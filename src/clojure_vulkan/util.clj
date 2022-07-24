@@ -12,3 +12,7 @@
 (def version-major 1)
 (def version-minor 3)
 (def vk-version (VK13/VK_MAKE_VERSION version-major version-minor 0))
+(defmacro assert-not-null [v & body]
+  `(if (nil? ~v)
+     (throw (NullPointerException. ~(str "NullPointerException: " (resolve v))))
+     (do ~@body)))

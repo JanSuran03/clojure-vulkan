@@ -4,11 +4,17 @@
             [clojure-vulkan.glfw :as glfw]))
 
 (defn -main []
+  ;; init
   (glfw/init)
-  (window/create-window)
   (vulkan/init)
+  (window/create-window)
   (window/show-window)
+
+  ;; application loop
   (while (not (window/should-window-close?))
     (glfw/poll-events))
+
+  ;; termination
   (window/destroy-window)
-  (glfw/terminate))
+  (glfw/terminate)
+  (vulkan/terminate))

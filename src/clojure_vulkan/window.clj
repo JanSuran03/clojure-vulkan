@@ -8,7 +8,7 @@
 (def ^Integer window-width 800)
 (def ^Integer window-height 600)
 (def ^String window-title "Hello Vulkan")
-(def window-ptr -1)
+(def window-ptr nil)
 
 (defn default-window-hints [] (GLFW/glfwDefaultWindowHints))
 (defn hint-resizable [resizable?] (GLFW/glfwWindowHint GLFW/GLFW_RESIZABLE (glfw-boolean resizable?)))
@@ -17,8 +17,10 @@
 (defn show-window [] (println window-ptr) (GLFW/glfwShowWindow window-ptr))
 
 (defn -create-window []
-  (alter-var-root #'window-ptr
-                  (constantly (GLFW/glfwCreateWindow window-width window-height window-title nullptr nullptr))))
+  (if-let [window (GLFW/glfwCreateWindow window-width window-height window-title nullptr nullptr)]
+    (alter-var-root #'window-ptr
+                    (constantly window))
+    (throw (RuntimeException. "Failed to create GLFW window."))))
 
 (defn create-window []
   (default-window-hints)

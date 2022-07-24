@@ -25,3 +25,7 @@
         (throw (RuntimeException. "Failed to create Vulkan instance.")))
       (alter-var-root #'vulkan-instance
                       (constantly (VkInstance. (.get instance-ptr 0) create-info))))))
+
+(defn destroy []
+  (util/assert-not-null vulkan-instance
+    (VK13/vkDestroyInstance vulkan-instance nil)))

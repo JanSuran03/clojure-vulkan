@@ -3,3 +3,6 @@
 
 (defn init []
   (instance/create))
+
+(defn terminate []
+  (instance/destroy))
