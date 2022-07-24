@@ -25,8 +25,7 @@
   (hint-resizable false)
   (hint-no-client-api)
   (hint-visible false)
-  (-create-window)
-  (show-window))
+  (-create-window))
 
 (defn destroy-window []
   (GLFW/glfwDestroyWindow window-ptr)
