@@ -1,12 +1,15 @@
 (ns clojure-vulkan.instance
-  (:require [clojure-vulkan.util :as util])
-  (:import (org.lwjgl.system MemoryStack)
-           (org.lwjgl.vulkan VK13 VkApplicationInfo VkInstance VkInstanceCreateInfo)
-           (org.lwjgl.glfw GLFWVulkan)))
+  (:require [clojure-vulkan.util :as util]
+            [clojure-vulkan.validation-layers :as validation-layers])
+  (:import (org.lwjgl.glfw GLFWVulkan)
+           (org.lwjgl.system MemoryStack)
+           (org.lwjgl.vulkan VK13 VkApplicationInfo VkInstance VkInstanceCreateInfo)))
 
 (def ^VkInstance vulkan-instance nil)
 
 (defn create []
+  (when validation-layers/*check-validation-layers*
+    (validation-layers/check-validation-layers-support))
   (util/with-memory-stack ^MemoryStack stack
     (let [^VkApplicationInfo app-info (doto (VkApplicationInfo/calloc stack)
                                         (.sType VK13/VK_STRUCTURE_TYPE_APPLICATION_INFO)
@@ -20,6 +23,9 @@
                                               (.pApplicationInfo app-info)
                                               (.ppEnabledExtensionNames (GLFWVulkan/glfwGetRequiredInstanceExtensions))
                                               (.ppEnabledLayerNames nil))
+          ^VkInstanceCreateInfo create-info (if validation-layers/*check-validation-layers*
+                                              (doto create-info
+                                                (.ppEnabledLayerNames (validation-layers/validation-layers-as-pointer-buffer))))
           instance-ptr (.mallocPointer stack 1)]
       (when (not= (VK13/vkCreateInstance create-info nil instance-ptr) VK13/VK_SUCCESS)
         (throw (RuntimeException. "Failed to create Vulkan instance.")))

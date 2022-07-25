@@ -2,8 +2,10 @@
   (:require [clojure-vulkan.util :as util]
             [clojure.string :as str])
   (:import (org.lwjgl.vulkan VK13 VkLayerProperties$Buffer VkLayerProperties)
-           (org.lwjgl.system MemoryStack)))
+           (org.lwjgl.system MemoryStack)
+           (org.lwjgl PointerBuffer)))
 
+(def ^:dynamic *check-validation-layers* true)
 (def ^:dynamic *validation-layers* #{"VK_LAYER_KHRONOS_validation"})
 
 (defn check-validation-layers-support []
@@ -18,3 +20,10 @@
         (throw (RuntimeException. (str "Some of validation layers are not supported."
                                        "\nAvailable layers: " (str/join ", " available-layers)
                                        "\nRequired layers: " (str/join ", " *validation-layers*))))))))
+
+(defn validation-layers-as-pointer-buffer []
+  (util/with-memory-stack ^MemoryStack stack
+    (let [^PointerBuffer buffer (.mallocPointer stack (count *validation-layers*))]
+      (doseq [layer *validation-layers*]
+        (.put buffer (.UTF8 stack layer)))
+      (.rewind buffer))))

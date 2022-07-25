@@ -6,7 +6,7 @@
 (defonce ^Long nullptr MemoryUtil/NULL)
 
 (defmacro with-memory-stack [stack & body]
-  `(with-open [~stack (MemoryStack/stackPush)]
+  `(with-open [^MemoryStack ~stack (MemoryStack/stackPush)]
      ~@body))
 
 (def version-major 1)
