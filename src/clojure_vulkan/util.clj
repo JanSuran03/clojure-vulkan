@@ -20,3 +20,13 @@
   `(if (nil? ~v)
      (throw (NullPointerException. ~(str "NullPointerException: " (resolve v))))
      (do ~@body)))
+
+(defn bit-ors [& bits] (reduce bit-or bits))
+
+(def ^:dynamic *doto-debug* false)
+
+(defn doto-debug [ret num]
+  (when *doto-debug*
+    (binding [*out* *err*]
+      (println "Got there: " num))
+    ret))

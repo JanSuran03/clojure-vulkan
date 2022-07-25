@@ -1,7 +1,7 @@
 (ns clojure-vulkan.validation-layers
   (:require [clojure-vulkan.util :as util]
             [clojure.string :as str])
-  (:import (org.lwjgl.vulkan VK13 VkLayerProperties$Buffer VkLayerProperties EXTDebugUtils VkDebugUtilsMessengerCallbackDataEXT)
+  (:import (org.lwjgl.vulkan VK13 VkLayerProperties$Buffer VkLayerProperties EXTDebugUtils)
            (org.lwjgl.system MemoryStack)
            (org.lwjgl PointerBuffer)
            (org.lwjgl.glfw GLFWVulkan)))
