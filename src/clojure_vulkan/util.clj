@@ -5,8 +5,12 @@
 
 (defonce ^Long nullptr MemoryUtil/NULL)
 
-(defmacro with-memory-stack [stack & body]
+(defmacro with-memory-stack-push [stack & body]
   `(with-open [^MemoryStack ~stack (MemoryStack/stackPush)]
+     ~@body))
+
+(defmacro with-memory-stack-get [stack & body]
+  `(let [^MemoryStack ~stack (MemoryStack/stackGet)]
      ~@body))
 
 (def version-major 1)

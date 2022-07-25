@@ -10,8 +10,8 @@
 (defn create []
   (when validation-layers/*check-validation-layers*
     (validation-layers/check-validation-layers-support))
-  (util/with-memory-stack ^MemoryStack stack
-    (let [^VkApplicationInfo app-info (doto (VkApplicationInfo/calloc stack)
+  (util/with-memory-stack-push ^MemoryStack stack
+                               (let [^VkApplicationInfo app-info (doto (VkApplicationInfo/calloc stack)
                                         (.sType VK13/VK_STRUCTURE_TYPE_APPLICATION_INFO)
                                         (.pApplicationName (.UTF8Safe stack "Hello Vulkan app"))
                                         (.applicationVersion util/vk-version)
