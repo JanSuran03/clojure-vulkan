@@ -11,7 +11,8 @@
     (invoke [this message-severity message-type callback-data-ptr user-data-ptr]
       (let [^VkDebugUtilsMessengerCallbackDataEXT callback-data (VkDebugUtilsMessengerCallbackDataEXT/create ^long callback-data-ptr)]
         (binding [*out* *err*]
-          (println "Validation layer callback: " (.pMessageString callback-data)))))))
+          (println "Validation layer callback: " (.pMessageString callback-data))))
+      false)))
 
 (defn setup-debug-messenger []
   (when validation-layers/*enable-validation-layers*
