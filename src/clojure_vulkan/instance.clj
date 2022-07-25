@@ -8,7 +8,7 @@
 (def ^VkInstance vulkan-instance nil)
 
 (defn create []
-  (when validation-layers/*check-validation-layers*
+  (when validation-layers/*enable-validation-layers*
     (validation-layers/check-validation-layers-support))
   (util/with-memory-stack-push ^MemoryStack stack
                                (let [^VkApplicationInfo app-info (doto (VkApplicationInfo/calloc stack)
@@ -23,7 +23,7 @@
                                               (.pApplicationInfo app-info)
                                               (.ppEnabledExtensionNames (validation-layers/get-required-extensions))
                                               (.ppEnabledLayerNames nil))
-          ^VkInstanceCreateInfo create-info (if validation-layers/*check-validation-layers*
+          ^VkInstanceCreateInfo create-info (if validation-layers/*enable-validation-layers*
                                               (doto create-info
                                                 (.ppEnabledLayerNames (validation-layers/validation-layers-as-pointer-buffer))))
           instance-ptr (.mallocPointer stack 1)]
