@@ -1,3 +1,5 @@
+(set! *warn-on-reflection* true)
+
 (ns clojure-vulkan.core
   (:require [clojure-vulkan.window :as window]
             [clojure-vulkan.vulkan :as vulkan]

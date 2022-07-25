@@ -21,7 +21,7 @@
           ^VkInstanceCreateInfo create-info (doto (VkInstanceCreateInfo/calloc stack)
                                               (.sType VK13/VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO)
                                               (.pApplicationInfo app-info)
-                                              (.ppEnabledExtensionNames (GLFWVulkan/glfwGetRequiredInstanceExtensions))
+                                              (.ppEnabledExtensionNames (validation-layers/get-required-extensions))
                                               (.ppEnabledLayerNames nil))
           ^VkInstanceCreateInfo create-info (if validation-layers/*check-validation-layers*
                                               (doto create-info

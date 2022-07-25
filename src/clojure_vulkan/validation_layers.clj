@@ -1,9 +1,10 @@
 (ns clojure-vulkan.validation-layers
   (:require [clojure-vulkan.util :as util]
             [clojure.string :as str])
-  (:import (org.lwjgl.vulkan VK13 VkLayerProperties$Buffer VkLayerProperties)
+  (:import (org.lwjgl.vulkan VK13 VkLayerProperties$Buffer VkLayerProperties EXTDebugUtils)
            (org.lwjgl.system MemoryStack)
-           (org.lwjgl PointerBuffer)))
+           (org.lwjgl PointerBuffer)
+           (org.lwjgl.glfw GLFWVulkan)))
 
 (def ^:dynamic *check-validation-layers* true)
 (def ^:dynamic *validation-layers* #{"VK_LAYER_KHRONOS_validation"})
@@ -27,3 +28,13 @@
       (doseq [layer *validation-layers*]
         (.put buffer (.UTF8 stack layer)))
       (.rewind buffer))))
+
+(defn get-required-extensions []
+  (let [^PointerBuffer glfw-extensions (GLFWVulkan/glfwGetRequiredInstanceExtensions)]
+    (if *check-validation-layers*
+      (util/with-memory-stack ^MemoryStack stack
+        (doto (.mallocPointer stack (inc (.capacity glfw-extensions)))
+          (.put glfw-extensions)
+          (.put (.UTF8 stack EXTDebugUtils/VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
+          .rewind))
+      glfw-extensions)))
