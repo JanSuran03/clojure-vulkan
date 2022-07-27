@@ -1,10 +1,10 @@
 (ns clojure-vulkan.validation-layers
-  (:require [clojure-vulkan.util :as util]
-            [clojure.string :as str])
-  (:import (org.lwjgl.vulkan VK13 VkLayerProperties$Buffer VkLayerProperties EXTDebugUtils)
+  (:require [clojure.string :as str]
+            [clojure-vulkan.util :as util])
+  (:import (org.lwjgl PointerBuffer)
+           (org.lwjgl.glfw GLFWVulkan)
            (org.lwjgl.system MemoryStack)
-           (org.lwjgl PointerBuffer)
-           (org.lwjgl.glfw GLFWVulkan)))
+           (org.lwjgl.vulkan EXTDebugUtils VK13 VkLayerProperties VkLayerProperties$Buffer)))
 
 (def ^:dynamic *enable-validation-layers* true)
 (def ^:dynamic *validation-layers* #{"VK_LAYER_KHRONOS_validation"})

@@ -1,6 +1,6 @@
 (ns clojure-vulkan.vulkan
-  (:require [clojure-vulkan.instance :as instance]
-            [clojure-vulkan.debug :as debug]
+  (:require [clojure-vulkan.debug :as debug]
+            [clojure-vulkan.instance :as instance]
             [clojure-vulkan.validation-layers :as validation-layers]))
 
 (defn init []

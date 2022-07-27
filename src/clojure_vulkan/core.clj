@@ -1,11 +1,11 @@
 (set! *warn-on-reflection* true)
 
 (ns clojure-vulkan.core
-  (:require [clojure-vulkan.window :as window]
-            [clojure-vulkan.vulkan :as vulkan]
-            [clojure-vulkan.glfw :as glfw]
+  (:require [clojure-vulkan.glfw :as glfw]
             [clojure-vulkan.util :as util]
-            [clojure-vulkan.validation-layers :as validation-layers]))
+            [clojure-vulkan.validation-layers :as validation-layers]
+            [clojure-vulkan.vulkan :as vulkan]
+            [clojure-vulkan.window :as window]))
 
 (defn find-or-default [opts key]
   (if-let [key (find opts key)]

@@ -1,6 +1,5 @@
 (ns clojure-vulkan.util
-  (:import (org.lwjgl.system MemoryUtil MemoryStack)
-           (org.lwjgl.glfw GLFW)
+  (:import (org.lwjgl.system MemoryStack MemoryUtil)
            (org.lwjgl.vulkan VK13)))
 
 (defonce ^Long nullptr MemoryUtil/NULL)

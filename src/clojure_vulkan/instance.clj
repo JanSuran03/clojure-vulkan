@@ -1,17 +1,16 @@
 (ns clojure-vulkan.instance
-  (:require [clojure-vulkan.util :as util]
+  (:require [clojure-vulkan.debug :as debug]
+            [clojure-vulkan.util :as util]
+            [clojure-vulkan.globals :refer [vulkan-instance]]
             [clojure-vulkan.validation-layers :as validation-layers])
-  (:import (org.lwjgl.glfw GLFWVulkan)
-           (org.lwjgl.system MemoryStack)
-           (org.lwjgl.vulkan VK13 VkApplicationInfo VkInstance VkInstanceCreateInfo)))
-
-(def ^VkInstance vulkan-instance nil)
+  (:import (org.lwjgl.system MemoryStack)
+           (org.lwjgl.vulkan VK13 VkApplicationInfo VkInstance VkInstanceCreateInfo VkDebugUtilsMessengerCreateInfoEXT)))
 
 (defn create []
   (when validation-layers/*enable-validation-layers*
     (validation-layers/check-validation-layers-support))
   (util/with-memory-stack-push ^MemoryStack stack
-                               (let [^VkApplicationInfo app-info (doto (VkApplicationInfo/calloc stack)
+    (let [^VkApplicationInfo app-info (doto (VkApplicationInfo/calloc stack)
                                         (.sType VK13/VK_STRUCTURE_TYPE_APPLICATION_INFO)
                                         (.pApplicationName (.UTF8Safe stack "Hello Vulkan app"))
                                         (.applicationVersion util/vk-version)
@@ -24,8 +23,12 @@
                                               (.ppEnabledExtensionNames (validation-layers/get-required-extensions))
                                               (.ppEnabledLayerNames nil))
           ^VkInstanceCreateInfo create-info (if validation-layers/*enable-validation-layers*
-                                              (doto create-info
-                                                (.ppEnabledLayerNames (validation-layers/validation-layers-as-pointer-buffer))))
+                                              (let [^VkDebugUtilsMessengerCreateInfoEXT debug-create-info
+                                                    (debug/init-debug-messenger-create-info
+                                                      (VkDebugUtilsMessengerCreateInfoEXT/calloc stack))]
+                                                (doto create-info
+                                                  (.ppEnabledLayerNames (validation-layers/validation-layers-as-pointer-buffer))
+                                                  (.pNext (.address debug-create-info)))))
           instance-ptr (.mallocPointer stack 1)]
       (when (not= (VK13/vkCreateInstance create-info nil instance-ptr) VK13/VK_SUCCESS)
         (throw (RuntimeException. "Failed to create Vulkan instance.")))
