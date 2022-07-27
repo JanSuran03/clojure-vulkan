@@ -1,6 +1,8 @@
 (ns clojure-vulkan.util
+  (:require [clojure.string :as str])
   (:import (org.lwjgl.system MemoryStack MemoryUtil)
-           (org.lwjgl.vulkan VK13)))
+           (org.lwjgl.vulkan VK13)
+           (java.util Date)))
 
 (defonce ^Long nullptr MemoryUtil/NULL)
 
@@ -29,3 +31,9 @@
     (binding [*out* *err*]
       (println "Got there: " num))
     ret))
+
+(def ^:dynamic *current-debug-filename* nil)
+
+(defn debug-filename []
+  (let [now (str/replace (Date.) #"\ " "_")]
+    (str "debug__" now ".txt")))

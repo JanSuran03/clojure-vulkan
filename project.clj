@@ -62,7 +62,8 @@
   (into '[[me.raynes/fs "1.4.6"]
           [org.clojure/clojure "1.11.1"]
           [org.clojure/core.async "1.5.648"]
-          [org.clojure.typed/checker.jvm "1.10.0-alpha1"]]
+          [org.clojure.typed/checker.jvm "1.10.0-alpha1"]
+          ]
     (lwjgl-deps-with-natives)))
 
 (defproject clojure-vulkan "0.1.0-SNAPSHOT"

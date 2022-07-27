@@ -11,8 +11,11 @@
   (reify VkDebugUtilsMessengerCallbackEXTI
     (invoke [this message-severity message-type callback-data-ptr user-data-ptr]
       (let [^VkDebugUtilsMessengerCallbackDataEXT callback-data (VkDebugUtilsMessengerCallbackDataEXT/create ^long callback-data-ptr)]
-        (binding [*out* *err*]
-          (println "Validation layer callback: " (.pMessageString callback-data))))
+        (if util/*current-debug-filename*
+          (spit util/*current-debug-filename* (str "Validation layer callback: " (.pMessageString callback-data)\newline)
+                :append true)
+          (binding [*out* *err*]
+            (println "Validation layer callback:" (.pMessageString callback-data)))))
       VK13/VK_FALSE)))
 
 (defn create-debug-messenger-extension [^VkInstance instance ^VkDebugUtilsMessengerCreateInfoEXT create-info
