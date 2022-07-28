@@ -1,5 +1,5 @@
 (ns clojure-vulkan.debug
-  (:require [clojure-vulkan.globals :refer [debug-messenger vulkan-instance]]
+  (:require [clojure-vulkan.globals :as globals :refer [debug-messenger vulkan-instance]]
             [clojure-vulkan.util :as util :refer [nullptr]]
             [clojure-vulkan.validation-layers :as validation-layers])
   (:import (java.nio LongBuffer)
@@ -51,4 +51,4 @@
 (defn destroy-debug-messenger [^VkAllocationCallbacks allocation-callbacks]
   (when (not= (VK13/vkGetInstanceProcAddr vulkan-instance "vkDestroyDebugUtilsMessengerEXT") nullptr)
     (EXTDebugUtils/vkDestroyDebugUtilsMessengerEXT vulkan-instance debug-messenger allocation-callbacks)
-    (alter-var-root #'debug-messenger (constantly -1))))
+    (globals/reset-debug-messenger)))

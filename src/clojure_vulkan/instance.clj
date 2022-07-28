@@ -2,7 +2,8 @@
   (:require [clojure-vulkan.debug :as debug]
             [clojure-vulkan.util :as util]
             [clojure-vulkan.globals :refer [vulkan-instance]]
-            [clojure-vulkan.validation-layers :as validation-layers])
+            [clojure-vulkan.validation-layers :as validation-layers]
+            [clojure-vulkan.globals :as globals])
   (:import (org.lwjgl.system MemoryStack)
            (org.lwjgl.vulkan VK13 VkApplicationInfo VkInstance VkInstanceCreateInfo VkDebugUtilsMessengerCreateInfoEXT)))
 
@@ -37,4 +38,5 @@
 
 (defn destroy []
   (util/assert-not-null vulkan-instance
-    (VK13/vkDestroyInstance vulkan-instance nil)))
+    (VK13/vkDestroyInstance vulkan-instance nil))
+  (globals/reset-vulkan-instance))
