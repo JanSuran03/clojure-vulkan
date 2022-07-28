@@ -10,12 +10,17 @@
 (def debug-callback
   (reify VkDebugUtilsMessengerCallbackEXTI
     (invoke [this message-severity message-type callback-data-ptr user-data-ptr]
-      (let [^VkDebugUtilsMessengerCallbackDataEXT callback-data (VkDebugUtilsMessengerCallbackDataEXT/create ^long callback-data-ptr)]
+      (let [^VkDebugUtilsMessengerCallbackDataEXT callback-data (VkDebugUtilsMessengerCallbackDataEXT/create ^long callback-data-ptr)
+            message-severity (case message-severity
+                               #=(bit-shift-left 1 0) "VERBOSE"
+                               #=(bit-shift-left 1 4) "INFO"
+                               #=(bit-shift-left 1 8) "WARNING"
+                               #=(bit-shift-left 1 12) "ERROR")]
         (if util/*current-debug-filename*
-          (spit util/*current-debug-filename* (str "Validation layer callback: " (.pMessageString callback-data)\newline)
+          (spit util/*current-debug-filename* (str "Validation layer callback: " (.pMessageString callback-data) \newline)
                 :append true)
           (binding [*out* *err*]
-            (println "Validation layer callback:" (.pMessageString callback-data)))))
+            (println (str "Validation layer callback (severity = " message-severity "): " (.pMessageString callback-data))))))
       VK13/VK_FALSE)))
 
 (defn create-debug-messenger-extension [^VkInstance instance ^VkDebugUtilsMessengerCreateInfoEXT create-info
@@ -29,10 +34,12 @@
   (doto create-info
     (.sType EXTDebugUtils/VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT)
     (.messageSeverity (util/bit-ors EXTDebugUtils/VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT
+                                    EXTDebugUtils/VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT
                                     EXTDebugUtils/VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT
                                     EXTDebugUtils/VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT))
 
     (.messageType (util/bit-ors EXTDebugUtils/VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT
+                                EXTDebugUtils/VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT
                                 EXTDebugUtils/VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT
                                 EXTDebugUtils/VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT))
     (.pfnUserCallback debug-callback)

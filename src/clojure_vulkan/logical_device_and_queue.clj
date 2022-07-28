@@ -1,5 +1,5 @@
 (ns clojure-vulkan.logical-device-and-queue
-  (:require [clojure-vulkan.globals :refer [graphics-queue logical-device physical-device queue-families]]
+  (:require [clojure-vulkan.globals :as globals :refer [graphics-queue logical-device physical-device queue-families]]
             [clojure-vulkan.util :as util]
             [clojure-vulkan.validation-layers :as validation-layers])
   (:import (org.lwjgl.vulkan VK13 VkDevice VkDeviceCreateInfo VkDeviceQueueCreateInfo VkDeviceQueueCreateInfo$Buffer
@@ -35,3 +35,7 @@
       (VK13/vkGetDeviceQueue device present-family 0 present-queue-ptr)
       (alter-var-root #'logical-device (constantly device))
       (alter-var-root #'graphics-queue (constantly (.get graphics-queue-ptr 0))))))
+
+(defn destroy-logical-device []
+  (VK13/vkDestroyDevice logical-device nil)
+  (globals/reset-logical-device))
