@@ -1,8 +1,8 @@
 (ns clojure-vulkan.window-surface
-  (:require [clojure-vulkan.globals :refer [vulkan-instance window-ptr window-surface-ptr]]
+  (:require [clojure-vulkan.globals :as globals :refer [vulkan-instance window-ptr window-surface-ptr]]
             [clojure-vulkan.util :as util])
   (:import (org.lwjgl.system MemoryStack)
-           (org.lwjgl.vulkan VK13)
+           (org.lwjgl.vulkan VK13 KHRSurface)
            (org.lwjgl.glfw GLFWVulkan)))
 
 (defn create-surface []
@@ -12,3 +12,7 @@
                   VK13/VK_SUCCESS)
         (throw (RuntimeException. "Failed to create window surface.")))
       (alter-var-root #'window-surface-ptr (constantly (.get surface-ptr* 0))))))
+
+(defn destroy-surface []
+  (KHRSurface/vkDestroySurfaceKHR vulkan-instance window-surface-ptr nil)
+  (globals/reset-window-surface))

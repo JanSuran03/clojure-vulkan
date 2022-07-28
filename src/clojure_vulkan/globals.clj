@@ -5,7 +5,7 @@
 (defn- reset-to-null [_] nil)
 (defn- reset-to-vk-null [_] VK13/VK_NULL_HANDLE)
 
-(def ^long debug-messenger-ptr VK13/VK_NULL_HANDLE)
+(def ^Long debug-messenger-ptr VK13/VK_NULL_HANDLE)
 (defn reset-debug-messenger [] (alter-var-root #'debug-messenger-ptr reset-to-vk-null))
 
 (def ^VkInstance vulkan-instance nil)
@@ -23,8 +23,8 @@
 (def ^VkQueue graphics-queue nil)
 (defn reset-graphics-queue [] (alter-var-root #'graphics-queue reset-to-null))
 
-(def ^long window-surface-ptr VK13/VK_NULL_HANDLE)
+(def ^Long window-surface-ptr VK13/VK_NULL_HANDLE)
 (defn reset-window-surface [] (alter-var-root #'window-surface-ptr reset-to-vk-null))
 
-(def ^long window-ptr nullptr)
+(def ^Long window-ptr nullptr)
 (defn reset-window-ptr [] (alter-var-root #'window-ptr reset-to-vk-null))
