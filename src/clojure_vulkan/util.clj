@@ -1,9 +1,10 @@
 (ns clojure-vulkan.util
   (:require [clojure.string :as str]
             [me.raynes.fs :as fs])
-  (:import (org.lwjgl.system MemoryStack MemoryUtil)
-           (org.lwjgl.vulkan VK13)
-           (java.util Date)))
+  (:import (java.io File)
+           (java.util Date)
+           (org.lwjgl.system MemoryStack MemoryUtil)
+           (org.lwjgl.vulkan VK13)))
 
 (defonce ^Long nullptr MemoryUtil/NULL)
 
@@ -42,7 +43,8 @@
     (str debug-prefix now ".txt")))
 
 (defn delete-debug-files []
-  (doseq [file (fs/list-dir "")]
-    (when (-> (.getPath file) (str/split #"\/") last
-              (str/starts-with? debug-prefix))
+  (doseq [^File file (fs/list-dir "")
+          :let [filename (-> file .getPath (str/split #"\/") last)]]
+    (when (or (str/starts-with? filename debug-prefix)
+              (str/starts-with? filename "hs_err_pid"))
       (fs/delete file))))
