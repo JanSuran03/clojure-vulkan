@@ -5,12 +5,16 @@
             [clojure-vulkan.util :as util]
             [clojure-vulkan.validation-layers :as validation-layers]
             [clojure-vulkan.vulkan :as vulkan]
-            [clojure-vulkan.window :as window]))
+            [clojure-vulkan.window :as window])
+  (:import (org.lwjgl.system MemoryStack)
+           (org.lwjgl.vulkan VK13)))
 
 (defn find-or-default [opts key]
   (if-let [key (find opts key)]
     (get opts key)
     true))
+
+(list :file-debug)
 
 (defn -main [& [{:keys [file-debug] :as opts}]]
   (binding [util/*doto-debug* (find-or-default opts :debug)
