@@ -46,8 +46,7 @@
             (sort-by (fn [[score _]]
                        score))
             first
-            second
-            (#(doto % println)))
+            second)
        @graphics-family*])))
 
 (defn pick-physical-device []

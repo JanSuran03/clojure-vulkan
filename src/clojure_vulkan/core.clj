@@ -21,8 +21,8 @@
     (try
       ;; init
       (glfw/init)
-      (vulkan/init)
       (window/create-window)
+      (vulkan/init)
       (window/show-window)
 
       ;; application loop

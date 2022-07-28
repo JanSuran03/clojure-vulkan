@@ -10,7 +10,6 @@
   (instance/create)
   (debug/setup-debug-messenger)
   (physical-device/pick-physical-device)
-  (println "QUEUE FAMILY: " clojure-vulkan.globals/queue-families)
   (logical-device-and-queue/create-logical-device))
 
 (defn terminate []
