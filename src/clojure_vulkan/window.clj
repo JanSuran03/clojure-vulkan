@@ -14,7 +14,7 @@
 (defn hint-resizable [resizable?] (GLFW/glfwWindowHint GLFW/GLFW_RESIZABLE (glfw-boolean resizable?)))
 (defn hint-no-client-api [] (GLFW/glfwWindowHint GLFW/GLFW_CLIENT_API GLFW/GLFW_NO_API))
 (defn hint-visible [visible?] (GLFW/glfwWindowHint GLFW/GLFW_VISIBLE (glfw-boolean visible?)))
-(defn show-window [] (println window-ptr) (GLFW/glfwShowWindow window-ptr))
+(defn show-window [] (GLFW/glfwShowWindow window-ptr))
 
 (defn -create-window []
   (if-let [window (GLFW/glfwCreateWindow window-width window-height window-title nullptr nullptr)]
