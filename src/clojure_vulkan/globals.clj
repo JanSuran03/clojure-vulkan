@@ -23,6 +23,9 @@
 (def ^VkQueue graphics-queue nil)
 (defn reset-graphics-queue [] (alter-var-root #'graphics-queue reset-to-null))
 
+(def ^VkQueue present-queue nil)
+(defn reset-present-queue [] (alter-var-root #'present-queue reset-to-null))
+
 (def ^Long window-surface-ptr VK13/VK_NULL_HANDLE)
 (defn reset-window-surface [] (alter-var-root #'window-surface-ptr reset-to-vk-null))
 
