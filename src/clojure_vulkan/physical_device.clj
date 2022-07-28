@@ -1,10 +1,24 @@
 (ns clojure-vulkan.physical-device
   (:require [clojure-vulkan.globals :refer [physical-device queue-families vulkan-instance window-surface-ptr]]
             [clojure-vulkan.util :as util])
-  (:import (org.lwjgl.system MemoryStack)
-           (org.lwjgl.vulkan VK13 VkPhysicalDevice VkPhysicalDeviceFeatures VkPhysicalDeviceProperties
-                             VkQueueFamilyProperties KHRSurface)
-           (org.lwjgl PointerBuffer)))
+  (:import (org.lwjgl PointerBuffer)
+           (org.lwjgl.system MemoryStack)
+           (org.lwjgl.vulkan KHRSurface KHRSwapchain VK13 VkExtensionProperties VkPhysicalDevice VkPhysicalDeviceFeatures
+                             VkPhysicalDeviceProperties VkQueueFamilyProperties)))
+
+(def device-extensions (list KHRSwapchain/VK_KHR_SWAPCHAIN_EXTENSION_NAME))
+
+(defn- check-device-extension-support [^VkPhysicalDevice device]
+  (util/with-memory-stack-push ^MemoryStack stack
+    (let [extension-count (.ints stack 0)
+          _ (VK13/vkEnumerateDeviceExtensionProperties device "" extension-count nil)
+          available-extensions (VkExtensionProperties/malloc (.get extension-count 0) stack)
+          _ (VK13/vkEnumerateDeviceExtensionProperties device "" extension-count available-extensions)
+          available-extensions-set (->> (.iterator available-extensions)
+                                        iterator-seq
+                                        (map (memfn ^VkExtensionProperties extensionNameString))
+                                        set)]
+      (every? #(contains? available-extensions-set %) device-extensions))))
 
 (defn- find-queue-families [^VkPhysicalDevice device]
   (util/with-memory-stack-push ^MemoryStack stack
@@ -40,7 +54,7 @@
               ^VkPhysicalDeviceProperties device-properties (VkPhysicalDeviceProperties/calloc stack)
               ^VkPhysicalDeviceFeatures device-features (VkPhysicalDeviceFeatures/calloc stack)
               score (volatile! 0)
-              _ (if (and graphics-family present-family)
+              _ (if (and graphics-family present-family (check-device-extension-support device))
                   (do (VK13/vkGetPhysicalDeviceProperties device device-properties)
                       (VK13/vkGetPhysicalDeviceFeatures device device-features)
                       (when (= (.deviceType device-properties) VK13/VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)

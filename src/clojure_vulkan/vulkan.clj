@@ -18,5 +18,6 @@
   (when validation-layers/*enable-validation-layers*
     (debug/destroy-debug-messenger nil))
   (window-surface/destroy-surface)
+  (logical-device-and-queue/destroy-logical-device)
   (instance/destroy)
   (globals/reset-queue-families))
