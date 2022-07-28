@@ -1,5 +1,6 @@
 (ns clojure-vulkan.util
-  (:require [clojure.string :as str])
+  (:require [clojure.string :as str]
+            [me.raynes.fs :as fs])
   (:import (org.lwjgl.system MemoryStack MemoryUtil)
            (org.lwjgl.vulkan VK13)
            (java.util Date)))
@@ -34,6 +35,14 @@
 
 (def ^:dynamic *current-debug-filename* nil)
 
+(def debug-prefix "debug__")
+
 (defn debug-filename []
   (let [now (str/replace (Date.) #"\ " "_")]
-    (str "debug__" now ".txt")))
+    (str debug-prefix now ".txt")))
+
+(defn delete-debug-files []
+  (doseq [file (fs/list-dir "")]
+    (when (-> (.getPath file) (str/split #"\/") last
+              (str/starts-with? debug-prefix))
+      (fs/delete file))))
