@@ -1,10 +1,12 @@
 (ns clojure-vulkan.physical-device
   (:require [clojure-vulkan.globals :refer [physical-device queue-families vulkan-instance window-surface-ptr]]
+            [clojure-vulkan.swap-chain :as swap-chain]
             [clojure-vulkan.util :as util])
   (:import (org.lwjgl PointerBuffer)
            (org.lwjgl.system MemoryStack)
            (org.lwjgl.vulkan KHRSurface KHRSwapchain VK13 VkExtensionProperties VkPhysicalDevice VkPhysicalDeviceFeatures
-                             VkPhysicalDeviceProperties VkQueueFamilyProperties)))
+                             VkPhysicalDeviceProperties VkQueueFamilyProperties VkSurfaceFormatKHR$Buffer)
+           (java.nio IntBuffer)))
 
 (def device-extensions (list KHRSwapchain/VK_KHR_SWAPCHAIN_EXTENSION_NAME))
 
@@ -54,7 +56,16 @@
               ^VkPhysicalDeviceProperties device-properties (VkPhysicalDeviceProperties/calloc stack)
               ^VkPhysicalDeviceFeatures device-features (VkPhysicalDeviceFeatures/calloc stack)
               score (volatile! 0)
-              _ (if (and graphics-family present-family (check-device-extension-support device))
+              query-swap-chain-support (fn []
+                                         (let [{:keys [formats-ptr present-modes-ptr capabilities]}
+                                               (swap-chain/query-swap-chain-support device)]
+                                           (and formats-ptr
+                                                (.hasRemaining ^VkSurfaceFormatKHR$Buffer formats-ptr)
+                                                present-modes-ptr
+                                                (.hasRemaining ^IntBuffer present-modes-ptr))))
+              _ (if (and graphics-family present-family
+                         (check-device-extension-support device)
+                         (query-swap-chain-support))
                   (do (VK13/vkGetPhysicalDeviceProperties device device-properties)
                       (VK13/vkGetPhysicalDeviceFeatures device device-features)
                       (when (= (.deviceType device-properties) VK13/VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)

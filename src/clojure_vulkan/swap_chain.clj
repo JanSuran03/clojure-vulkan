@@ -22,6 +22,7 @@
                               (let [present-modes-ptr (.mallocInt stack present-mode-count)]
                                 (KHRSurface/vkGetPhysicalDeviceSurfacePresentModesKHR device window-surface-ptr present-mode-count-ptr present-modes-ptr)
                                 present-modes-ptr))]
-      {:formats-ptr       formats-ptr
-       :present-modes-ptr present-modes-ptr
-       :capabilities      capabilities})))
+      (and formats-ptr present-modes-ptr
+           {:formats-ptr       formats-ptr
+            :present-modes-ptr present-modes-ptr
+            :capabilities      capabilities}))))
