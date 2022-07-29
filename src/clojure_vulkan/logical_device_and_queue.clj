@@ -1,7 +1,8 @@
 (ns clojure-vulkan.logical-device-and-queue
   (:require [clojure-vulkan.globals :as globals :refer [graphics-queue logical-device physical-device queue-families]]
             [clojure-vulkan.util :as util]
-            [clojure-vulkan.validation-layers :as validation-layers])
+            [clojure-vulkan.validation-layers :as validation-layers]
+            [clojure-vulkan.physical-device :as physical-device])
   (:import (org.lwjgl.vulkan VK13 VkDevice VkDeviceCreateInfo VkDeviceQueueCreateInfo VkDeviceQueueCreateInfo$Buffer
                              VkPhysicalDeviceFeatures)
            (org.lwjgl.system MemoryStack)))
@@ -11,7 +12,7 @@
     (let [{:keys [graphics-family present-family]} queue-families
           unique-queue-families (hash-set graphics-family present-family)
           ^VkDeviceQueueCreateInfo$Buffer queue-create-infos (VkDeviceQueueCreateInfo/calloc (count unique-queue-families) stack)
-          _ (doseq [[ i queue-family] (map-indexed (fn [i family] [i family]) unique-queue-families)]
+          _ (doseq [[i queue-family] (map-indexed (fn [i family] [i family]) unique-queue-families)]
               (doto ^VkDeviceQueueCreateInfo (.get queue-create-infos ^Long i)
                 (.sType VK13/VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO)
                 (.queueFamilyIndex queue-family)
@@ -20,10 +21,11 @@
           ^VkDeviceCreateInfo device-create-info (doto (VkDeviceCreateInfo/calloc stack)
                                                    (.sType VK13/VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO)
                                                    (.pQueueCreateInfos queue-create-infos)
-                                                   (.pEnabledFeatures device-features))
+                                                   (.pEnabledFeatures device-features)
+                                                   (.ppEnabledExtensionNames (util/string-seq-as-pointer-buffer physical-device/device-extensions)))
           ^VkDeviceCreateInfo device-create-info (cond-> device-create-info
                                                          validation-layers/*enable-validation-layers*
-                                                         (.ppEnabledLayerNames (validation-layers/validation-layers-as-pointer-buffer)))
+                                                         (.ppEnabledLayerNames (util/string-seq-as-pointer-buffer validation-layers/*validation-layers*)))
           device-ptr (.pointers stack VK13/VK_NULL_HANDLE)
           _ (when (not= (VK13/vkCreateDevice physical-device device-create-info nil device-ptr)
                         VK13/VK_SUCCESS)

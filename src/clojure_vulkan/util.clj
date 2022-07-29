@@ -48,3 +48,10 @@
     (when (or (str/starts-with? filename debug-prefix)
               (str/starts-with? filename "hs_err_pid"))
       (fs/delete file))))
+
+(defn string-seq-as-pointer-buffer [string-seq]
+  (with-memory-stack-get ^MemoryStack stack
+    (let [buffer (.mallocPointer stack (count string-seq))]
+      (doseq [string string-seq]
+        (.put buffer (.UTF8 stack string)))
+      (.rewind buffer))))

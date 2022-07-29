@@ -22,13 +22,6 @@
                                        "\nAvailable layers: " (str/join ", " available-layers)
                                        "\nRequired layers: " (str/join ", " *validation-layers*))))))))
 
-(defn validation-layers-as-pointer-buffer []
-  (util/with-memory-stack-get ^MemoryStack stack
-    (let [^PointerBuffer buffer (.mallocPointer stack (count *validation-layers*))]
-      (doseq [layer *validation-layers*]
-        (.put buffer (.UTF8 stack layer)))
-      (.rewind buffer))))
-
 (defn get-required-extensions []
   (let [^PointerBuffer glfw-extensions (GLFWVulkan/glfwGetRequiredInstanceExtensions)]
     (if *enable-validation-layers*

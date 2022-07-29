@@ -4,7 +4,6 @@
             [clojure-vulkan.globals :as globals :refer [window-ptr]])
   (:import (org.lwjgl.glfw GLFW)))
 
-(set! *warn-on-reflection* true)
 
 (def ^Integer window-width 800)
 (def ^Integer window-height 600)
