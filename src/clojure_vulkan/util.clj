@@ -3,7 +3,7 @@
             [me.raynes.fs :as fs])
   (:import (java.io File)
            (java.util Date)
-           (org.lwjgl.system MemoryStack MemoryUtil)
+           (org.lwjgl.system MemoryStack MemoryUtil StructBuffer)
            (org.lwjgl.vulkan VK13)))
 
 (defonce ^Long nullptr MemoryUtil/NULL)
@@ -55,3 +55,18 @@
       (doseq [string string-seq]
         (.put buffer (.UTF8 stack string)))
       (.rewind buffer))))
+
+(defn contains-keys [m & keys]
+  (every? #(contains? m %) keys))
+
+(comment
+  (let [nss (->> (all-ns)
+                 (filter #(str/starts-with? % "clojure-vulkan"))
+                 (map (comp symbol str))
+                 doall)]
+    (dotimes [_ 5]
+      (time (doseq [ns nss]
+              (require `[~ns :reload true]))))))
+
+(defn buffer->seq [^StructBuffer buffer]
+  (-> buffer .iterator iterator-seq))

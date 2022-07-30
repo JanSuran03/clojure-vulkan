@@ -20,7 +20,9 @@
           (spit util/*current-debug-filename* (str "Validation layer callback: " (.pMessageString callback-data) \newline)
                 :append true)
           (binding [*out* *err*]
-            (println (str "Validation layer callback (severity = " message-severity "): " (.pMessageString callback-data))))))
+            (println (str "Validation layer callback (severity = " message-severity "): " (.pMessageString callback-data)))))
+        (if (= message-severity "ERROR")
+          (throw (RuntimeException. "VALIDATION LAYER ERROR: " (.pMessageString callback-data)))))
       VK13/VK_FALSE)))
 
 (defn create-debug-messenger-extension [^VkInstance instance ^VkDebugUtilsMessengerCreateInfoEXT create-info

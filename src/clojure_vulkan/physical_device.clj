@@ -16,8 +16,8 @@
           _ (VK13/vkEnumerateDeviceExtensionProperties device "" extension-count nil)
           available-extensions (VkExtensionProperties/malloc (.get extension-count 0) stack)
           _ (VK13/vkEnumerateDeviceExtensionProperties device "" extension-count available-extensions)
-          available-extensions-set (->> (.iterator available-extensions)
-                                        iterator-seq
+          available-extensions-set (->> available-extensions
+                                        util/buffer->seq
                                         (map (memfn ^VkExtensionProperties extensionNameString))
                                         set)]
       (every? #(contains? available-extensions-set %) device-extensions))))
