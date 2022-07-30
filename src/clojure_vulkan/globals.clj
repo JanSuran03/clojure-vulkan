@@ -46,3 +46,6 @@
 
 (def ^VkExtent2D SWAP-CHAIN-EXTENT nil)
 (defn reset-swap-chain-extent [] (alter-var-root #'SWAP-CHAIN-EXTENT reset-to-nil))
+
+(def SWAP-CHAIN-IMAGE-VIEWS [])
+(defn reset-swap-chain-image-views [] (alter-var-root #'SWAP-CHAIN-IMAGE-VIEWS empty))

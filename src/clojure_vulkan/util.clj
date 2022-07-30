@@ -59,7 +59,7 @@
 (defn contains-keys [m & keys]
   (every? #(contains? m %) keys))
 
-(comment
+(defn test-compile-speed []
   (let [nss (->> (all-ns)
                  (filter #(str/starts-with? % "clojure-vulkan"))
                  (map (comp symbol str))
