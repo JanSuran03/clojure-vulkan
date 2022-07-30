@@ -31,3 +31,9 @@
 
 (def ^Long window-ptr nullptr)
 (defn reset-window-ptr [] (alter-var-root #'window-ptr reset-to-vk-null))
+
+(def swap-chain-support-details {})
+(defn reset-swap-chain-support-details [] (alter-var-root #'swap-chain-support-details empty))
+
+(def swap-chain-ptr VK13/VK_NULL_HANDLE)
+(defn reset-swap-chain-ptr [] (alter-var-root #'swap-chain-ptr reset-to-vk-null))

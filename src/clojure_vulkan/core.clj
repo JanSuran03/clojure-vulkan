@@ -5,8 +5,7 @@
             [clojure-vulkan.util :as util]
             [clojure-vulkan.validation-layers :as validation-layers]
             [clojure-vulkan.vulkan :as vulkan]
-            [clojure-vulkan.window :as window])
-  (:import (org.lwjgl.glfw GLFW)))
+            [clojure-vulkan.window :as window]))
 
 (defn find-or-default [opts key]
   (if-let [key (find opts key)]
