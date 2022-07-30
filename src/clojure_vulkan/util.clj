@@ -70,3 +70,6 @@
 
 (defn buffer->seq [^StructBuffer buffer]
   (-> buffer .iterator iterator-seq))
+
+(defn clamp [^Integer min-value ^Integer value ^Integer max-value]
+  (Math/min max-value (Math/max min-value value)))

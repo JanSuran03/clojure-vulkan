@@ -57,7 +57,7 @@
               ^VkPhysicalDeviceFeatures device-features (VkPhysicalDeviceFeatures/calloc stack)
               score (volatile! 0)
               query-swap-chain-support (fn []
-                                         (let [{:keys [formats-ptr present-modes-ptr capabilities]}
+                                         (let [{:keys [formats-ptr present-modes-ptr surface-capabilities present-modes-count]}
                                                (swap-chain/query-swap-chain-support device)]
                                            (and formats-ptr
                                                 (.hasRemaining ^VkSurfaceFormatKHR$Buffer formats-ptr)

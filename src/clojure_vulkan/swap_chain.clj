@@ -1,14 +1,17 @@
 (ns clojure-vulkan.swap-chain
-  (:require [clojure-vulkan.globals :refer [window-surface-ptr]]
+  (:require [clojure-vulkan.globals :refer [window-ptr window-surface-ptr]]
             [clojure-vulkan.util :as util])
   (:import (org.lwjgl.system MemoryStack)
-           (org.lwjgl.vulkan VkPhysicalDevice VkSurfaceCapabilitiesKHR VK13 KHRSurface VkSurfaceFormatKHR VkSurfaceFormatKHR$Buffer KHRSwapchain)
-           (java.nio IntBuffer)))
+           (org.lwjgl.vulkan KHRSurface VK13 VkExtent2D VkPhysicalDevice VkSurfaceCapabilitiesKHR VkSurfaceFormatKHR VkSurfaceFormatKHR$Buffer)
+           (java.nio IntBuffer)
+           (org.lwjgl.glfw GLFW)))
+
+(defonce UINT32-MAX 0xffffffff)
 
 (defn query-swap-chain-support [^VkPhysicalDevice device]
   (util/with-memory-stack-push ^MemoryStack stack
-    (let [^VkSurfaceCapabilitiesKHR capabilities (VkSurfaceCapabilitiesKHR/malloc stack)
-          _ (KHRSurface/vkGetPhysicalDeviceSurfaceCapabilitiesKHR device window-surface-ptr capabilities)
+    (let [^VkSurfaceCapabilitiesKHR surface-capabilities (VkSurfaceCapabilitiesKHR/malloc stack)
+          _ (KHRSurface/vkGetPhysicalDeviceSurfaceCapabilitiesKHR device window-surface-ptr surface-capabilities)
           formats-count-ptr (.ints stack 0)
           _ (KHRSurface/vkGetPhysicalDeviceSurfaceFormatsKHR device window-surface-ptr formats-count-ptr nil)
           formats-count (.get formats-count-ptr 0)
@@ -24,10 +27,10 @@
                                 (KHRSurface/vkGetPhysicalDeviceSurfacePresentModesKHR device window-surface-ptr present-mode-count-ptr present-modes-ptr)
                                 present-modes-ptr))]
       (and formats present-modes-ptr
-           {:formats-ptr         formats
-            :present-modes-ptr   present-modes-ptr
-            :present-modes-count present-modes-count
-            :capabilities        capabilities}))))
+           {:formats-ptr          formats
+            :present-modes-ptr    present-modes-ptr
+            :present-modes-count  present-modes-count
+            :surface-capabilities surface-capabilities}))))
 
 (defn choose-swap-surface-format [^VkSurfaceFormatKHR$Buffer formats]
   (or (->> formats
@@ -50,3 +53,16 @@
                 KHRSurface/VK_PRESENT_MODE_MAILBOX_KHR))
             (range present-modes-count))
       KHRSurface/VK_PRESENT_MODE_FIFO_KHR))
+
+(defn ^VkExtent2D choose-swap-extent [^VkSurfaceCapabilitiesKHR surface-capabilities]
+  (if (= (.. surface-capabilities currentExtent width) UINT32-MAX)
+    (util/with-memory-stack-push ^MemoryStack stack
+      (let [width-buffer (.mallocInt stack 1)
+            height-buffer (.mallocInt stack 1)
+            _ (GLFW/glfwGetFramebufferSize window-ptr width-buffer height-buffer)
+            min-extent (.minImageExtent surface-capabilities)
+            max-extent (.maxImageExtent surface-capabilities)]
+        (doto (VkExtent2D/malloc stack)
+          (.set (util/clamp (.width min-extent) (.get width-buffer 0) (.width max-extent))
+                (util/clamp (.height min-extent) (.get height-buffer 0) (.height max-extent))))))
+    (.currentExtent surface-capabilities)))
