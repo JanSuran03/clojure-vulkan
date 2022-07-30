@@ -1,5 +1,6 @@
 (ns clojure-vulkan.swap-chain
-  (:require [clojure-vulkan.globals :refer [logical-device physical-device queue-families swap-chain-ptr swap-chain-support-details window-ptr window-surface-ptr]]
+  (:require [clojure-vulkan.globals :refer [logical-device physical-device queue-families swap-chain-extent swap-chain-image-format
+                                            swap-chain-images swap-chain-ptr swap-chain-support-details window-ptr window-surface-ptr]]
             [clojure-vulkan.util :as util])
   (:import (org.lwjgl.system MemoryStack)
            (org.lwjgl.vulkan KHRSurface KHRSwapchain VK13 VkExtent2D VkPhysicalDevice VkSurfaceCapabilitiesKHR VkSurfaceFormatKHR VkSurfaceFormatKHR$Buffer VkSwapchainCreateInfoKHR)
@@ -69,16 +70,17 @@
 
 (defn create-swap-chain []
   (util/with-memory-stack-push ^MemoryStack stack
-    (let [{:keys [formats-ptr present-modes-ptr present-modes-count surface-capabilities]} (or (not-empty swap-chain-support-details)
-                                                                                               (query-swap-chain-support physical-device))
+    (let [{:keys [formats-ptr present-modes-ptr present-modes-count ^VkSurfaceCapabilitiesKHR surface-capabilities]}
+          (or (not-empty swap-chain-support-details)
+              (query-swap-chain-support physical-device))
           surface-format (choose-swap-surface-format formats-ptr)
           present-mode (choose-swap-presentation-mode present-modes-ptr present-modes-count)
           extent (choose-swap-extent surface-capabilities)
           image-count (inc (.minImageCount surface-capabilities))
-          image-count (if (and (pos? (.maxImageCount surface-capabilities))
-                               (> image-count (.maxImageCount surface-capabilities)))
-                        (.maxImageCount surface-capabilities)
-                        (inc (.minImageCount surface-capabilities)))
+          image-count-ptr (if (and (pos? (.maxImageCount surface-capabilities))
+                                   (> image-count (.maxImageCount surface-capabilities)))
+                            (.ints stack (.maxImageCount surface-capabilities))
+                            (.ints stack ^Integer (inc (.minImageCount surface-capabilities))))
           ^VkSwapchainCreateInfoKHR create-info (doto (VkSwapchainCreateInfoKHR/calloc stack)
                                                   (.sType KHRSwapchain/VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR)
                                                   (.surface window-surface-ptr)
@@ -103,7 +105,18 @@
                   (.clipped true)
                   (.oldSwapchain VK13/VK_NULL_HANDLE)))
           swap-chain-ptr* (.longs stack VK13/VK_NULL_HANDLE)
-          _ (when (not= (KHRSwapchain/vkCreateSwapchainKHR logical-device create-info nil swap-chain-ptr*)
-                        VK13/VK_SUCCESS)
-              (throw (RuntimeException. "Failed to create swapchain.")))]
-      (alter-var-root #'swap-chain-ptr (constantly (.get swap-chain-ptr* 0))))))
+          _ (do (when (not= (KHRSwapchain/vkCreateSwapchainKHR logical-device create-info nil swap-chain-ptr*)
+                            VK13/VK_SUCCESS)
+                  (throw (RuntimeException. "Failed to create swapchain.")))
+                (alter-var-root #'swap-chain-ptr (constantly (.get swap-chain-ptr* 0)))
+                (KHRSwapchain/vkGetSwapchainImagesKHR logical-device swap-chain-ptr image-count-ptr nil))
+          swapchain-images-ptr (.mallocLong stack (.get image-count-ptr 0))]
+      (KHRSwapchain/vkGetSwapchainImagesKHR logical-device swap-chain-ptr image-count-ptr swapchain-images-ptr)
+      (alter-var-root #'swap-chain-images (constantly (mapv #(.get swapchain-images-ptr ^int %)
+                                                            (range image-count))))
+      (alter-var-root #'swap-chain-image-format (constantly (.format surface-format)))
+      (alter-var-root #'swap-chain-extent (constantly (doto (VkExtent2D/create)
+                                                        (.set extent)))))))
+
+(defn destroy-swapchain []
+  (KHRSwapchain/vkDestroySwapchainKHR logical-device swap-chain-ptr nil))

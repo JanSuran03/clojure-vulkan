@@ -19,6 +19,7 @@
 (defn terminate []
   (when validation-layers/*enable-validation-layers*
     (debug/destroy-debug-messenger nil))
+  (swap-chain/destroy-swapchain)
   (window-surface/destroy-surface)
   (logical-device-and-queue/destroy-logical-device)
   (instance/destroy)
