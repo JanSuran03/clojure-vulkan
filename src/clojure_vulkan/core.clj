@@ -31,7 +31,8 @@
 
       (catch Throwable t
         (println "An error occured:" (.getMessage t))
-        (.printStackTrace t))
+        #_(.printStackTrace t)
+        (throw t))
 
 
       ;; termination

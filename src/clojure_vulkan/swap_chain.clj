@@ -100,7 +100,7 @@
                   (.preTransform (.currentTransform surface-capabilities))
                   (.compositeAlpha KHRSurface/VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR)
                   (.presentMode present-mode)
-                  (.clipped VK13/VK_TRUE)
+                  (.clipped true)
                   (.oldSwapchain VK13/VK_NULL_HANDLE)))
           swap-chain-ptr* (.longs stack VK13/VK_NULL_HANDLE)
           _ (when (not= (KHRSwapchain/vkCreateSwapchainKHR logical-device create-info nil swap-chain-ptr*)
