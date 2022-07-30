@@ -1,5 +1,5 @@
 (ns clojure-vulkan.logical-device-and-queue
-  (:require [clojure-vulkan.globals :as globals :refer [graphics-queue logical-device physical-device queue-families]]
+  (:require [clojure-vulkan.globals :as globals :refer [GRAPHICS-QUEUE LOGICAL-DEVICE PHYSICAL-DEVICE QUEUE-FAMILIES]]
             [clojure-vulkan.util :as util]
             [clojure-vulkan.validation-layers :as validation-layers]
             [clojure-vulkan.physical-device :as physical-device])
@@ -9,7 +9,7 @@
 
 (defn create-logical-device []
   (util/with-memory-stack-push ^MemoryStack stack
-    (let [{:keys [graphics-family present-family]} queue-families
+    (let [{:keys [graphics-family present-family]} QUEUE-FAMILIES
           unique-queue-families (hash-set graphics-family present-family)
           ^VkDeviceQueueCreateInfo$Buffer queue-create-infos (VkDeviceQueueCreateInfo/calloc (count unique-queue-families) stack)
           _ (doseq [[i queue-family] (map-indexed (fn [i family] [i family]) unique-queue-families)]
@@ -27,17 +27,17 @@
                                                          validation-layers/*enable-validation-layers*
                                                          (.ppEnabledLayerNames (util/string-seq-as-pointer-buffer validation-layers/*validation-layers*)))
           device-ptr (.pointers stack VK13/VK_NULL_HANDLE)
-          _ (when (not= (VK13/vkCreateDevice physical-device device-create-info nil device-ptr)
+          _ (when (not= (VK13/vkCreateDevice PHYSICAL-DEVICE device-create-info nil device-ptr)
                         VK13/VK_SUCCESS)
               (throw (RuntimeException. "Failed to create a logical device.")))
-          device (VkDevice. (.get device-ptr 0) physical-device device-create-info)
+          device (VkDevice. (.get device-ptr 0) PHYSICAL-DEVICE device-create-info)
           graphics-queue-ptr (.pointers stack VK13/VK_NULL_HANDLE)
           present-queue-ptr (.pointers stack VK13/VK_NULL_HANDLE)]
       (VK13/vkGetDeviceQueue device graphics-family 0 graphics-queue-ptr)
       (VK13/vkGetDeviceQueue device present-family 0 present-queue-ptr)
-      (alter-var-root #'logical-device (constantly device))
-      (alter-var-root #'graphics-queue (constantly (.get graphics-queue-ptr 0))))))
+      (alter-var-root #'LOGICAL-DEVICE (constantly device))
+      (alter-var-root #'GRAPHICS-QUEUE (constantly (.get graphics-queue-ptr 0))))))
 
 (defn destroy-logical-device []
-  (VK13/vkDestroyDevice logical-device nil)
+  (VK13/vkDestroyDevice LOGICAL-DEVICE nil)
   (globals/reset-logical-device))

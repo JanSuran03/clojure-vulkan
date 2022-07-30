@@ -1,7 +1,7 @@
 (ns clojure-vulkan.instance
   (:require [clojure-vulkan.debug :as debug]
             [clojure-vulkan.util :as util]
-            [clojure-vulkan.globals :refer [vulkan-instance]]
+            [clojure-vulkan.globals :refer [VULKAN-INSTANCE]]
             [clojure-vulkan.validation-layers :as validation-layers]
             [clojure-vulkan.globals :as globals])
   (:import (org.lwjgl.system MemoryStack)
@@ -33,10 +33,10 @@
           instance-ptr (.mallocPointer stack 1)]
       (when (not= (VK13/vkCreateInstance create-info nil instance-ptr) VK13/VK_SUCCESS)
         (throw (RuntimeException. "Failed to create Vulkan instance.")))
-      (alter-var-root #'vulkan-instance
+      (alter-var-root #'VULKAN-INSTANCE
                       (constantly (VkInstance. (.get instance-ptr 0) create-info))))))
 
 (defn destroy []
-  (util/assert-not-null vulkan-instance
-    (VK13/vkDestroyInstance vulkan-instance nil))
+  (util/assert-not-null VULKAN-INSTANCE
+    (VK13/vkDestroyInstance VULKAN-INSTANCE nil))
   (globals/reset-vulkan-instance))

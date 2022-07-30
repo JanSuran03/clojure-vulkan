@@ -1,6 +1,6 @@
 (ns clojure-vulkan.swap-chain
-  (:require [clojure-vulkan.globals :refer [logical-device physical-device queue-families swap-chain-extent swap-chain-image-format
-                                            swap-chain-images swap-chain-ptr swap-chain-support-details window-ptr window-surface-ptr]]
+  (:require [clojure-vulkan.globals :refer [LOGICAL-DEVICE PHYSICAL-DEVICE QUEUE-FAMILIES SWAP-CHAIN-EXTENT SWAP-CHAIN-IMAGE-FORMAT
+                                            SWAP-CHAIN-IMAGES SWAP-CHAIN-POINTER SWAP-CHAIN-SUPPORT-DETAILS WINDOW-POINTER WINDOW-SURFACE-POINTER]]
             [clojure-vulkan.util :as util])
   (:import (org.lwjgl.system MemoryStack)
            (org.lwjgl.vulkan KHRSurface KHRSwapchain VK13 VkExtent2D VkPhysicalDevice VkSurfaceCapabilitiesKHR VkSurfaceFormatKHR VkSurfaceFormatKHR$Buffer VkSwapchainCreateInfoKHR)
@@ -12,23 +12,23 @@
 (defn query-swap-chain-support [^VkPhysicalDevice device]
   (util/with-memory-stack-push ^MemoryStack stack
     (let [^VkSurfaceCapabilitiesKHR surface-capabilities (VkSurfaceCapabilitiesKHR/malloc stack)
-          _ (KHRSurface/vkGetPhysicalDeviceSurfaceCapabilitiesKHR device window-surface-ptr surface-capabilities)
+          _ (KHRSurface/vkGetPhysicalDeviceSurfaceCapabilitiesKHR device WINDOW-SURFACE-POINTER surface-capabilities)
           formats-count-ptr (.ints stack 0)
-          _ (KHRSurface/vkGetPhysicalDeviceSurfaceFormatsKHR device window-surface-ptr formats-count-ptr nil)
+          _ (KHRSurface/vkGetPhysicalDeviceSurfaceFormatsKHR device WINDOW-SURFACE-POINTER formats-count-ptr nil)
           formats-count (.get formats-count-ptr 0)
           formats (when-not (zero? formats-count)
                     (let [formats-ptr (VkSurfaceFormatKHR/malloc formats-count stack)]
-                      (KHRSurface/vkGetPhysicalDeviceSurfaceFormatsKHR device window-surface-ptr formats-count-ptr formats-ptr)
+                      (KHRSurface/vkGetPhysicalDeviceSurfaceFormatsKHR device WINDOW-SURFACE-POINTER formats-count-ptr formats-ptr)
                       formats-ptr))
           present-mode-count-ptr (.ints stack 0)
-          _ (KHRSurface/vkGetPhysicalDeviceSurfacePresentModesKHR device window-surface-ptr present-mode-count-ptr nil)
+          _ (KHRSurface/vkGetPhysicalDeviceSurfacePresentModesKHR device WINDOW-SURFACE-POINTER present-mode-count-ptr nil)
           present-modes-count (.get present-mode-count-ptr 0)
           present-modes-ptr (when-not (zero? present-modes-count)
                               (let [present-modes-ptr (.mallocInt stack present-modes-count)]
-                                (KHRSurface/vkGetPhysicalDeviceSurfacePresentModesKHR device window-surface-ptr present-mode-count-ptr present-modes-ptr)
+                                (KHRSurface/vkGetPhysicalDeviceSurfacePresentModesKHR device WINDOW-SURFACE-POINTER present-mode-count-ptr present-modes-ptr)
                                 present-modes-ptr))]
       (and formats present-modes-ptr
-           (alter-var-root #'swap-chain-support-details (constantly {:formats-ptr          formats
+           (alter-var-root #'SWAP-CHAIN-SUPPORT-DETAILS (constantly {:formats-ptr          formats
                                                                      :present-modes-ptr    present-modes-ptr
                                                                      :present-modes-count  present-modes-count
                                                                      :surface-capabilities surface-capabilities}))))))
@@ -60,7 +60,7 @@
     (util/with-memory-stack-push ^MemoryStack stack
       (let [width-buffer (.mallocInt stack 1)
             height-buffer (.mallocInt stack 1)
-            _ (GLFW/glfwGetFramebufferSize window-ptr width-buffer height-buffer)
+            _ (GLFW/glfwGetFramebufferSize WINDOW-POINTER width-buffer height-buffer)
             min-extent (.minImageExtent surface-capabilities)
             max-extent (.maxImageExtent surface-capabilities)]
         (doto (VkExtent2D/malloc stack)
@@ -71,8 +71,8 @@
 (defn create-swap-chain []
   (util/with-memory-stack-push ^MemoryStack stack
     (let [{:keys [formats-ptr present-modes-ptr present-modes-count ^VkSurfaceCapabilitiesKHR surface-capabilities]}
-          (or (not-empty swap-chain-support-details)
-              (query-swap-chain-support physical-device))
+          (or (not-empty SWAP-CHAIN-SUPPORT-DETAILS)
+              (query-swap-chain-support PHYSICAL-DEVICE))
           surface-format (choose-swap-surface-format formats-ptr)
           present-mode (choose-swap-presentation-mode present-modes-ptr present-modes-count)
           extent (choose-swap-extent surface-capabilities)
@@ -83,21 +83,21 @@
                             (.ints stack ^Integer (inc (.minImageCount surface-capabilities))))
           ^VkSwapchainCreateInfoKHR create-info (doto (VkSwapchainCreateInfoKHR/calloc stack)
                                                   (.sType KHRSwapchain/VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR)
-                                                  (.surface window-surface-ptr)
+                                                  (.surface WINDOW-SURFACE-POINTER)
                                                   (.minImageCount image-count)
                                                   (.imageFormat (.format surface-format))
                                                   (.imageColorSpace (.colorSpace surface-format))
                                                   (.imageExtent extent)
                                                   (.imageArrayLayers 1)
                                                   (.imageUsage VK13/VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT))
-          _ (do (if (= (:graphics-family queue-families) (:present-family queue-families))
+          _ (do (if (= (:graphics-family QUEUE-FAMILIES) (:present-family QUEUE-FAMILIES))
                   (doto create-info
                     (.imageSharingMode VK13/VK_SHARING_MODE_EXCLUSIVE)
                     (.queueFamilyIndexCount 0))
                   (doto create-info
                     (.imageSharingMode VK13/VK_SHARING_MODE_CONCURRENT)
                     (.queueFamilyIndexCount 2)
-                    (.pQueueFamilyIndices (.ints stack (:graphics-family queue-families) (:present-family queue-families)))))
+                    (.pQueueFamilyIndices (.ints stack (:graphics-family QUEUE-FAMILIES) (:present-family QUEUE-FAMILIES)))))
                 (doto create-info
                   (.preTransform (.currentTransform surface-capabilities))
                   (.compositeAlpha KHRSurface/VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR)
@@ -105,18 +105,18 @@
                   (.clipped true)
                   (.oldSwapchain VK13/VK_NULL_HANDLE)))
           swap-chain-ptr* (.longs stack VK13/VK_NULL_HANDLE)
-          _ (do (when (not= (KHRSwapchain/vkCreateSwapchainKHR logical-device create-info nil swap-chain-ptr*)
+          _ (do (when (not= (KHRSwapchain/vkCreateSwapchainKHR LOGICAL-DEVICE create-info nil swap-chain-ptr*)
                             VK13/VK_SUCCESS)
                   (throw (RuntimeException. "Failed to create swapchain.")))
-                (alter-var-root #'swap-chain-ptr (constantly (.get swap-chain-ptr* 0)))
-                (KHRSwapchain/vkGetSwapchainImagesKHR logical-device swap-chain-ptr image-count-ptr nil))
+                (alter-var-root #'SWAP-CHAIN-POINTER (constantly (.get swap-chain-ptr* 0)))
+                (KHRSwapchain/vkGetSwapchainImagesKHR LOGICAL-DEVICE SWAP-CHAIN-POINTER image-count-ptr nil))
           swapchain-images-ptr (.mallocLong stack (.get image-count-ptr 0))]
-      (KHRSwapchain/vkGetSwapchainImagesKHR logical-device swap-chain-ptr image-count-ptr swapchain-images-ptr)
-      (alter-var-root #'swap-chain-images (constantly (mapv #(.get swapchain-images-ptr ^int %)
+      (KHRSwapchain/vkGetSwapchainImagesKHR LOGICAL-DEVICE SWAP-CHAIN-POINTER image-count-ptr swapchain-images-ptr)
+      (alter-var-root #'SWAP-CHAIN-IMAGES (constantly (mapv #(.get swapchain-images-ptr ^int %)
                                                             (range image-count))))
-      (alter-var-root #'swap-chain-image-format (constantly (.format surface-format)))
-      (alter-var-root #'swap-chain-extent (constantly (doto (VkExtent2D/create)
+      (alter-var-root #'SWAP-CHAIN-IMAGE-FORMAT (constantly (.format surface-format)))
+      (alter-var-root #'SWAP-CHAIN-EXTENT (constantly (doto (VkExtent2D/create)
                                                         (.set extent)))))))
 
 (defn destroy-swapchain []
-  (KHRSwapchain/vkDestroySwapchainKHR logical-device swap-chain-ptr nil))
+  (KHRSwapchain/vkDestroySwapchainKHR LOGICAL-DEVICE SWAP-CHAIN-POINTER nil))
