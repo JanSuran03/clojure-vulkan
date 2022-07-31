@@ -1,6 +1,7 @@
 (ns clojure-vulkan.vulkan
   (:require [clojure-vulkan.debug :as debug]
             [clojure-vulkan.globals :as globals]
+            [clojure-vulkan.graphics-pipeline :as graphics-pipeline]
             [clojure-vulkan.image-views :as image-views]
             [clojure-vulkan.instance :as instance]
             [clojure-vulkan.logical-device-and-queue :as logical-device-and-queue]
@@ -16,7 +17,8 @@
   (physical-device/pick-physical-device)
   (logical-device-and-queue/create-logical-device)
   (swap-chain/create-swap-chain)
-  (image-views/create-image-views))
+  (image-views/create-image-views)
+  (graphics-pipeline/create-graphics-pipeline))
 
 (defn terminate []
   (image-views/destroy-image-views)
