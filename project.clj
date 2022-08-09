@@ -34,6 +34,7 @@
                     "lwjgl-par"
                     "lwjgl-remotery"
                     "lwjgl-rpmalloc"
+                    "lwjgl-shaderc"
                     "lwjgl-sse"
                     "lwjgl-stb"
                     "lwjgl-tinyexr"

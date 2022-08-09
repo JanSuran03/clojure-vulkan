@@ -109,6 +109,10 @@
     <orderEntry type="library" name="Leiningen: org.lwjgl/lwjgl-rpmalloc:3.3.1:natives-linux" level="project" />
     <orderEntry type="library" name="Leiningen: org.lwjgl/lwjgl-rpmalloc:3.3.1:natives-macos" level="project" />
     <orderEntry type="library" name="Leiningen: org.lwjgl/lwjgl-rpmalloc:3.3.1:natives-windows" level="project" />
+    <orderEntry type="library" name="Leiningen: org.lwjgl/lwjgl-shaderc:3.3.1" level="project" />
+    <orderEntry type="library" name="Leiningen: org.lwjgl/lwjgl-shaderc:3.3.1:natives-linux" level="project" />
+    <orderEntry type="library" name="Leiningen: org.lwjgl/lwjgl-shaderc:3.3.1:natives-macos" level="project" />
+    <orderEntry type="library" name="Leiningen: org.lwjgl/lwjgl-shaderc:3.3.1:natives-windows" level="project" />
     <orderEntry type="library" name="Leiningen: org.lwjgl/lwjgl-sse:3.3.1" level="project" />
     <orderEntry type="library" name="Leiningen: org.lwjgl/lwjgl-sse:3.3.1:natives-linux" level="project" />
     <orderEntry type="library" name="Leiningen: org.lwjgl/lwjgl-sse:3.3.1:natives-macos" level="project" />
