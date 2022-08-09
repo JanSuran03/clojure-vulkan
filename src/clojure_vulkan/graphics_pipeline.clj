@@ -3,7 +3,8 @@
             [clojure-vulkan.util :as util]
             [clojure-vulkan.globals :refer [LOGICAL-DEVICE]])
   (:import (org.lwjgl.system MemoryStack)
-           (org.lwjgl.vulkan VkShaderModuleCreateInfo VK13 VkPipelineShaderStageCreateInfo VkPipelineShaderStageCreateInfo$Buffer)))
+           (org.lwjgl.vulkan VkShaderModuleCreateInfo VK13 VkPipelineShaderStageCreateInfo VkPipelineShaderStageCreateInfo$Buffer)
+           (clojure_vulkan.shaders SpirVShader)))
 
 (defn- create-shader-module [shader-in-spir-v-format]
   (util/with-memory-stack-push ^MemoryStack stack
@@ -25,6 +26,7 @@
           vertex-shader-module (create-shader-module vertex-shader-in-spir-v-format)
           fragment-shader-module (create-shader-module fragment-shader-in-spir-v-format)
           entry-point (.UTF8 stack "main")
+          _ (println "donkey")
           ^VkPipelineShaderStageCreateInfo$Buffer shader-stages (VkPipelineShaderStageCreateInfo/calloc 2 stack)
           vertex-shader-stage-create-info (doto ^VkPipelineShaderStageCreateInfo (.get shader-stages 0)
                                             (.sType VK13/VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO)
@@ -38,5 +40,5 @@
                                               (.pName entry-point))]
       (VK13/vkDestroyShaderModule LOGICAL-DEVICE vertex-shader-module nil)
       (VK13/vkDestroyShaderModule LOGICAL-DEVICE fragment-shader-module nil)
-      (.free vertex-shader-in-spir-v-format)
-      (.free fragment-shader-in-spir-v-format))))
+      (.free ^SpirVShader vertex-shader-in-spir-v-format)
+      (.free ^SpirVShader fragment-shader-in-spir-v-format))))

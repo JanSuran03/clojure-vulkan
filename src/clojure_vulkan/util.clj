@@ -16,6 +16,18 @@
   `(let [^MemoryStack ~stack (MemoryStack/stackGet)]
      ~@body))
 
+(defn partition-string-by [^String s n]
+  (let [len (.length s)]
+    (loop [cur 0
+           ret (transient [])]
+      (if (>= cur len)
+        (persistent! ret)
+        (recur (+ cur n)
+               (conj! ret (subs s cur (min len (+ cur n)))))))))
+
+(defn split-string-on-lines-by [^String s n]
+  (str/join \newline (partition-string-by s n)))
+
 (def version-major 1)
 (def version-minor 3)
 (def vk-version (VK13/VK_MAKE_VERSION version-major version-minor 0))
@@ -28,11 +40,20 @@
 
 (def ^:dynamic *doto-debug* false)
 
-(defn doto-debug [ret num]
-  (when *doto-debug*
-    (binding [*out* *err*]
-      (println "Got there: " num))
+(defn- do-debug [num]
+  (binding [*out* *err*]
+    (println "***********************************")
+    (println "Got there: " num)
+    (println "***********************************")))
+
+(defn doto-debug [ret stage]
+  (when true                                                ;*doto-debug*
+    (do-debug stage)
     ret))
+
+(defn debug [stage]
+  (when true                                                ;*doto-debug*
+    (do-debug stage)))
 
 (def ^:dynamic *current-debug-filename* nil)
 

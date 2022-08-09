@@ -1,13 +1,21 @@
 (ns clojure-vulkan.swap-chain
   (:require [clojure-vulkan.globals :refer [LOGICAL-DEVICE PHYSICAL-DEVICE QUEUE-FAMILIES SWAP-CHAIN-EXTENT SWAP-CHAIN-IMAGE-FORMAT
                                             SWAP-CHAIN-IMAGES SWAP-CHAIN-POINTER SWAP-CHAIN-SUPPORT-DETAILS WINDOW-POINTER WINDOW-SURFACE-POINTER]]
-            [clojure-vulkan.util :as util])
+            [clojure-vulkan.util :as util]
+            [clojure.pprint :as pp])
   (:import (org.lwjgl.system MemoryStack)
            (org.lwjgl.vulkan KHRSurface KHRSwapchain VK13 VkExtent2D VkPhysicalDevice VkSurfaceCapabilitiesKHR VkSurfaceFormatKHR VkSurfaceFormatKHR$Buffer VkSwapchainCreateInfoKHR)
            (java.nio IntBuffer)
            (org.lwjgl.glfw GLFW)))
 
 (defonce UINT32-MAX 0xffffffff)
+
+(defn- print-surface-capabilities-details [^VkSurfaceCapabilitiesKHR surface-capabilities]
+  (pp/pprint {:min-image-count   (.minImageCount surface-capabilities)
+              :max-image-count   (.maxImageCount surface-capabilities)
+              :current-extent    (.currentExtent surface-capabilities)
+              :current-transform (.currentTransform surface-capabilities)
+              :hash-code         (.hashCode surface-capabilities)}))
 
 (defn query-swap-chain-support [^VkPhysicalDevice device]
   (util/with-memory-stack-push ^MemoryStack stack
@@ -27,6 +35,7 @@
                               (let [present-modes-ptr (.mallocInt stack present-modes-count)]
                                 (KHRSurface/vkGetPhysicalDeviceSurfacePresentModesKHR device WINDOW-SURFACE-POINTER present-mode-count-ptr present-modes-ptr)
                                 present-modes-ptr))]
+      (print-surface-capabilities-details surface-capabilities)
       (and formats present-modes-ptr
            (alter-var-root #'SWAP-CHAIN-SUPPORT-DETAILS (constantly {:formats-ptr          formats
                                                                      :present-modes-ptr    present-modes-ptr
@@ -34,8 +43,7 @@
                                                                      :surface-capabilities surface-capabilities}))))))
 
 (defn ^VkSurfaceFormatKHR choose-swap-surface-format [^VkSurfaceFormatKHR$Buffer formats-ptr]
-  (or (->> formats-ptr
-           util/buffer->seq
+  (or (->> (util/buffer->seq formats-ptr)
            (some (fn [^VkSurfaceFormatKHR format]
                    (and (= (.format format) VK13/VK_FORMAT_B8G8R8_UNORM)
                         (= (.colorSpace format) KHRSurface/VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
@@ -71,8 +79,10 @@
 (defn create-swap-chain []
   (util/with-memory-stack-push ^MemoryStack stack
     (let [{:keys [formats-ptr present-modes-ptr present-modes-count ^VkSurfaceCapabilitiesKHR surface-capabilities]}
-          (or (not-empty SWAP-CHAIN-SUPPORT-DETAILS)
-              (query-swap-chain-support PHYSICAL-DEVICE))
+          (or #_(not-empty SWAP-CHAIN-SUPPORT-DETAILS)
+            (query-swap-chain-support PHYSICAL-DEVICE))
+          _ (println "not cached now")
+          _ (print-surface-capabilities-details surface-capabilities)
           surface-format (choose-swap-surface-format formats-ptr)
           present-mode (choose-swap-presentation-mode present-modes-ptr present-modes-count)
           extent (choose-swap-extent surface-capabilities)
@@ -81,6 +91,7 @@
                                    (> image-count (.maxImageCount surface-capabilities)))
                             (.ints stack (.maxImageCount surface-capabilities))
                             (.ints stack ^Integer (inc (.minImageCount surface-capabilities))))
+          _ (println "IMAGE COUNT: " image-count)
           ^VkSwapchainCreateInfoKHR create-info (doto (VkSwapchainCreateInfoKHR/calloc stack)
                                                   (.sType KHRSwapchain/VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR)
                                                   (.surface WINDOW-SURFACE-POINTER)
@@ -98,6 +109,7 @@
                     (.imageSharingMode VK13/VK_SHARING_MODE_CONCURRENT)
                     (.queueFamilyIndexCount 2)
                     (.pQueueFamilyIndices (.ints stack (:graphics-family QUEUE-FAMILIES) (:present-family QUEUE-FAMILIES)))))
+                (print-surface-capabilities-details surface-capabilities)
                 (doto create-info
                   (.preTransform (.currentTransform surface-capabilities))
                   (.compositeAlpha KHRSurface/VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR)

@@ -30,7 +30,8 @@
         (glfw/poll-events))
 
       (catch Throwable t
-        (println "An error occured:" (.getMessage t))
+        (println "An error occured:" (.getMessage t)
+                 (.printStackTrace t))
         #_(.printStackTrace t)
         (throw t))
 

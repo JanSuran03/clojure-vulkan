@@ -1,11 +1,14 @@
 (ns clojure-vulkan.debug
   (:require [clojure-vulkan.globals :as globals :refer [DEBUG-MESSENGER-POINTER VULKAN-INSTANCE]]
             [clojure-vulkan.util :as util :refer [nullptr]]
-            [clojure-vulkan.validation-layers :as validation-layers])
+            [clojure-vulkan.validation-layers :as validation-layers]
+            [clojure.string :as str])
   (:import (java.nio LongBuffer)
            (org.lwjgl.system MemoryStack)
            (org.lwjgl.vulkan EXTDebugUtils VK13 VkAllocationCallbacks VkDebugUtilsMessengerCallbackDataEXT VkDebugUtilsMessengerCallbackEXTI
                              VkDebugUtilsMessengerCreateInfoEXT VkInstance)))
+
+(def max-chars-on-single-line 90)
 
 (def debug-callback
   (reify VkDebugUtilsMessengerCallbackEXTI
@@ -16,13 +19,21 @@
                                #=(bit-shift-left 1 4) "INFO"
                                #=(bit-shift-left 1 8) "WARNING"
                                #=(bit-shift-left 1 12) "ERROR")]
-        (if util/*current-debug-filename*
-          (spit util/*current-debug-filename* (str "Validation layer callback: " (.pMessageString callback-data) \newline)
+        #_(if util/*current-debug-filename*
+          (spit util/*current-debug-filename* (str ">>> Validation layer callback:\n"
+                                                   (util/split-string-on-lines-by (.pMessageString callback-data)
+                                                                                  max-chars-on-single-line)
+                                                   \newline)
                 :append true)
           (binding [*out* *err*]
-            (println (str "Validation layer callback (severity = " message-severity "): " (.pMessageString callback-data)))))
+            (println (str ">>> Validation layer callback (severity = " message-severity "):\n"
+                          (util/split-string-on-lines-by (.pMessageString callback-data)
+                                                         max-chars-on-single-line)))))
         (if (= message-severity "ERROR")
-          (throw (RuntimeException. "VALIDATION LAYER ERROR: " (.pMessageString callback-data)))))
+          (throw (RuntimeException. (str "\n\n>>>>> VALIDATION LAYER ERROR:\n"
+                                         (util/split-string-on-lines-by (.pMessageString callback-data)
+                                                                        max-chars-on-single-line)
+                                         \newline \newline)))))
       VK13/VK_FALSE)))
 
 (defn create-debug-messenger-extension [^VkInstance instance ^VkDebugUtilsMessengerCreateInfoEXT create-info
