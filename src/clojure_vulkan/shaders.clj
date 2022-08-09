@@ -4,7 +4,9 @@
             [me.raynes.fs :as fs])
   (:import (java.io ByteArrayOutputStream File)
            (org.lwjgl.util.shaderc Shaderc)
-           (org.lwjgl.vulkan VK13)))
+           (org.lwjgl.vulkan VK13)
+           (java.nio ByteBuffer)
+           (org.lwjgl.system NativeResource)))
 
 (def shaders-root "resources/shaders/")
 (def shader-sources-root                                    ;(.getAbsolutePath (File. (str shaders-root "sources/")))
@@ -54,6 +56,19 @@
 ;; or (slurp-bytes (str shader-sources-root \/ shader-source-file))
 ;; the tutorial way to do this, but why lol
 
+(defprotocol ISpirVShader
+  (get-address [this])
+  (get-bytebuffer [this]))
+
+(deftype SpirVShader [address ^:unsynchronized-mutable ^ByteBuffer bytecode]
+  NativeResource
+  (free [this]
+    (Shaderc/shaderc_result_release address)
+    (set! bytecode nil))
+  ISpirVShader
+  (get-address [this] address)
+  (get-bytebuffer [this] bytecode))
+
 (defn compile-shader [shader-source-file shader-type]
   (try (let [full-relative-path (str shader-sources-root shader-source-file)
              compiler (Shaderc/shaderc_compiler_initialize)
@@ -73,5 +88,5 @@
            (throw (RuntimeException. (str "Failed to compile shader " full-relative-path " into SPIR-V:\n"
                                           (Shaderc/shaderc_result_get_error_message result)))))
          (Shaderc/shaderc_compiler_release compiler)
-         (Shaderc/shaderc_result_get_bytes result))
+         (SpirVShader. result (Shaderc/shaderc_result_get_bytes result)))
        (catch Throwable t (.printStackTrace t))))
