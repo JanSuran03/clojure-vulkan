@@ -17,7 +17,7 @@
           _ (KHRSurface/vkGetPhysicalDeviceSurfaceFormatsKHR device WINDOW-SURFACE-POINTER formats-count-ptr nil)
           formats-count (.get formats-count-ptr 0)
           formats (when-not (zero? formats-count)
-                    (let [formats-ptr (VkSurfaceFormatKHR/malloc formats-count stack)]
+                    (let [formats-ptr (VkSurfaceFormatKHR/malloc formats-count)]
                       (KHRSurface/vkGetPhysicalDeviceSurfaceFormatsKHR device WINDOW-SURFACE-POINTER formats-count-ptr formats-ptr)
                       formats-ptr))
           present-mode-count-ptr (.ints stack 0)
@@ -72,8 +72,6 @@
     (let [{:keys [formats-ptr present-modes-ptr present-modes-count ^VkSurfaceCapabilitiesKHR surface-capabilities]}
           (or (not-empty SWAP-CHAIN-SUPPORT-DETAILS)
               (query-swap-chain-support PHYSICAL-DEVICE))
-
-
           surface-format (choose-swap-surface-format formats-ptr)
           present-mode (choose-swap-presentation-mode present-modes-ptr present-modes-count)
           extent (.currentExtent surface-capabilities) #_(choose-swap-extent surface-capabilities)
@@ -82,6 +80,7 @@
                                    (> image-count (.maxImageCount surface-capabilities)))
                             (.ints stack (.maxImageCount surface-capabilities))
                             (.ints stack ^Integer (inc (.minImageCount surface-capabilities))))
+          _ (println "IMAGE FORMAT:=  " (.format surface-format))
           ^VkSwapchainCreateInfoKHR create-info (doto (VkSwapchainCreateInfoKHR/calloc stack)
                                                   (.sType KHRSwapchain/VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR)
                                                   (.surface WINDOW-SURFACE-POINTER)
