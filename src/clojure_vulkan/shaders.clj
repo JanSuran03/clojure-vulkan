@@ -88,5 +88,6 @@
            (throw (RuntimeException. (str "Failed to compile shader " full-relative-path " into SPIR-V:\n"
                                           (Shaderc/shaderc_result_get_error_message result)))))
          (Shaderc/shaderc_compiler_release compiler)
+         (println {:result result :bytecode (Shaderc/shaderc_result_get_bytes result)})
          (SpirVShader. result (Shaderc/shaderc_result_get_bytes result)))
        (catch Throwable t (.printStackTrace t))))
