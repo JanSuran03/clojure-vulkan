@@ -4,7 +4,10 @@
             [clojure-vulkan.util :as util])
   (:import (clojure_vulkan.shaders SpirVShader)
            (org.lwjgl.system MemoryStack)
-           (org.lwjgl.vulkan VK13 VkShaderModuleCreateInfo VkPipelineShaderStageCreateInfo VkPipelineShaderStageCreateInfo$Buffer)))
+           (org.lwjgl.vulkan VK13 VkPipelineDynamicStateCreateInfo VkPipelineShaderStageCreateInfo
+                             VkPipelineShaderStageCreateInfo$Buffer VkPipelineVertexInputStateCreateInfo VkShaderModuleCreateInfo)))
+
+(def ^:private dynamic-states-vec [VK13/VK_DYNAMIC_STATE_VIEWPORT VK13/VK_DYNAMIC_STATE_SCISSOR])
 
 (defn- create-shader-module [shader-in-spir-v-format]
   (util/with-memory-stack-push ^MemoryStack stack
@@ -34,7 +37,14 @@
                                               (.sType VK13/VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO)
                                               (.stage VK13/VK_SHADER_STAGE_FRAGMENT_BIT)
                                               (.module fragment-shader-module)
-                                              (.pName entry-point))]
+                                              (.pName entry-point))
+          dynamic-state-create-info (doto (VkPipelineDynamicStateCreateInfo/calloc stack)
+                                      (.sType VK13/VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO)
+                                      (.pDynamicStates (util/integers-as-pointer-buffer stack dynamic-states-vec)))
+          vertex-input-state-create-info (doto (VkPipelineVertexInputStateCreateInfo/calloc stack)
+                                           (.sType VK13/VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO)
+                                           (.pVertexBindingDescriptions nil)
+                                           (.pVertexAttributeDescriptions nil))]
       (VK13/vkDestroyShaderModule LOGICAL-DEVICE vertex-shader-module nil)
       (VK13/vkDestroyShaderModule LOGICAL-DEVICE fragment-shader-module nil)
       (.free ^SpirVShader vertex-shader-in-spir-v-format)
