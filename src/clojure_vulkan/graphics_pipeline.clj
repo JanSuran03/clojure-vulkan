@@ -1,10 +1,10 @@
 (ns clojure-vulkan.graphics-pipeline
-  (:require [clojure-vulkan.shaders :as shaders]
-            [clojure-vulkan.util :as util]
-            [clojure-vulkan.globals :refer [LOGICAL-DEVICE]])
-  (:import (org.lwjgl.system MemoryStack)
-           (org.lwjgl.vulkan VkShaderModuleCreateInfo VK13 VkPipelineShaderStageCreateInfo VkPipelineShaderStageCreateInfo$Buffer)
-           (clojure_vulkan.shaders SpirVShader)))
+  (:require [clojure-vulkan.globals :refer [LOGICAL-DEVICE]]
+            [clojure-vulkan.shaders :as shaders]
+            [clojure-vulkan.util :as util])
+  (:import (clojure_vulkan.shaders SpirVShader)
+           (org.lwjgl.system MemoryStack)
+           (org.lwjgl.vulkan VK13 VkShaderModuleCreateInfo VkPipelineShaderStageCreateInfo VkPipelineShaderStageCreateInfo$Buffer)))
 
 (defn- create-shader-module [shader-in-spir-v-format]
   (util/with-memory-stack-push ^MemoryStack stack
@@ -19,9 +19,7 @@
 
 (defn create-graphics-pipeline []
   (util/with-memory-stack-push ^MemoryStack stack
-    (let [;vertex-shader-bytecode (shaders/get-shader-in-spir-v-bytecode "shader.vert" "shader-vert.spv")
-          ;fragment-shader-bytecode (shaders/get-shader-in-spir-v-bytecode "shader.frag" "shader-frag.spv")
-          vertex-shader-in-spir-v-format (shaders/compile-shader "shader.vert" :shader-type/vertex)
+    (let [vertex-shader-in-spir-v-format (shaders/compile-shader "shader.vert" :shader-type/vertex)
           fragment-shader-in-spir-v-format (shaders/compile-shader "shader.frag" :shader-type/fragment)
           vertex-shader-module (create-shader-module vertex-shader-in-spir-v-format)
           fragment-shader-module (create-shader-module fragment-shader-in-spir-v-format)

@@ -2,7 +2,7 @@
   (:require [clojure-vulkan.globals  :as globals :refer [LOGICAL-DEVICE SWAP-CHAIN-IMAGE-FORMAT SWAP-CHAIN-IMAGE-VIEWS SWAP-CHAIN-IMAGES]]
             [clojure-vulkan.util :as util])
   (:import (org.lwjgl.system MemoryStack)
-           (org.lwjgl.vulkan VkImageViewCreateInfo VK13)))
+           (org.lwjgl.vulkan VK13 VkImageViewCreateInfo)))
 
 (defn create-image-views []
   (util/with-memory-stack-push ^MemoryStack stack

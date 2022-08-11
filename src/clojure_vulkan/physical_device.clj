@@ -2,11 +2,11 @@
   (:require [clojure-vulkan.globals :refer [PHYSICAL-DEVICE QUEUE-FAMILIES VULKAN-INSTANCE WINDOW-SURFACE-POINTER]]
             [clojure-vulkan.swap-chain :as swap-chain]
             [clojure-vulkan.util :as util])
-  (:import (org.lwjgl PointerBuffer)
+  (:import (java.nio IntBuffer)
+           (org.lwjgl PointerBuffer)
            (org.lwjgl.system MemoryStack)
            (org.lwjgl.vulkan KHRSurface KHRSwapchain VK13 VkExtensionProperties VkPhysicalDevice VkPhysicalDeviceFeatures
-                             VkPhysicalDeviceProperties VkQueueFamilyProperties VkSurfaceFormatKHR$Buffer)
-           (java.nio IntBuffer)))
+                             VkPhysicalDeviceProperties VkQueueFamilyProperties VkSurfaceFormatKHR$Buffer)))
 
 (def device-extensions (list KHRSwapchain/VK_KHR_SWAPCHAIN_EXTENSION_NAME))
 

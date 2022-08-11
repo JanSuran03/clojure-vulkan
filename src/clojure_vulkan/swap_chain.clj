@@ -74,7 +74,7 @@
               (query-swap-chain-support PHYSICAL-DEVICE))
           surface-format (choose-swap-surface-format formats-ptr)
           present-mode (choose-swap-presentation-mode present-modes-ptr present-modes-count)
-          extent (.currentExtent surface-capabilities) #_(choose-swap-extent surface-capabilities)
+          extent (choose-swap-extent surface-capabilities)
           image-count (inc (.minImageCount surface-capabilities))
           image-count-ptr (if (and (pos? (.maxImageCount surface-capabilities))
                                    (> image-count (.maxImageCount surface-capabilities)))

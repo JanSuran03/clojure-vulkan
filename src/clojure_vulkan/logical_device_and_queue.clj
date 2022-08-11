@@ -1,11 +1,11 @@
 (ns clojure-vulkan.logical-device-and-queue
   (:require [clojure-vulkan.globals :as globals :refer [GRAPHICS-QUEUE LOGICAL-DEVICE PHYSICAL-DEVICE QUEUE-FAMILIES]]
+            [clojure-vulkan.physical-device :as physical-device]
             [clojure-vulkan.util :as util]
-            [clojure-vulkan.validation-layers :as validation-layers]
-            [clojure-vulkan.physical-device :as physical-device])
-  (:import (org.lwjgl.vulkan VK13 VkDevice VkDeviceCreateInfo VkDeviceQueueCreateInfo VkDeviceQueueCreateInfo$Buffer
-                             VkPhysicalDeviceFeatures)
-           (org.lwjgl.system MemoryStack)))
+            [clojure-vulkan.validation-layers :as validation-layers])
+  (:import (org.lwjgl.system MemoryStack)
+           (org.lwjgl.vulkan VK13 VkDevice VkDeviceCreateInfo VkDeviceQueueCreateInfo VkDeviceQueueCreateInfo$Buffer
+                             VkPhysicalDeviceFeatures)))
 
 (defn create-logical-device []
   (util/with-memory-stack-push ^MemoryStack stack

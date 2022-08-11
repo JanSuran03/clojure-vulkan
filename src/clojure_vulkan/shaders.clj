@@ -1,18 +1,13 @@
 (ns clojure-vulkan.shaders
-  (:require [clojure.java.io :as io]
-            [clojure.java.shell :as sh]
-            [me.raynes.fs :as fs])
-  (:import (java.io ByteArrayOutputStream File)
-           (org.lwjgl.util.shaderc Shaderc)
-           (org.lwjgl.vulkan VK13)
+  (:require [clojure.java.io :as io])
+  (:import (java.io ByteArrayOutputStream)
            (java.nio ByteBuffer)
-           (org.lwjgl.system NativeResource)))
+           (org.lwjgl.util.shaderc Shaderc)
+           (org.lwjgl.system NativeResource)
+           (org.lwjgl.vulkan VK13)))
 
 (def shaders-root "resources/shaders/")
-(def shader-sources-root                                    ;(.getAbsolutePath (File. (str shaders-root "sources/")))
-  (str shaders-root "sources/"))
-(def compiled-shaders-root                                  ;(.getAbsolutePath (File. (str shaders-root "compiled/")))
-  (str shaders-root "compiled/"))
+(def shader-sources-root (str shaders-root "sources/"))
 
 (defn- shader-type->integer-id [shader-type]
   (case shader-type
@@ -20,24 +15,6 @@
     :shader-type/fragment Shaderc/shaderc_glsl_fragment_shader
     :shader-type/geometry Shaderc/shaderc_glsl_geometry_shader
     (throw (RuntimeException. (str "Unknown shader type: " shader-type)))))
-
-#_(defn- is-already-compiled? [shader-bytecode-out]
-    (fs/exists? (str compiled-shaders-root shader-bytecode-out)))
-
-#_(defn compile-shader
-    "(compile-shader \"shader\" :fragment)
-     => (compile-shader
-     "
-    ([shader-source-file] (compile-shader shader-source-file nil))
-    ([shader-source-file shader-bytecode-out-file]
-     (let [{:keys [err]} (if shader-bytecode-out-file
-                           (sh/sh "glslc" (str "resources/shaders/sources/" shader-source-file)
-                                  "-o"
-                                  (str "resources/shaders/compiled/" shader-bytecode-out-file))
-                           (sh/sh "glslc" (str "resources/shaders/sources/" shader-source-file)))]
-       (if (pos? (.length ^CharSequence err))
-         (throw (RuntimeException. (str "Couldn't compile shader (source =" shader-source-file
-                                        "; out =" shader-bytecode-out-file ":\n" err)))))))
 
 (defn slurp-bytes [source]
   (with-open [out (ByteArrayOutputStream.)]
@@ -47,10 +24,6 @@
       (dotimes [i (alength signed-byte-out)]
         (aset-short ret i (Byte/toUnsignedInt (aget signed-byte-out i))))
       ret)))
-
-#_(defn get-shader-in-spir-v-bytecode [shader-source shader-bytecode-out]
-    (when-not (is-already-compiled? shader-bytecode-out) (compile-shader shader-source shader-bytecode-out))
-    (slurp-bytes (str compiled-shaders-root shader-bytecode-out)))
 
 ;; let source = (seq (Files/readAllBytes (Path/of @#'shaders/shader-sources-root (into-array String ["shader.vert"]))))
 ;; or (slurp-bytes (str shader-sources-root \/ shader-source-file))

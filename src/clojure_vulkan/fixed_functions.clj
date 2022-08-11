@@ -1,8 +1,8 @@
 (ns clojure-vulkan.fixed-functions
   (:require [clojure-vulkan.util :as util])
-  (:import (org.lwjgl.vulkan VK13 VkPipelineDynamicStateCreateInfo)
+  (:import (java.nio IntBuffer)
            (org.lwjgl.system MemoryStack)
-           (java.nio IntBuffer)))
+           (org.lwjgl.vulkan VK13 VkPipelineDynamicStateCreateInfo)))
 
 (def dynamic-states-vec [VK13/VK_DYNAMIC_STATE_VIEWPORT VK13/VK_DYNAMIC_STATE_SCISSOR])
 

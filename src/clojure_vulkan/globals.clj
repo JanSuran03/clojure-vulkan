@@ -1,6 +1,6 @@
 (ns clojure-vulkan.globals
   (:require [clojure-vulkan.util :refer [nullptr]])
-  (:import (org.lwjgl.vulkan VkInstance VkPhysicalDevice VK13 VkDevice VkQueue VkExtent2D)))
+  (:import (org.lwjgl.vulkan VK13 VkDevice VkExtent2D VkInstance VkPhysicalDevice VkQueue)))
 
 (defn- reset-to-nil [_] nil)
 (defn- reset-to-vk-null [_] VK13/VK_NULL_HANDLE)

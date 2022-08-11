@@ -1,8 +1,7 @@
 (ns clojure-vulkan.debug
   (:require [clojure-vulkan.globals :as globals :refer [DEBUG-MESSENGER-POINTER VULKAN-INSTANCE]]
             [clojure-vulkan.util :as util :refer [nullptr]]
-            [clojure-vulkan.validation-layers :as validation-layers]
-            [clojure.string :as str])
+            [clojure-vulkan.validation-layers :as validation-layers])
   (:import (java.nio LongBuffer)
            (org.lwjgl.system MemoryStack)
            (org.lwjgl.vulkan EXTDebugUtils VK13 VkAllocationCallbacks VkDebugUtilsMessengerCallbackDataEXT VkDebugUtilsMessengerCallbackEXTI
@@ -19,7 +18,7 @@
                                #=(bit-shift-left 1 4) "INFO"
                                #=(bit-shift-left 1 8) "WARNING"
                                #=(bit-shift-left 1 12) "ERROR")]
-        #_(if util/*current-debug-filename*
+        (if util/*current-debug-filename*
           (spit util/*current-debug-filename* (str ">>> Validation layer callback:\n"
                                                    (util/split-string-on-lines-by (.pMessageString callback-data)
                                                                                   max-chars-on-single-line)

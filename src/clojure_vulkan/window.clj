@@ -1,7 +1,7 @@
 (ns clojure-vulkan.window
   (:require [clojure-vulkan.glfw :refer [glfw-boolean]]
-            [clojure-vulkan.util :refer [nullptr]]
-            [clojure-vulkan.globals :as globals :refer [WINDOW-POINTER]])
+            [clojure-vulkan.globals :as globals :refer [WINDOW-POINTER]]
+            [clojure-vulkan.util :refer [nullptr]])
   (:import (org.lwjgl.glfw GLFW)))
 
 

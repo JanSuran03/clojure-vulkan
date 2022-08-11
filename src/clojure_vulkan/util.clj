@@ -82,9 +82,6 @@
       (.put buffer i))
     (.rewind buffer)))
 
-(defn contains-keys [m & keys]
-  (every? #(contains? m %) keys))
-
 (defn test-compile-speed []
   (let [nss (->> (all-ns)
                  (filter #(str/starts-with? % "clojure-vulkan"))

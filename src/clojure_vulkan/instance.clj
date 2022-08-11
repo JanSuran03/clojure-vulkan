@@ -1,11 +1,10 @@
 (ns clojure-vulkan.instance
   (:require [clojure-vulkan.debug :as debug]
+            [clojure-vulkan.globals :as globals :refer [VULKAN-INSTANCE]]
             [clojure-vulkan.util :as util]
-            [clojure-vulkan.globals :refer [VULKAN-INSTANCE]]
-            [clojure-vulkan.validation-layers :as validation-layers]
-            [clojure-vulkan.globals :as globals])
+            [clojure-vulkan.validation-layers :as validation-layers])
   (:import (org.lwjgl.system MemoryStack)
-           (org.lwjgl.vulkan VK13 VkApplicationInfo VkInstance VkInstanceCreateInfo VkDebugUtilsMessengerCreateInfoEXT)))
+           (org.lwjgl.vulkan VK13 VkApplicationInfo VkDebugUtilsMessengerCreateInfoEXT VkInstance VkInstanceCreateInfo)))
 
 (defn create []
   (when validation-layers/*enable-validation-layers*
