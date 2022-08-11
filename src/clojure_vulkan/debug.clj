@@ -19,15 +19,21 @@
                                #=(bit-shift-left 1 8) "WARNING"
                                #=(bit-shift-left 1 12) "ERROR")]
         (if util/*current-debug-filename*
-          (spit util/*current-debug-filename* (str ">>> Validation layer callback:\n"
-                                                   (util/split-string-on-lines-by (.pMessageString callback-data)
-                                                                                  max-chars-on-single-line)
-                                                   \newline)
+          (spit util/*current-debug-filename*
+                #_(str ">>> Validation layer callback:\n"
+                       (util/split-string-on-lines-by (.pMessageString callback-data)
+                                                      max-chars-on-single-line)
+                       \newline)
+                (str "Validation layer callback:\n"
+                     (.pMessageString callback-data)
+                     \newline)
                 :append true)
           (binding [*out* *err*]
-            (println (str ">>> Validation layer callback (severity = " message-severity "):\n"
-                          (util/split-string-on-lines-by (.pMessageString callback-data)
-                                                         max-chars-on-single-line)))))
+            #_(println (str ">>> Validation layer callback (severity = " message-severity "):\n"
+                            (util/split-string-on-lines-by (.pMessageString callback-data)
+                                                           max-chars-on-single-line)))
+            (println (str "Validation layer callback (severity = " message-severity "): "
+                          (.pMessageString callback-data)))))
         (if (= message-severity "ERROR")
           (throw (RuntimeException. (str "\n\n>>>>> VALIDATION LAYER ERROR:\n"
                                          (util/split-string-on-lines-by (.pMessageString callback-data)

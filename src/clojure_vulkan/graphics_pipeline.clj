@@ -4,8 +4,10 @@
             [clojure-vulkan.util :as util])
   (:import (clojure_vulkan.shaders SpirVShader)
            (org.lwjgl.system MemoryStack)
-           (org.lwjgl.vulkan VK13 VkPipelineDynamicStateCreateInfo VkPipelineShaderStageCreateInfo
-                             VkPipelineShaderStageCreateInfo$Buffer VkPipelineVertexInputStateCreateInfo VkShaderModuleCreateInfo VkPipelineInputAssemblyStateCreateInfo VkViewport VkExtent2D VkRect2D VkOffset2D VkPipelineViewportStateCreateInfo)))
+           (org.lwjgl.vulkan VK13 VkExtent2D VkOffset2D VkPipelineDynamicStateCreateInfo VkPipelineInputAssemblyStateCreateInfo
+                             VkPipelineMultisampleStateCreateInfo VkPipelineRasterizationStateCreateInfo VkPipelineShaderStageCreateInfo
+                             VkPipelineShaderStageCreateInfo$Buffer VkPipelineVertexInputStateCreateInfo VkPipelineViewportStateCreateInfo
+                             VkRect2D VkShaderModuleCreateInfo VkViewport )))
 
 (def ^:private dynamic-states-vec [VK13/VK_DYNAMIC_STATE_VIEWPORT VK13/VK_DYNAMIC_STATE_SCISSOR])
 
@@ -64,7 +66,26 @@
                                        (.viewportCount 1)
                                        (.pViewports viewports)
                                        (.scissorCount 1)
-                                       (.pScissors scissors))]
+                                       (.pScissors scissors))
+          rasterization-state-create-info (doto (VkPipelineRasterizationStateCreateInfo/calloc stack)
+                                            (.depthClampEnable false) ; fragments outside the visible depth are discarded
+                                            (.rasterizerDiscardEnable false) ; basically enables the rasterizer
+                                            (.polygonMode VK13/VK_POLYGON_MODE_FILL)
+                                            (.lineWidth (float 1)) ; VkPhysicalDeviceFeatures/WIDELINES if otherwise
+                                            (.cullMode VK13/VK_CULL_MODE_BACK_BIT)
+                                            (.frontFace VK13/VK_FRONT_FACE_CLOCKWISE)
+                                            (.depthBiasEnable false)
+                                            (.depthBiasConstantFactor (float 0))
+                                            (.depthBiasClamp (float 0))
+                                            (.depthBiasSlopeFactor (float 0)))
+          mulitsample-state-create-info (doto (VkPipelineMultisampleStateCreateInfo/calloc stack) ; VkPhysicalDeviceFeatures/MULTISAMPLING...? for now disable all
+                                          (.sType VK13/VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO)
+                                          (.sampleShadingEnable false)
+                                          (.rasterizationSamples VK13/VK_SAMPLE_COUNT_1_BIT)
+                                          (.minSampleShading (float 1))
+                                          (.pSampleMask nil)
+                                          (.alphaToCoverageEnable false)
+                                          (.alphaToOneEnable false))]
       (VK13/vkDestroyShaderModule LOGICAL-DEVICE vertex-shader-module nil)
       (VK13/vkDestroyShaderModule LOGICAL-DEVICE fragment-shader-module nil)
       (.free ^SpirVShader vertex-shader-in-spir-v-format)
