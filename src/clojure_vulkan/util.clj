@@ -16,7 +16,7 @@
   `(let [^MemoryStack ~stack (MemoryStack/stackGet)]
      ~@body))
 
-(defn partition-string-by [^String s n]
+(defn partition-string-by [^String s ^long n]
   (let [len (.length s)]
     (loop [cur 0
            ret (transient [])]
@@ -70,12 +70,17 @@
               (str/starts-with? filename "hs_err_pid"))
       (fs/delete file))))
 
-(defn string-seq-as-pointer-buffer [string-seq]
-  (with-memory-stack-get ^MemoryStack stack
-    (let [buffer (.mallocPointer stack (count string-seq))]
-      (doseq [string string-seq]
-        (.put buffer (.UTF8 stack string)))
-      (.rewind buffer))))
+(defn string-seq-as-pointer-buffer [^MemoryStack stack string-seq]
+  (let [buffer (.mallocPointer stack (count string-seq))]
+    (doseq [string string-seq]
+      (.put buffer (.UTF8 stack string)))
+    (.rewind buffer)))
+
+(defn integers-as-pointer-buffer [^MemoryStack stack integer-seq]
+  (let [buffer (.mallocInt stack (count integer-seq))]
+    (doseq [^int i integer-seq]
+      (.put buffer i))
+    (.rewind buffer)))
 
 (defn contains-keys [m & keys]
   (every? #(contains? m %) keys))

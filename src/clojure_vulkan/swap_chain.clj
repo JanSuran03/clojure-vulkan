@@ -80,7 +80,6 @@
                                    (> image-count (.maxImageCount surface-capabilities)))
                             (.ints stack (.maxImageCount surface-capabilities))
                             (.ints stack ^Integer (inc (.minImageCount surface-capabilities))))
-          _ (println "IMAGE FORMAT:=  " (.format surface-format))
           ^VkSwapchainCreateInfoKHR create-info (doto (VkSwapchainCreateInfoKHR/calloc stack)
                                                   (.sType KHRSwapchain/VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR)
                                                   (.surface WINDOW-SURFACE-POINTER)

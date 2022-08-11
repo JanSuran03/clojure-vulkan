@@ -22,10 +22,10 @@
                                                    (.sType VK13/VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO)
                                                    (.pQueueCreateInfos queue-create-infos)
                                                    (.pEnabledFeatures device-features)
-                                                   (.ppEnabledExtensionNames (util/string-seq-as-pointer-buffer physical-device/device-extensions)))
+                                                   (.ppEnabledExtensionNames (util/string-seq-as-pointer-buffer stack physical-device/device-extensions)))
           ^VkDeviceCreateInfo device-create-info (cond-> device-create-info
                                                          validation-layers/*enable-validation-layers*
-                                                         (.ppEnabledLayerNames (util/string-seq-as-pointer-buffer validation-layers/*validation-layers*)))
+                                                         (.ppEnabledLayerNames (util/string-seq-as-pointer-buffer stack validation-layers/*validation-layers*)))
           device-ptr (.pointers stack VK13/VK_NULL_HANDLE)
           _ (when (not= (VK13/vkCreateDevice PHYSICAL-DEVICE device-create-info nil device-ptr)
                         VK13/VK_SUCCESS)
