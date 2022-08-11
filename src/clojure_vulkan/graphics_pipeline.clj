@@ -4,10 +4,10 @@
             [clojure-vulkan.util :as util])
   (:import (clojure_vulkan.shaders SpirVShader)
            (org.lwjgl.system MemoryStack)
-           (org.lwjgl.vulkan VK13 VkExtent2D VkOffset2D VkPipelineDynamicStateCreateInfo VkPipelineInputAssemblyStateCreateInfo
-                             VkPipelineMultisampleStateCreateInfo VkPipelineRasterizationStateCreateInfo VkPipelineShaderStageCreateInfo
-                             VkPipelineShaderStageCreateInfo$Buffer VkPipelineVertexInputStateCreateInfo VkPipelineViewportStateCreateInfo
-                             VkRect2D VkShaderModuleCreateInfo VkViewport )))
+           (org.lwjgl.vulkan VK13 VkExtent2D VkOffset2D VkPipelineColorBlendAttachmentState VkPipelineColorBlendStateCreateInfo VkPipelineDynamicStateCreateInfo
+                             VkPipelineInputAssemblyStateCreateInfo VkPipelineMultisampleStateCreateInfo VkPipelineRasterizationStateCreateInfo
+                             VkPipelineShaderStageCreateInfo VkPipelineShaderStageCreateInfo$Buffer VkPipelineVertexInputStateCreateInfo
+                             VkPipelineViewportStateCreateInfo VkRect2D VkShaderModuleCreateInfo VkViewport)))
 
 (def ^:private dynamic-states-vec [VK13/VK_DYNAMIC_STATE_VIEWPORT VK13/VK_DYNAMIC_STATE_SCISSOR])
 
@@ -85,7 +85,28 @@
                                           (.minSampleShading (float 1))
                                           (.pSampleMask nil)
                                           (.alphaToCoverageEnable false)
-                                          (.alphaToOneEnable false))]
+                                          (.alphaToOneEnable false))
+          color-blend-attachments (doto (VkPipelineColorBlendAttachmentState/calloc stack)
+                                    (.colorWriteMask (util/bit-ors VK13/VK_COLOR_COMPONENT_R_BIT
+                                                                   VK13/VK_COLOR_COMPONENT_G_BIT
+                                                                   VK13/VK_COLOR_COMPONENT_B_BIT
+                                                                   VK13/VK_COLOR_COMPONENT_A_BIT))
+                                    (.blendEnable false)
+                                    (.srcColorBlendFactor VK13/VK_BLEND_FACTOR_SRC_ALPHA)
+                                    (.dstColorBlendFactor VK13/VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA)
+                                    (.colorBlendOp VK13/VK_BLEND_OP_ADD)
+                                    (.srcAlphaBlendFactor VK13/VK_BLEND_FACTOR_ONE)
+                                    (.dstAlphaBlendFactor VK13/VK_BLEND_FACTOR_ZERO)
+                                    (.alphaBlendOp VK13/VK_BLEND_OP_ADD))
+          color-blend-state-create-info (doto (VkPipelineColorBlendStateCreateInfo/calloc stack)
+                                          (.sType VK13/VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO)
+                                          (.logicOpEnable false)
+                                          (.logicOp VK13/VK_LOGIC_OP_COPY)
+                                          (.pAttachments color-blend-attachments)
+                                          (.blendConstants 0 (float 0))
+                                          (.blendConstants 1 (float 0))
+                                          (.blendConstants 2 (float 0))
+                                          (.blendConstants 3 (float 0)))]
       (VK13/vkDestroyShaderModule LOGICAL-DEVICE vertex-shader-module nil)
       (VK13/vkDestroyShaderModule LOGICAL-DEVICE fragment-shader-module nil)
       (.free ^SpirVShader vertex-shader-in-spir-v-format)
