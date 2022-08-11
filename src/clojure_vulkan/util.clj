@@ -87,6 +87,7 @@
                  (filter #(str/starts-with? % "clojure-vulkan"))
                  (map (comp symbol str))
                  doall)]
+    (println "Namespaces:" (count nss))
     (dotimes [_ 5]
       (time (doseq [ns nss]
               (require `[~ns :reload true]))))))

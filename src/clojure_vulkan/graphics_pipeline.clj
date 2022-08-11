@@ -1,11 +1,11 @@
 (ns clojure-vulkan.graphics-pipeline
-  (:require [clojure-vulkan.globals :refer [LOGICAL-DEVICE]]
+  (:require [clojure-vulkan.globals :refer [LOGICAL-DEVICE SWAP-CHAIN-EXTENT]]
             [clojure-vulkan.shaders :as shaders]
             [clojure-vulkan.util :as util])
   (:import (clojure_vulkan.shaders SpirVShader)
            (org.lwjgl.system MemoryStack)
            (org.lwjgl.vulkan VK13 VkPipelineDynamicStateCreateInfo VkPipelineShaderStageCreateInfo
-                             VkPipelineShaderStageCreateInfo$Buffer VkPipelineVertexInputStateCreateInfo VkShaderModuleCreateInfo)))
+                             VkPipelineShaderStageCreateInfo$Buffer VkPipelineVertexInputStateCreateInfo VkShaderModuleCreateInfo VkPipelineInputAssemblyStateCreateInfo VkViewport VkExtent2D)))
 
 (def ^:private dynamic-states-vec [VK13/VK_DYNAMIC_STATE_VIEWPORT VK13/VK_DYNAMIC_STATE_SCISSOR])
 
@@ -44,7 +44,18 @@
           vertex-input-state-create-info (doto (VkPipelineVertexInputStateCreateInfo/calloc stack)
                                            (.sType VK13/VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO)
                                            (.pVertexBindingDescriptions nil)
-                                           (.pVertexAttributeDescriptions nil))]
+                                           (.pVertexAttributeDescriptions nil))
+          input-assembly-state-create-info (doto (VkPipelineInputAssemblyStateCreateInfo/calloc stack)
+                                             (.sType VK13/VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO)
+                                             (.topology VK13/VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST) ; triangle from every 3 new vertices without reuse
+                                             (.primitiveRestartEnable false))
+          viewport (doto (VkViewport/calloc stack)
+                     (.x 0)
+                     (.y 0)
+                     (.width (float (.width ^VkExtent2D SWAP-CHAIN-EXTENT)))
+                     (.height (float (.height ^VkExtent2D SWAP-CHAIN-EXTENT)))
+                     (.minDepth (float 0))
+                     (.maxDepth (float 0)))]
       (VK13/vkDestroyShaderModule LOGICAL-DEVICE vertex-shader-module nil)
       (VK13/vkDestroyShaderModule LOGICAL-DEVICE fragment-shader-module nil)
       (.free ^SpirVShader vertex-shader-in-spir-v-format)
