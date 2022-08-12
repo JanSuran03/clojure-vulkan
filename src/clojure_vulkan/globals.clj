@@ -49,3 +49,6 @@
 
 (def SWAP-CHAIN-IMAGE-VIEWS [])
 (defn reset-swap-chain-image-views [] (alter-var-root #'SWAP-CHAIN-IMAGE-VIEWS empty))
+
+(def PIPELINE-LAYOUT-POINTER nullptr)
+(defn reset-pipeline-layout-ptr [] (alter-var-root #'PIPELINE-LAYOUT-POINTER reset-to-vk-null))

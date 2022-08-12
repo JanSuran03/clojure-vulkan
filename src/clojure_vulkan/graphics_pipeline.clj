@@ -1,5 +1,5 @@
 (ns clojure-vulkan.graphics-pipeline
-  (:require [clojure-vulkan.globals :refer [LOGICAL-DEVICE SWAP-CHAIN-EXTENT]]
+  (:require [clojure-vulkan.globals :as globals :refer [LOGICAL-DEVICE PIPELINE-LAYOUT-POINTER SWAP-CHAIN-EXTENT]]
             [clojure-vulkan.shaders :as shaders]
             [clojure-vulkan.util :as util])
   (:import (clojure_vulkan.shaders SpirVShader)
@@ -7,7 +7,7 @@
            (org.lwjgl.vulkan VK13 VkExtent2D VkOffset2D VkPipelineColorBlendAttachmentState VkPipelineColorBlendStateCreateInfo VkPipelineDynamicStateCreateInfo
                              VkPipelineInputAssemblyStateCreateInfo VkPipelineMultisampleStateCreateInfo VkPipelineRasterizationStateCreateInfo
                              VkPipelineShaderStageCreateInfo VkPipelineShaderStageCreateInfo$Buffer VkPipelineVertexInputStateCreateInfo
-                             VkPipelineViewportStateCreateInfo VkRect2D VkShaderModuleCreateInfo VkViewport)))
+                             VkPipelineViewportStateCreateInfo VkRect2D VkShaderModuleCreateInfo VkViewport VkPipelineLayoutCreateInfo)))
 
 (def ^:private dynamic-states-vec [VK13/VK_DYNAMIC_STATE_VIEWPORT VK13/VK_DYNAMIC_STATE_SCISSOR])
 
@@ -106,8 +106,21 @@
                                           (.blendConstants 0 (float 0))
                                           (.blendConstants 1 (float 0))
                                           (.blendConstants 2 (float 0))
-                                          (.blendConstants 3 (float 0)))]
+                                          (.blendConstants 3 (float 0)))
+          pipeline-layout-create-info (doto (VkPipelineLayoutCreateInfo/calloc stack)
+                                        (.sType VK13/VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO)
+                                        (.pSetLayouts nil)
+                                        (.pPushConstantRanges nil))
+          pipeline-layout-ptr (.longs stack VK13/VK_NULL_HANDLE)]
+      (when (not= (VK13/vkCreatePipelineLayout LOGICAL-DEVICE pipeline-layout-create-info nil pipeline-layout-ptr)
+                  VK13/VK_SUCCESS)
+        (throw (RuntimeException. "Coudln't create pipeline layout.")))
+      (alter-var-root PIPELINE-LAYOUT-POINTER (constantly (.get pipeline-layout-ptr 0)))
       (VK13/vkDestroyShaderModule LOGICAL-DEVICE vertex-shader-module nil)
       (VK13/vkDestroyShaderModule LOGICAL-DEVICE fragment-shader-module nil)
       (.free ^SpirVShader vertex-shader-in-spir-v-format)
       (.free ^SpirVShader fragment-shader-in-spir-v-format))))
+
+(defn destroy-pipeline-layout []
+  (VK13/vkDestroyPipelineLayout LOGICAL-DEVICE PIPELINE-LAYOUT-POINTER nil)
+  (globals/reset-pipeline-layout-ptr))
