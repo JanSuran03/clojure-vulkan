@@ -6,6 +6,7 @@
             [clojure-vulkan.instance :as instance]
             [clojure-vulkan.logical-device-and-queue :as logical-device-and-queue]
             [clojure-vulkan.physical-device :as physical-device]
+            [clojure-vulkan.render-pass :as render-pass]
             [clojure-vulkan.swap-chain :as swap-chain]
             [clojure-vulkan.validation-layers :as validation-layers]
             [clojure-vulkan.window-surface :as window-surface]))
@@ -18,6 +19,7 @@
   (logical-device-and-queue/create-logical-device)
   (swap-chain/create-swap-chain)
   (image-views/create-image-views)
+  (render-pass/create-render-pass)
   (graphics-pipeline/create-graphics-pipeline))
 
 (defn find-resets []
@@ -31,6 +33,7 @@
 
 (defn terminate []
   (graphics-pipeline/destroy-pipeline-layout)
+  (render-pass/destroy-render-pass)
   (image-views/destroy-image-views)
   (swap-chain/destroy-swapchain)
   (window-surface/destroy-surface)

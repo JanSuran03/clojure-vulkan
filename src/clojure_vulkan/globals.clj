@@ -52,3 +52,6 @@
 
 (def PIPELINE-LAYOUT-POINTER nullptr)
 (defn reset-pipeline-layout-ptr [] (alter-var-root #'PIPELINE-LAYOUT-POINTER reset-to-vk-null))
+
+(def RENDER-PASS-POINTER nullptr)
+(defn reset-render-pass-ptr [] (alter-var-root #'RENDER-PASS-POINTER reset-to-vk-null))
