@@ -30,7 +30,7 @@
       (when (not= (VK13/vkCreateRenderPass LOGICAL-DEVICE render-pass-create-info nil render-pass-ptr)
                   VK13/VK_SUCCESS)
         (throw (RuntimeException. "Failed to create render pass.")))
-      (alter-var-root #'RENDER-PASS-POINTER (constantly (.get render-pass-ptr 0))))))
+      (globals/set-global! RENDER-PASS-POINTER (.get render-pass-ptr 0)))))
 
 (defn destroy-render-pass []
   (VK13/vkDestroyRenderPass LOGICAL-DEVICE RENDER-PASS-POINTER nil)

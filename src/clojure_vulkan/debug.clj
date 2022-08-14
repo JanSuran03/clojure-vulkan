@@ -72,7 +72,7 @@
             (init-debug-messenger-create-info (VkDebugUtilsMessengerCreateInfoEXT/calloc stack))
             ^LongBuffer debug-messenger-ptr (.longs stack VK13/VK_NULL_HANDLE)]
         (if (create-debug-messenger-extension VULKAN-INSTANCE create-info nil debug-messenger-ptr)
-          (alter-var-root #'DEBUG-MESSENGER-POINTER (constantly (.get debug-messenger-ptr 0)))
+          (globals/set-global! DEBUG-MESSENGER-POINTER (.get debug-messenger-ptr 0))
           (throw (RuntimeException. "Failed to set up debug messenger.")))))))
 
 (defn destroy-debug-messenger [^VkAllocationCallbacks allocation-callbacks]

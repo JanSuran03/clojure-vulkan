@@ -17,8 +17,7 @@
 
 (defn -create-window []
   (if-let [window (GLFW/glfwCreateWindow window-width window-height window-title nullptr nullptr)]
-    (alter-var-root #'WINDOW-POINTER
-                    (constantly window))
+    (globals/set-global! WINDOW-POINTER window)
     (throw (RuntimeException. "Failed to create GLFW window."))))
 
 (defn create-window []

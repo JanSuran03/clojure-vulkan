@@ -29,7 +29,7 @@
                                   (.get image-view-ptr 0)
                                   (throw (RuntimeException. "Couldn't create image views.")))))
                             SWAP-CHAIN-IMAGES)]
-      (alter-var-root #'SWAP-CHAIN-IMAGE-VIEWS (constantly image-views)))))
+      (globals/set-global! SWAP-CHAIN-IMAGE-VIEWS image-views))))
 
 (defn destroy-image-views []
   (doseq [image-view-ptr SWAP-CHAIN-IMAGE-VIEWS]

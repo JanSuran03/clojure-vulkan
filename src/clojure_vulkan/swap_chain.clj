@@ -1,7 +1,8 @@
 (ns clojure-vulkan.swap-chain
   (:require [clojure-vulkan.globals :refer [LOGICAL-DEVICE PHYSICAL-DEVICE QUEUE-FAMILIES SWAP-CHAIN-EXTENT SWAP-CHAIN-IMAGE-FORMAT
                                             SWAP-CHAIN-IMAGES SWAP-CHAIN-POINTER SWAP-CHAIN-SUPPORT-DETAILS WINDOW-POINTER WINDOW-SURFACE-POINTER]]
-            [clojure-vulkan.util :as util])
+            [clojure-vulkan.util :as util]
+            [clojure-vulkan.globals :as globals])
   (:import (java.nio IntBuffer)
            (org.lwjgl.glfw GLFW)
            (org.lwjgl.system MemoryStack)
@@ -28,10 +29,10 @@
                                 (KHRSurface/vkGetPhysicalDeviceSurfacePresentModesKHR device WINDOW-SURFACE-POINTER present-mode-count-ptr present-modes-ptr)
                                 present-modes-ptr))]
       (and formats present-modes-ptr
-           (alter-var-root #'SWAP-CHAIN-SUPPORT-DETAILS (constantly {:formats-ptr          formats
-                                                                     :present-modes-ptr    present-modes-ptr
-                                                                     :present-modes-count  present-modes-count
-                                                                     :surface-capabilities surface-capabilities}))))))
+           (globals/set-global! SWAP-CHAIN-SUPPORT-DETAILS {:formats-ptr          formats
+                                                            :present-modes-ptr    present-modes-ptr
+                                                            :present-modes-count  present-modes-count
+                                                            :surface-capabilities surface-capabilities})))))
 
 (defn ^VkSurfaceFormatKHR choose-swap-surface-format [^VkSurfaceFormatKHR$Buffer formats-ptr]
   (or (->> (util/buffer->seq formats-ptr)
@@ -107,15 +108,15 @@
           _ (do (when (not= (KHRSwapchain/vkCreateSwapchainKHR LOGICAL-DEVICE create-info nil swap-chain-ptr*)
                             VK13/VK_SUCCESS)
                   (throw (RuntimeException. "Failed to create swapchain.")))
-                (alter-var-root #'SWAP-CHAIN-POINTER (constantly (.get swap-chain-ptr* 0)))
+                (globals/set-global! SWAP-CHAIN-POINTER (.get swap-chain-ptr* 0))
                 (KHRSwapchain/vkGetSwapchainImagesKHR LOGICAL-DEVICE SWAP-CHAIN-POINTER image-count-ptr nil))
           swapchain-images-ptr (.mallocLong stack (.get image-count-ptr 0))]
       (KHRSwapchain/vkGetSwapchainImagesKHR LOGICAL-DEVICE SWAP-CHAIN-POINTER image-count-ptr swapchain-images-ptr)
-      (alter-var-root #'SWAP-CHAIN-IMAGES (constantly (mapv #(.get swapchain-images-ptr ^int %)
-                                                            (range image-count))))
-      (alter-var-root #'SWAP-CHAIN-IMAGE-FORMAT (constantly (.format surface-format)))
-      (alter-var-root #'SWAP-CHAIN-EXTENT (constantly (doto (VkExtent2D/create)
-                                                        (.set extent)))))))
+      (globals/set-global! SWAP-CHAIN-IMAGES (mapv #(.get swapchain-images-ptr ^int %)
+                                                   (range image-count)))
+      (globals/set-global! SWAP-CHAIN-IMAGE-FORMAT (.format surface-format))
+      (globals/set-global! SWAP-CHAIN-EXTENT (doto (VkExtent2D/create)
+                                               (.set extent))))))
 
 (defn destroy-swapchain []
   (KHRSwapchain/vkDestroySwapchainKHR LOGICAL-DEVICE SWAP-CHAIN-POINTER nil))

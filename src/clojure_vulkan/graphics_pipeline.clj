@@ -115,7 +115,7 @@
       (when (not= (VK13/vkCreatePipelineLayout LOGICAL-DEVICE pipeline-layout-create-info nil pipeline-layout-ptr)
                   VK13/VK_SUCCESS)
         (throw (RuntimeException. "Couldn't create pipeline layout.")))
-      (alter-var-root #'PIPELINE-LAYOUT-POINTER (constantly (.get pipeline-layout-ptr 0)))
+      (globals/set-global! PIPELINE-LAYOUT-POINTER (.get pipeline-layout-ptr 0))
       (VK13/vkDestroyShaderModule LOGICAL-DEVICE vertex-shader-module nil)
       (VK13/vkDestroyShaderModule LOGICAL-DEVICE fragment-shader-module nil)
       (.free ^SpirVShader vertex-shader-in-spir-v-format)

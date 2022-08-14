@@ -32,10 +32,8 @@
           instance-ptr (.mallocPointer stack 1)]
       (when (not= (VK13/vkCreateInstance create-info nil instance-ptr) VK13/VK_SUCCESS)
         (throw (RuntimeException. "Failed to create Vulkan instance.")))
-      (alter-var-root #'VULKAN-INSTANCE
-                      (constantly (VkInstance. (.get instance-ptr 0) create-info))))))
+      (globals/set-global! VULKAN-INSTANCE (VkInstance. (.get instance-ptr 0) create-info)))))
 
 (defn destroy []
-  (util/assert-not-null VULKAN-INSTANCE
-    (VK13/vkDestroyInstance VULKAN-INSTANCE nil))
+  (util/assert-not-null VULKAN-INSTANCE (VK13/vkDestroyInstance VULKAN-INSTANCE nil))
   (globals/reset-vulkan-instance))

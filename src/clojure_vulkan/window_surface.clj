@@ -11,7 +11,7 @@
       (when (not= (GLFWVulkan/glfwCreateWindowSurface VULKAN-INSTANCE WINDOW-POINTER nil surface-ptr*)
                   VK13/VK_SUCCESS)
         (throw (RuntimeException. "Failed to create window surface.")))
-      (alter-var-root #'WINDOW-SURFACE-POINTER (constantly (.get surface-ptr* 0))))))
+      (globals/set-global! WINDOW-SURFACE-POINTER (.get surface-ptr* 0)))))
 
 (defn destroy-surface []
   (KHRSurface/vkDestroySurfaceKHR VULKAN-INSTANCE WINDOW-SURFACE-POINTER nil)

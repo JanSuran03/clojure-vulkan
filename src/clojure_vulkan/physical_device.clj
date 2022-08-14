@@ -1,5 +1,5 @@
 (ns clojure-vulkan.physical-device
-  (:require [clojure-vulkan.globals :refer [PHYSICAL-DEVICE QUEUE-FAMILIES VULKAN-INSTANCE WINDOW-SURFACE-POINTER]]
+  (:require [clojure-vulkan.globals :as globals :refer [PHYSICAL-DEVICE QUEUE-FAMILIES VULKAN-INSTANCE WINDOW-SURFACE-POINTER]]
             [clojure-vulkan.swap-chain :as swap-chain]
             [clojure-vulkan.util :as util])
   (:import (java.nio IntBuffer)
@@ -97,6 +97,6 @@
           {:keys [graphics-family* present-family* physical-device*]} (pick-suitable-device physical-devices-ptr device-count)]
       (when-not physical-device*
         (throw (RuntimeException. "No suitable GPU found.")))
-      (alter-var-root #'PHYSICAL-DEVICE (constantly physical-device*))
+      (globals/set-global! PHYSICAL-DEVICE physical-device*)
       (alter-var-root #'QUEUE-FAMILIES conj {:graphics-family graphics-family*
                                              :present-family  present-family*}))))

@@ -35,8 +35,8 @@
           present-queue-ptr (.pointers stack VK13/VK_NULL_HANDLE)]
       (VK13/vkGetDeviceQueue device graphics-family 0 graphics-queue-ptr)
       (VK13/vkGetDeviceQueue device present-family 0 present-queue-ptr)
-      (alter-var-root #'LOGICAL-DEVICE (constantly device))
-      (alter-var-root #'GRAPHICS-QUEUE (constantly (.get graphics-queue-ptr 0))))))
+      (globals/set-global! LOGICAL-DEVICE device)
+      (globals/set-global! GRAPHICS-QUEUE (.get graphics-queue-ptr 0)))))
 
 (defn destroy-logical-device []
   (VK13/vkDestroyDevice LOGICAL-DEVICE nil)

@@ -2,6 +2,9 @@
   (:require [clojure-vulkan.util :refer [nullptr]])
   (:import (org.lwjgl.vulkan VK13 VkDevice VkExtent2D VkInstance VkPhysicalDevice VkQueue)))
 
+(defmacro set-global! [global-var new-value]
+  `(alter-var-root (var ~global-var) (constantly ~new-value)))
+
 (defn- reset-to-nil [_] nil)
 (defn- reset-to-vk-null [_] VK13/VK_NULL_HANDLE)
 
