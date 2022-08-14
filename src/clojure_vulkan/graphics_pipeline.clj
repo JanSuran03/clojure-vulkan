@@ -86,7 +86,7 @@
                                           (.pSampleMask nil)
                                           (.alphaToCoverageEnable false)
                                           (.alphaToOneEnable false))
-          color-blend-attachments (doto (VkPipelineColorBlendAttachmentState/calloc stack)
+          color-blend-attachments (doto (VkPipelineColorBlendAttachmentState/calloc 1 stack)
                                     (.colorWriteMask (util/bit-ors VK13/VK_COLOR_COMPONENT_R_BIT
                                                                    VK13/VK_COLOR_COMPONENT_G_BIT
                                                                    VK13/VK_COLOR_COMPONENT_B_BIT
@@ -114,8 +114,8 @@
           pipeline-layout-ptr (.longs stack VK13/VK_NULL_HANDLE)]
       (when (not= (VK13/vkCreatePipelineLayout LOGICAL-DEVICE pipeline-layout-create-info nil pipeline-layout-ptr)
                   VK13/VK_SUCCESS)
-        (throw (RuntimeException. "Coudln't create pipeline layout.")))
-      (alter-var-root PIPELINE-LAYOUT-POINTER (constantly (.get pipeline-layout-ptr 0)))
+        (throw (RuntimeException. "Couldn't create pipeline layout.")))
+      (alter-var-root #'PIPELINE-LAYOUT-POINTER (constantly (.get pipeline-layout-ptr 0)))
       (VK13/vkDestroyShaderModule LOGICAL-DEVICE vertex-shader-module nil)
       (VK13/vkDestroyShaderModule LOGICAL-DEVICE fragment-shader-module nil)
       (.free ^SpirVShader vertex-shader-in-spir-v-format)
