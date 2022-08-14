@@ -1,13 +1,14 @@
 (ns clojure-vulkan.graphics-pipeline
-  (:require [clojure-vulkan.globals :as globals :refer [LOGICAL-DEVICE PIPELINE-LAYOUT-POINTER SWAP-CHAIN-EXTENT]]
+  (:require [clojure-vulkan.globals :as globals :refer [GRAPHICS-PIPELINE-POINTER LOGICAL-DEVICE PIPELINE-LAYOUT-POINTER RENDER-PASS-POINTER SWAP-CHAIN-EXTENT]]
             [clojure-vulkan.shaders :as shaders]
             [clojure-vulkan.util :as util])
   (:import (clojure_vulkan.shaders SpirVShader)
            (org.lwjgl.system MemoryStack)
-           (org.lwjgl.vulkan VK13 VkExtent2D VkOffset2D VkPipelineColorBlendAttachmentState VkPipelineColorBlendStateCreateInfo VkPipelineDynamicStateCreateInfo
-                             VkPipelineInputAssemblyStateCreateInfo VkPipelineMultisampleStateCreateInfo VkPipelineRasterizationStateCreateInfo
-                             VkPipelineShaderStageCreateInfo VkPipelineShaderStageCreateInfo$Buffer VkPipelineVertexInputStateCreateInfo
-                             VkPipelineViewportStateCreateInfo VkRect2D VkShaderModuleCreateInfo VkViewport VkPipelineLayoutCreateInfo)))
+           (org.lwjgl.vulkan VK13 VkExtent2D VkGraphicsPipelineCreateInfo VkOffset2D VkPipelineColorBlendAttachmentState
+                             VkPipelineColorBlendStateCreateInfo VkPipelineDynamicStateCreateInfo VkPipelineInputAssemblyStateCreateInfo
+                             VkPipelineLayoutCreateInfo VkPipelineMultisampleStateCreateInfo VkPipelineRasterizationStateCreateInfo
+                             VkPipelineShaderStageCreateInfo VkPipelineVertexInputStateCreateInfo VkPipelineViewportStateCreateInfo
+                             VkRect2D VkShaderModuleCreateInfo VkViewport)))
 
 (def ^:private dynamic-states-vec [VK13/VK_DYNAMIC_STATE_VIEWPORT VK13/VK_DYNAMIC_STATE_SCISSOR])
 
@@ -29,7 +30,7 @@
           vertex-shader-module (create-shader-module vertex-shader-in-spir-v-format)
           fragment-shader-module (create-shader-module fragment-shader-in-spir-v-format)
           entry-point (.UTF8 stack "main")
-          ^VkPipelineShaderStageCreateInfo$Buffer shader-stages (VkPipelineShaderStageCreateInfo/calloc 2 stack)
+          shader-stages (VkPipelineShaderStageCreateInfo/calloc 2 stack)
           vertex-shader-stage-create-info (doto ^VkPipelineShaderStageCreateInfo (.get shader-stages 0)
                                             (.sType VK13/VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO)
                                             (.stage VK13/VK_SHADER_STAGE_VERTEX_BIT)
@@ -68,6 +69,7 @@
                                        (.scissorCount 1)
                                        (.pScissors scissors))
           rasterization-state-create-info (doto (VkPipelineRasterizationStateCreateInfo/calloc stack)
+                                            (.sType VK13/VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO)
                                             (.depthClampEnable false) ; fragments outside the visible depth are discarded
                                             (.rasterizerDiscardEnable false) ; basically enables the rasterizer
                                             (.polygonMode VK13/VK_POLYGON_MODE_FILL)
@@ -78,7 +80,7 @@
                                             (.depthBiasConstantFactor (float 0))
                                             (.depthBiasClamp (float 0))
                                             (.depthBiasSlopeFactor (float 0)))
-          mulitsample-state-create-info (doto (VkPipelineMultisampleStateCreateInfo/calloc stack) ; VkPhysicalDeviceFeatures/MULTISAMPLING...? for now disable all
+          multisample-state-create-info (doto (VkPipelineMultisampleStateCreateInfo/calloc stack) ; VkPhysicalDeviceFeatures/MULTISAMPLING...? for now disable all
                                           (.sType VK13/VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO)
                                           (.sampleShadingEnable false)
                                           (.rasterizationSamples VK13/VK_SAMPLE_COUNT_1_BIT)
@@ -111,11 +113,35 @@
                                         (.sType VK13/VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO)
                                         (.pSetLayouts nil)
                                         (.pPushConstantRanges nil))
-          pipeline-layout-ptr (.longs stack VK13/VK_NULL_HANDLE)]
-      (when (not= (VK13/vkCreatePipelineLayout LOGICAL-DEVICE pipeline-layout-create-info nil pipeline-layout-ptr)
-                  VK13/VK_SUCCESS)
-        (throw (RuntimeException. "Couldn't create pipeline layout.")))
-      (globals/set-global! PIPELINE-LAYOUT-POINTER (.get pipeline-layout-ptr 0))
+          pipeline-layout-ptr (.longs stack VK13/VK_NULL_HANDLE)
+          _ (if (= (VK13/vkCreatePipelineLayout LOGICAL-DEVICE pipeline-layout-create-info nil pipeline-layout-ptr)
+                   VK13/VK_SUCCESS)
+              (globals/set-global! PIPELINE-LAYOUT-POINTER (.get pipeline-layout-ptr 0))
+              (throw (RuntimeException. "Couldn't create pipeline layout.")))
+          pipeline-create-infos (doto (VkGraphicsPipelineCreateInfo/calloc 1 stack)
+                                  ;; create info structs
+                                  (.sType VK13/VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO)
+                                  (.pStages shader-stages)
+                                  (.pVertexInputState vertex-input-state-create-info)
+                                  (.pInputAssemblyState input-assembly-state-create-info)
+                                  (.pViewportState viewport-state-create-info)
+                                  (.pRasterizationState rasterization-state-create-info)
+                                  (.pMultisampleState multisample-state-create-info)
+                                  (.pDepthStencilState nil)
+                                  (.pColorBlendState color-blend-state-create-info)
+                                  (.pDynamicState dynamic-state-create-info)
+                                  ;; fixed function stage structs
+                                  (.layout PIPELINE-LAYOUT-POINTER)
+                                  (.renderPass RENDER-PASS-POINTER)
+                                  (.subpass 0)
+                                  (.basePipelineHandle VK13/VK_NULL_HANDLE)
+                                  (.basePipelineIndex -1))
+          graphics-pipeline-ptr (.mallocLong stack 1)]
+      (if (= (VK13/vkCreateGraphicsPipelines LOGICAL-DEVICE VK13/VK_NULL_HANDLE pipeline-create-infos nil graphics-pipeline-ptr)
+             VK13/VK_SUCCESS)
+        (do (println "PIPELINE POINTER: " (.get graphics-pipeline-ptr 0))
+            (globals/set-global! GRAPHICS-PIPELINE-POINTER (.get graphics-pipeline-ptr 0)))
+        (throw (RuntimeException. "Couldn't create graphics pipeline.")))
       (VK13/vkDestroyShaderModule LOGICAL-DEVICE vertex-shader-module nil)
       (VK13/vkDestroyShaderModule LOGICAL-DEVICE fragment-shader-module nil)
       (.free ^SpirVShader vertex-shader-in-spir-v-format)
@@ -124,3 +150,7 @@
 (defn destroy-pipeline-layout []
   (VK13/vkDestroyPipelineLayout LOGICAL-DEVICE PIPELINE-LAYOUT-POINTER nil)
   (globals/reset-pipeline-layout-ptr))
+
+(defn destroy-graphics-pipeline []
+  (VK13/vkDestroyPipeline LOGICAL-DEVICE GRAPHICS-PIPELINE-POINTER nil)
+  (globals/reset-graphics-pipeline-ptr))

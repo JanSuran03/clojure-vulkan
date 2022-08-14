@@ -45,7 +45,7 @@
 (defn reset-swap-chain-images [] (alter-var-root #'SWAP-CHAIN-IMAGES empty))
 
 (def ^Integer SWAP-CHAIN-IMAGE-FORMAT VK13/VK_NULL_HANDLE)
-(defn reset-swap-chain-image-format [] (alter-var-root #'SWAP-CHAIN-POINTER reset-to-vk-null))
+(defn reset-swap-chain-image-foRENDER-PASS-POINTERrmat [] (alter-var-root #'SWAP-CHAIN-POINTER reset-to-vk-null))
 
 (def ^VkExtent2D SWAP-CHAIN-EXTENT nil)
 (defn reset-swap-chain-extent [] (alter-var-root #'SWAP-CHAIN-EXTENT reset-to-nil))
@@ -53,8 +53,11 @@
 (def SWAP-CHAIN-IMAGE-VIEWS [])
 (defn reset-swap-chain-image-views [] (alter-var-root #'SWAP-CHAIN-IMAGE-VIEWS empty))
 
-(def PIPELINE-LAYOUT-POINTER nullptr)
+(def ^Long PIPELINE-LAYOUT-POINTER nullptr)
 (defn reset-pipeline-layout-ptr [] (alter-var-root #'PIPELINE-LAYOUT-POINTER reset-to-vk-null))
 
-(def RENDER-PASS-POINTER nullptr)
+(def ^Long RENDER-PASS-POINTER nullptr)
 (defn reset-render-pass-ptr [] (alter-var-root #'RENDER-PASS-POINTER reset-to-vk-null))
+
+(def ^Long GRAPHICS-PIPELINE-POINTER nullptr)
+(defn reset-graphics-pipeline-ptr [] (alter-var-root #'GRAPHICS-PIPELINE-POINTER reset-to-vk-null))

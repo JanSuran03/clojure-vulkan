@@ -32,6 +32,7 @@
               (symbol "globals" (name sym))))))
 
 (defn terminate []
+  (graphics-pipeline/destroy-graphics-pipeline)
   (graphics-pipeline/destroy-pipeline-layout)
   (render-pass/destroy-render-pass)
   (image-views/destroy-image-views)
