@@ -1,5 +1,6 @@
 (ns clojure-vulkan.vulkan
-  (:require [clojure-vulkan.debug :as debug]
+  (:require [clojure-vulkan.command-buffers :as command-buffers]
+            [clojure-vulkan.debug :as debug]
             [clojure-vulkan.frame-buffers :as frame-buffers]
             [clojure-vulkan.globals :as globals]
             [clojure-vulkan.graphics-pipeline :as graphics-pipeline]
@@ -22,7 +23,8 @@
   (image-views/create-image-views)
   (render-pass/create-render-pass)
   (graphics-pipeline/create-graphics-pipeline)
-  (frame-buffers/create-frame-buffers))
+  (frame-buffers/create-frame-buffers)
+  (command-buffers/create-command-pool))
 
 (defn find-resets []
   (->> (find-ns 'clojure-vulkan.globals)
@@ -34,6 +36,7 @@
               (symbol "globals" (name sym))))))
 
 (defn terminate []
+  (command-buffers/destroy-command-pool)
   (frame-buffers/destroy-frame-buffers)
   (graphics-pipeline/destroy-graphics-pipeline)
   (graphics-pipeline/destroy-pipeline-layout)

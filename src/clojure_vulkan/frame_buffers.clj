@@ -3,7 +3,7 @@
                                                         SWAP-CHAIN-FRAME-BUFFER-POINTERS-VECTOR]]
             [clojure-vulkan.util :as util])
   (:import (org.lwjgl.system MemoryStack)
-           (org.lwjgl.vulkan VkFramebufferCreateInfo VK13 VkExtent2D)))
+           (org.lwjgl.vulkan VK13 VkExtent2D VkFramebufferCreateInfo)))
 
 (defn create-frame-buffers []
   (util/with-memory-stack-push ^MemoryStack stack
