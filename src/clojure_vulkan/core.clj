@@ -2,6 +2,7 @@
 
 (ns clojure-vulkan.core
   (:require [clojure-vulkan.glfw :as glfw]
+            [clojure-vulkan.render :as render]
             [clojure-vulkan.util :as util]
             [clojure-vulkan.validation-layers :as validation-layers]
             [clojure-vulkan.vulkan :as vulkan]
@@ -27,7 +28,8 @@
 
       ;; application loop
       (while (not (window/should-window-close?))
-        (glfw/poll-events))
+        (glfw/poll-events)
+        (render/draw-frame))
 
       (catch Throwable t
         (println "An error occured:" (.getMessage t)

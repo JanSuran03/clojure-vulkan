@@ -8,6 +8,7 @@
             [clojure-vulkan.instance :as instance]
             [clojure-vulkan.logical-device-and-queue :as logical-device-and-queue]
             [clojure-vulkan.physical-device :as physical-device]
+            [clojure-vulkan.render :as render]
             [clojure-vulkan.render-pass :as render-pass]
             [clojure-vulkan.swap-chain :as swap-chain]
             [clojure-vulkan.validation-layers :as validation-layers]
@@ -25,7 +26,8 @@
   (graphics-pipeline/create-graphics-pipeline)
   (frame-buffers/create-frame-buffers)
   (command-buffers/create-command-pool)
-  (command-buffers/create-command-buffers))
+  (command-buffers/create-command-buffers)
+  (render/create-sync-objects))
 
 (defn find-resets []
   (->> (find-ns 'clojure-vulkan.globals)
@@ -37,6 +39,7 @@
               (symbol "globals" (name sym))))))
 
 (defn terminate []
+  (render/destroy-semaphores-and-fences)
   (command-buffers/destroy-command-buffers)
   (command-buffers/destroy-command-pool)
   (frame-buffers/destroy-frame-buffers)

@@ -75,7 +75,6 @@
                              (.height (float (.height SWAP-CHAIN-EXTENT)))
                              (.minDepth (float 0))
                              (.maxDepth (float 1)))
-          _ (println "VIEWPORTS:" viewports-buffer)
           render-pass-begin-info (doto (VkRenderPassBeginInfo/calloc stack)
                                    (.sType VK13/VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO)
                                    (.renderPass RENDER-PASS-POINTER)
