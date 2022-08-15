@@ -22,12 +22,11 @@
                                        "\nAvailable layers: " (str/join ", " available-layers)
                                        "\nRequired layers: " (str/join ", " *validation-layers*))))))))
 
-(defn get-required-extensions []
+(defn get-required-extensions [^MemoryStack stack]
   (let [^PointerBuffer glfw-extensions (GLFWVulkan/glfwGetRequiredInstanceExtensions)]
     (if *enable-validation-layers*
-      (util/with-memory-stack-get ^MemoryStack stack
-        (doto (.mallocPointer stack (inc (.capacity glfw-extensions)))
-          (.put glfw-extensions)
-          (.put (.UTF8 stack EXTDebugUtils/VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
-          .rewind))
+      (doto (.mallocPointer stack (inc (.capacity glfw-extensions)))
+        (.put glfw-extensions)
+        (.put (.UTF8 stack EXTDebugUtils/VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
+        .rewind)
       glfw-extensions)))

@@ -12,10 +12,6 @@
   `(with-open [^MemoryStack ~stack (MemoryStack/stackPush)]
      ~@body))
 
-(defmacro with-memory-stack-get [stack & body]
-  `(let [^MemoryStack ~stack (MemoryStack/stackGet)]
-     ~@body))
-
 (defn partition-string-by [^String s ^long n]
   (let [len (.length s)]
     (loop [cur 0

@@ -139,8 +139,7 @@
           graphics-pipeline-ptr (.mallocLong stack 1)]
       (if (= (VK13/vkCreateGraphicsPipelines LOGICAL-DEVICE VK13/VK_NULL_HANDLE pipeline-create-infos nil graphics-pipeline-ptr)
              VK13/VK_SUCCESS)
-        (do (println "PIPELINE POINTER: " (.get graphics-pipeline-ptr 0))
-            (globals/set-global! GRAPHICS-PIPELINE-POINTER (.get graphics-pipeline-ptr 0)))
+        (globals/set-global! GRAPHICS-PIPELINE-POINTER (.get graphics-pipeline-ptr 0))
         (throw (RuntimeException. "Couldn't create graphics pipeline.")))
       (VK13/vkDestroyShaderModule LOGICAL-DEVICE vertex-shader-module nil)
       (VK13/vkDestroyShaderModule LOGICAL-DEVICE fragment-shader-module nil)

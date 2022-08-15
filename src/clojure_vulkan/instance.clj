@@ -20,7 +20,7 @@
           ^VkInstanceCreateInfo create-info (doto (VkInstanceCreateInfo/calloc stack)
                                               (.sType VK13/VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO)
                                               (.pApplicationInfo app-info)
-                                              (.ppEnabledExtensionNames (validation-layers/get-required-extensions))
+                                              (.ppEnabledExtensionNames (validation-layers/get-required-extensions stack))
                                               (.ppEnabledLayerNames nil))
           ^VkInstanceCreateInfo create-info (if validation-layers/*enable-validation-layers*
                                               (let [^VkDebugUtilsMessengerCreateInfoEXT debug-create-info
