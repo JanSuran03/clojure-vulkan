@@ -62,20 +62,20 @@
                                            (and formats-ptr
                                                 (.hasRemaining ^VkSurfaceFormatKHR$Buffer formats-ptr)
                                                 present-modes-ptr
-                                                (.hasRemaining ^IntBuffer present-modes-ptr))))
-              _ (if (and graphics-family present-family
-                         (check-device-extension-support device)
-                         (query-swap-chain-support))
-                  (do (VK13/vkGetPhysicalDeviceProperties device device-properties)
-                      (VK13/vkGetPhysicalDeviceFeatures device device-features)
-                      (when (= (.deviceType device-properties) VK13/VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
-                        (vswap! score + 1000))
-                      (when-not (.geometryShader device-features)
-                        (vreset! score 0))
-                      (vswap! devices conj (list @score device))
-                      (vreset! graphics-family* graphics-family)
-                      (vreset! present-family* present-family))
-                  (vreset! score nil))]))
+                                                (.hasRemaining ^IntBuffer present-modes-ptr))))]
+          (if (and graphics-family present-family
+                   (check-device-extension-support device)
+                   (query-swap-chain-support))
+            (do (VK13/vkGetPhysicalDeviceProperties device device-properties)
+                (VK13/vkGetPhysicalDeviceFeatures device device-features)
+                (when (= (.deviceType device-properties) VK13/VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
+                  (vswap! score + 1000))
+                (when-not (.geometryShader device-features)
+                  (vreset! score 0))
+                (vswap! devices conj (list @score device))
+                (vreset! graphics-family* graphics-family)
+                (vreset! present-family* present-family))
+            (vreset! score nil))))
       {:graphics-family* @graphics-family*
        :present-family*  @present-family*
        :physical-device* (->> @devices (remove (fn [[score _]]

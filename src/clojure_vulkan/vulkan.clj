@@ -24,7 +24,8 @@
   (render-pass/create-render-pass)
   (graphics-pipeline/create-graphics-pipeline)
   (frame-buffers/create-frame-buffers)
-  (command-buffers/create-command-pool))
+  (command-buffers/create-command-pool)
+  (command-buffers/create-command-buffers))
 
 (defn find-resets []
   (->> (find-ns 'clojure-vulkan.globals)
@@ -36,6 +37,7 @@
               (symbol "globals" (name sym))))))
 
 (defn terminate []
+  (command-buffers/destroy-command-buffers)
   (command-buffers/destroy-command-pool)
   (frame-buffers/destroy-frame-buffers)
   (graphics-pipeline/destroy-graphics-pipeline)

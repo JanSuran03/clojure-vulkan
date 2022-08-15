@@ -65,5 +65,8 @@
 (def SWAP-CHAIN-FRAME-BUFFER-POINTERS-VECTOR [])
 (defn reset-swap-chain-frame-buffers [] (alter-var-root #'SWAP-CHAIN-FRAME-BUFFER-POINTERS-VECTOR empty))
 
-(def COMMAND-POOL-POINTER nullptr)
+(def ^Long COMMAND-POOL-POINTER nullptr)
 (defn reset-command-pool-ptr [] (alter-var-root #'COMMAND-POOL-POINTER reset-to-vk-null))
+
+(def COMMAND-BUFFERS [])
+(defn reset-command-buffers [] (alter-var-root #'COMMAND-BUFFERS empty))
