@@ -16,8 +16,7 @@
 (list :file-debug)
 
 (defn -main [& [{:keys [file-debug] :as opts}]]
-  (binding [util/*doto-debug* (find-or-default opts :debug)
-            validation-layers/*enable-validation-layers* (find-or-default opts :validation)
+  (binding [validation-layers/*enable-validation-layers* (find-or-default opts :validation)
             util/*current-debug-filename* (when file-debug (util/debug-filename))]
     (try
       ;; init

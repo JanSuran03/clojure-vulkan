@@ -1,9 +1,11 @@
 (ns clojure-vulkan.render
-  (:require [clojure-vulkan.globals :as globals :refer [COMMAND-BUFFERS GRAPHICS-PIPELINE-POINTER GRAPHICS-QUEUE LOGICAL-DEVICE RENDER-PASS-POINTER
-                                                        SWAP-CHAIN-EXTENT SWAP-CHAIN-FRAME-BUFFER-POINTERS-VECTOR SWAP-CHAIN-POINTER]]
+  (:require [clojure-vulkan.globals :as globals :refer [COMMAND-BUFFERS GRAPHICS-PIPELINE-POINTER GRAPHICS-QUEUE LOGICAL-DEVICE
+                                                        PRESENT-QUEUE RENDER-PASS-POINTER SWAP-CHAIN-EXTENT
+                                                        SWAP-CHAIN-FRAME-BUFFER-POINTERS-VECTOR SWAP-CHAIN-POINTER]]
             [clojure-vulkan.util :as util])
   (:import (org.lwjgl.system MemoryStack Pointer)
-           (org.lwjgl.vulkan KHRSwapchain VK13 VkClearColorValue VkClearValue VkCommandBuffer VkCommandBufferBeginInfo VkFenceCreateInfo VkOffset2D VkRect2D VkRenderPassBeginInfo VkSemaphoreCreateInfo VkSubmitInfo VkViewport)
+           (org.lwjgl.vulkan KHRSwapchain VK13 VkClearColorValue VkClearValue VkCommandBuffer VkCommandBufferBeginInfo VkFenceCreateInfo
+                             VkOffset2D VkPresentInfoKHR VkRect2D VkRenderPassBeginInfo VkSemaphoreCreateInfo VkSubmitInfo VkViewport)
            (clojure_vulkan Semaphores)))
 
 (def ^Long infinite-timeout 0x7fffffffffffffff)
@@ -47,8 +49,9 @@
       (VK13/vkWaitForFences LOGICAL-DEVICE (.getInFlightFencePointer SEMAPHORES) true infinite-timeout)
       (VK13/vkResetFences LOGICAL-DEVICE (.getInFlightFencePointer SEMAPHORES))
       (KHRSwapchain/vkAcquireNextImageKHR LOGICAL-DEVICE SWAP-CHAIN-POINTER infinite-timeout
-                                          ^Long (.getImageAvailableSemaphorePointer SEMAPHORES)
+                                          (.getImageAvailableSemaphorePointer SEMAPHORES)
                                           VK13/VK_NULL_HANDLE image-index)
+      (println "NEXT IMAGE INDEX: " (.get image-index 0))
       (VK13/vkResetCommandBuffer (first COMMAND-BUFFERS) 0)
       ;; record command buffer
       (let [command-buffer-begin-info (doto (VkCommandBufferBeginInfo/calloc stack)
@@ -60,7 +63,7 @@
                           (.offset (.set (VkOffset2D/calloc stack) 0 0))
                           (.extent SWAP-CHAIN-EXTENT))
             clear-values (VkClearValue/calloc 1 stack)
-            _ (.float32 ^VkClearColorValue (.color clear-values) (.floats stack 0 1 0 1))
+            _ (.float32 ^VkClearColorValue (.color clear-values) (.floats stack 0 0 0 1))
             render-pass-begin-info (doto (VkRenderPassBeginInfo/calloc stack)
                                      (.sType VK13/VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO)
                                      (.renderPass RENDER-PASS-POINTER)
@@ -87,6 +90,7 @@
         (when (not= (VK13/vkEndCommandBuffer (first COMMAND-BUFFERS))
                     VK13/VK_SUCCESS)
           (throw (RuntimeException. "Failed to record command buffer."))))
+      ;; and do the rest
       (let [wait-semaphores (.longs stack (.getImageAvailableSemaphorePointer SEMAPHORES))
             wait-stages (.ints stack VK13/VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
             signal-semaphores (.longs stack (.getRenderFinishedSemaphorePointer SEMAPHORES))
@@ -96,9 +100,15 @@
                           (.pWaitSemaphores wait-semaphores)
                           (.pWaitDstStageMask wait-stages)
                           (.pCommandBuffers (.pointers stack ^Pointer (first COMMAND-BUFFERS)))
-                          (.pSignalSemaphores signal-semaphores))]
-        (println "Got there")
-        (when (not= (VK13/vkQueueSubmit GRAPHICS-QUEUE submit-info (.getInFlightFencePointer SEMAPHORES))
-                    VK13/VK_SUCCESS)
-          (throw (RuntimeException. "Failed to submit draw command buffer.")))
-        (println "And got there as well.")))))
+                          (.pSignalSemaphores signal-semaphores))
+            _ (when (not= (VK13/vkQueueSubmit GRAPHICS-QUEUE submit-info (.getInFlightFencePointer SEMAPHORES))
+                          VK13/VK_SUCCESS)
+                (throw (RuntimeException. "Failed to submit draw command buffer.")))
+            present-info (doto (VkPresentInfoKHR/calloc stack)
+                           (.sType KHRSwapchain/VK_STRUCTURE_TYPE_PRESENT_INFO_KHR)
+                           (.pWaitSemaphores signal-semaphores)
+                           (.swapchainCount 1)
+                           (.pSwapchains (.longs stack SWAP-CHAIN-POINTER))
+                           (.pImageIndices image-index)
+                           (.pResults nil))]
+        (KHRSwapchain/vkQueuePresentKHR PRESENT-QUEUE present-info)))))

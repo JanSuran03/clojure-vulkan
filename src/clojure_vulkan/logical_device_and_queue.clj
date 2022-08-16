@@ -1,5 +1,5 @@
 (ns clojure-vulkan.logical-device-and-queue
-  (:require [clojure-vulkan.globals :as globals :refer [GRAPHICS-QUEUE LOGICAL-DEVICE PHYSICAL-DEVICE QUEUE-FAMILIES]]
+  (:require [clojure-vulkan.globals :as globals :refer [GRAPHICS-QUEUE LOGICAL-DEVICE PHYSICAL-DEVICE PRESENT-QUEUE QUEUE-FAMILIES]]
             [clojure-vulkan.physical-device :as physical-device]
             [clojure-vulkan.util :as util]
             [clojure-vulkan.validation-layers :as validation-layers])
@@ -36,7 +36,8 @@
       (VK13/vkGetDeviceQueue device graphics-family 0 graphics-queue-ptr)
       (VK13/vkGetDeviceQueue device present-family 0 present-queue-ptr)
       (globals/set-global! LOGICAL-DEVICE device)
-      (globals/set-global! GRAPHICS-QUEUE (VkQueue. (.get graphics-queue-ptr 0) LOGICAL-DEVICE)))))
+      (globals/set-global! GRAPHICS-QUEUE (VkQueue. (.get graphics-queue-ptr 0) LOGICAL-DEVICE))
+      (globals/set-global! PRESENT-QUEUE (VkQueue. (.get present-queue-ptr 0) LOGICAL-DEVICE)))))
 
 (defn destroy-logical-device []
   (VK13/vkDestroyDevice LOGICAL-DEVICE nil)
