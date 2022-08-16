@@ -15,7 +15,7 @@
           _ (VK13/vkEnumerateInstanceLayerProperties layer-count nil)
           ^VkLayerProperties$Buffer available-layers (VkLayerProperties/malloc (.get layer-count 0) stack)
           _ (VK13/vkEnumerateInstanceLayerProperties layer-count available-layers)
-          available-layers (->> available-layers util/buffer->seq
+          available-layers (->> available-layers util/struct-buffer->seq
                                 (map (memfn ^VkLayerProperties layerNameString)) set)]
       (when-not (every? #(contains? available-layers %) *validation-layers*)
         (throw (RuntimeException. (str "Some of validation layers are not supported."

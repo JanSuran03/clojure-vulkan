@@ -73,7 +73,7 @@
       (time (doseq [ns nss]
               (require `[~ns :reload true]))))))
 
-(defn buffer->seq [^StructBuffer buffer]
+(defn struct-buffer->seq [^StructBuffer buffer]
   (-> buffer .iterator iterator-seq))
 
 (defn clamp [^Integer min-value ^Integer value ^Integer max-value]

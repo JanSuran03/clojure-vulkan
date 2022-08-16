@@ -7,8 +7,8 @@
 
 (defn create-frame-buffers []
   (util/with-memory-stack-push ^MemoryStack stack
-    (let [attachments-multiuse-buffer (.mallocLong stack 1)
-          frame-buffer-multiuse-ptr (.mallocLong stack 1)
+    (let [attachments-buffer (.mallocLong stack 1)
+          frame-buffer-ptr (.mallocLong stack 1)
           frame-buffer-create-info (doto (VkFramebufferCreateInfo/calloc stack)
                                      (.sType VK13/VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO)
                                      (.renderPass RENDER-PASS-POINTER)
@@ -17,11 +17,11 @@
                                      (.height (.height ^VkExtent2D SWAP-CHAIN-EXTENT))
                                      (.layers 1))]
       (doseq [^Long image-view SWAP-CHAIN-IMAGE-VIEWS]
-        (.put attachments-multiuse-buffer 0 image-view)
-        (.pAttachments frame-buffer-create-info attachments-multiuse-buffer)
-        (if (= (VK13/vkCreateFramebuffer LOGICAL-DEVICE frame-buffer-create-info nil frame-buffer-multiuse-ptr)
+        (.put attachments-buffer 0 image-view)
+        (.pAttachments frame-buffer-create-info attachments-buffer)
+        (if (= (VK13/vkCreateFramebuffer LOGICAL-DEVICE frame-buffer-create-info nil frame-buffer-ptr)
                VK13/VK_SUCCESS)
-          (alter-var-root #'SWAP-CHAIN-FRAME-BUFFER-POINTERS-VECTOR conj (.get frame-buffer-multiuse-ptr 0))
+          (alter-var-root #'SWAP-CHAIN-FRAME-BUFFER-POINTERS-VECTOR conj (.get frame-buffer-ptr 0))
           (throw (RuntimeException. "Failed to create framebuffer.")))))))
 
 (defn destroy-frame-buffers []

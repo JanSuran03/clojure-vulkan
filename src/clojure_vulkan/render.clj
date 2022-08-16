@@ -1,7 +1,7 @@
 (ns clojure-vulkan.render
-  (:require [clojure-vulkan.globals :as globals :refer [COMMAND-BUFFERS GRAPHICS-PIPELINE-POINTER GRAPHICS-QUEUE LOGICAL-DEVICE
-                                                        PRESENT-QUEUE RENDER-PASS-POINTER SWAP-CHAIN-EXTENT
-                                                        SWAP-CHAIN-FRAME-BUFFER-POINTERS-VECTOR SWAP-CHAIN-POINTER]]
+  (:require [clojure-vulkan.globals :refer [COMMAND-BUFFERS GRAPHICS-PIPELINE-POINTER GRAPHICS-QUEUE LOGICAL-DEVICE PRESENT-QUEUE
+                                            RENDER-PASS-POINTER SWAP-CHAIN-EXTENT SWAP-CHAIN-FRAME-BUFFER-POINTERS-VECTOR
+                                            SWAP-CHAIN-POINTER]]
             [clojure-vulkan.util :as util])
   (:import (org.lwjgl.system MemoryStack Pointer)
            (org.lwjgl.vulkan KHRSwapchain VK13 VkClearColorValue VkClearValue VkCommandBuffer VkCommandBufferBeginInfo VkFenceCreateInfo

@@ -35,7 +35,7 @@
                                                             :surface-capabilities surface-capabilities})))))
 
 (defn ^VkSurfaceFormatKHR choose-swap-surface-format [^VkSurfaceFormatKHR$Buffer formats-ptr]
-  (or (->> (util/buffer->seq formats-ptr)
+  (or (->> (util/struct-buffer->seq formats-ptr)
            (some (fn [^VkSurfaceFormatKHR format]
                    (and (= (.format format) VK13/VK_FORMAT_B8G8R8_UNORM)
                         (= (.colorSpace format) KHRSurface/VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
