@@ -5,7 +5,7 @@
             [clojure-vulkan.validation-layers :as validation-layers])
   (:import (org.lwjgl.system MemoryStack)
            (org.lwjgl.vulkan VK13 VkDevice VkDeviceCreateInfo VkDeviceQueueCreateInfo VkDeviceQueueCreateInfo$Buffer
-                             VkPhysicalDeviceFeatures)))
+                             VkPhysicalDeviceFeatures VkQueue)))
 
 (defn create-logical-device []
   (util/with-memory-stack-push ^MemoryStack stack
@@ -36,7 +36,7 @@
       (VK13/vkGetDeviceQueue device graphics-family 0 graphics-queue-ptr)
       (VK13/vkGetDeviceQueue device present-family 0 present-queue-ptr)
       (globals/set-global! LOGICAL-DEVICE device)
-      (globals/set-global! GRAPHICS-QUEUE (.get graphics-queue-ptr 0)))))
+      (globals/set-global! GRAPHICS-QUEUE (VkQueue. (.get graphics-queue-ptr 0) LOGICAL-DEVICE)))))
 
 (defn destroy-logical-device []
   (VK13/vkDestroyDevice LOGICAL-DEVICE nil)

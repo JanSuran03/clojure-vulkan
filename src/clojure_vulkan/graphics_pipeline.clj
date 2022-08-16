@@ -61,7 +61,7 @@
                      (.extent SWAP-CHAIN-EXTENT))
           dynamic-state-create-info (doto (VkPipelineDynamicStateCreateInfo/calloc stack)
                                       (.sType VK13/VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO)
-                                      (.pDynamicStates (util/integers-as-pointer-buffer stack dynamic-states-vec)))
+                                      (.pDynamicStates (util/integers-as-int-buffer stack dynamic-states-vec)))
           viewport-state-create-info (doto (VkPipelineViewportStateCreateInfo/calloc stack)
                                        (.sType VK13/VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO)
                                        (.viewportCount 1)

@@ -70,6 +70,3 @@
 
 (def COMMAND-BUFFERS [])
 (defn reset-command-buffers [] (alter-var-root #'COMMAND-BUFFERS empty))
-
-(def SEMAPHORES-AND-FENCES {})
-(defn reset-semaphores-and-fences [] (alter-var-root #'SEMAPHORES-AND-FENCES empty))

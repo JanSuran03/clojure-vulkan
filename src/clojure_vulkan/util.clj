@@ -36,21 +36,6 @@
 
 (def ^:dynamic *doto-debug* false)
 
-(defn- do-debug [num]
-  (binding [*out* *err*]
-    (println "***********************************")
-    (println "Got there: " num)
-    (println "***********************************")))
-
-(defn doto-debug [ret stage]
-  (when true                                                ;*doto-debug*
-    (do-debug stage)
-    ret))
-
-(defn debug [stage]
-  (when true                                                ;*doto-debug*
-    (do-debug stage)))
-
 (def ^:dynamic *current-debug-filename* nil)
 
 (def debug-prefix "debug__")
@@ -72,7 +57,7 @@
       (.put buffer (.UTF8 stack string)))
     (.rewind buffer)))
 
-(defn integers-as-pointer-buffer [^MemoryStack stack integer-seq]
+(defn integers-as-int-buffer [^MemoryStack stack integer-seq]
   (let [buffer (.mallocInt stack (count integer-seq))]
     (doseq [^int i integer-seq]
       (.put buffer i))
