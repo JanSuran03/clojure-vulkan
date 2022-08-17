@@ -48,7 +48,7 @@
   (graphics-pipeline/destroy-pipeline-layout)
   (render-pass/destroy-render-pass)
   (image-views/destroy-image-views)
-  (swap-chain/destroy-swapchain)
+  (swap-chain/destroy-swap-chain)
   (window-surface/destroy-surface)
   (logical-device-and-queue/destroy-logical-device)
   (when validation-layers/*enable-validation-layers*

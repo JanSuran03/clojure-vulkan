@@ -1,8 +1,7 @@
 (ns clojure-vulkan.swap-chain
-  (:require [clojure-vulkan.globals :refer [LOGICAL-DEVICE PHYSICAL-DEVICE QUEUE-FAMILIES SWAP-CHAIN-EXTENT SWAP-CHAIN-IMAGE-FORMAT
+  (:require [clojure-vulkan.globals :as globals :refer [LOGICAL-DEVICE PHYSICAL-DEVICE QUEUE-FAMILIES SWAP-CHAIN-EXTENT SWAP-CHAIN-IMAGE-FORMAT
                                             SWAP-CHAIN-IMAGES SWAP-CHAIN-POINTER SWAP-CHAIN-SUPPORT-DETAILS WINDOW-POINTER WINDOW-SURFACE-POINTER]]
-            [clojure-vulkan.util :as util]
-            [clojure-vulkan.globals :as globals])
+            [clojure-vulkan.util :as util])
   (:import (java.nio IntBuffer)
            (org.lwjgl.glfw GLFW)
            (org.lwjgl.system MemoryStack)
@@ -118,5 +117,5 @@
       (globals/set-global! SWAP-CHAIN-EXTENT (doto (VkExtent2D/create)
                                                (.set extent))))))
 
-(defn destroy-swapchain []
+(defn destroy-swap-chain []
   (KHRSwapchain/vkDestroySwapchainKHR LOGICAL-DEVICE SWAP-CHAIN-POINTER nil))
