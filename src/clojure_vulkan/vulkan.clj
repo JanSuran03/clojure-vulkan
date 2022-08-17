@@ -40,20 +40,17 @@
               (symbol "globals" (name sym))))))
 
 (defn terminate []
+  (swap-chain/cleanup-swap-chain)
   (frame/destroy-semaphores-and-fences)
-  (command-buffers/destroy-command-buffers)
   (command-buffers/destroy-command-pool)
-  (frame-buffers/destroy-frame-buffers)
   (graphics-pipeline/destroy-graphics-pipeline)
   (graphics-pipeline/destroy-pipeline-layout)
   (render-pass/destroy-render-pass)
-  (image-views/destroy-image-views)
-  (swap-chain/destroy-swap-chain)
   (window-surface/destroy-surface)
   (logical-device-and-queue/destroy-logical-device)
   (when validation-layers/*enable-validation-layers*
     (debug/destroy-debug-messenger nil))
-  (instance/destroy)
+  (instance/destroy-instance)
   (globals/reset-queue-families)
   (globals/reset-swap-chain-support-details))
 

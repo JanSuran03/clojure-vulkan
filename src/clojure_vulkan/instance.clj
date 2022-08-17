@@ -34,6 +34,6 @@
         (throw (RuntimeException. "Failed to create Vulkan instance.")))
       (globals/set-global! VULKAN-INSTANCE (VkInstance. (.get instance-ptr 0) create-info)))))
 
-(defn destroy []
+(defn destroy-instance []
   (util/assert-not-null VULKAN-INSTANCE (VK13/vkDestroyInstance VULKAN-INSTANCE nil))
   (globals/reset-vulkan-instance))

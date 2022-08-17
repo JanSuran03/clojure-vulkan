@@ -1,6 +1,10 @@
 (ns clojure-vulkan.swap-chain
-  (:require [clojure-vulkan.globals :as globals :refer [LOGICAL-DEVICE PHYSICAL-DEVICE QUEUE-FAMILIES SWAP-CHAIN-EXTENT SWAP-CHAIN-IMAGE-FORMAT
-                                            SWAP-CHAIN-IMAGES SWAP-CHAIN-POINTER SWAP-CHAIN-SUPPORT-DETAILS WINDOW-POINTER WINDOW-SURFACE-POINTER]]
+  (:require [clojure-vulkan.frame-buffers :as frame-buffers]
+            [clojure-vulkan.globals :as globals :refer [LOGICAL-DEVICE PHYSICAL-DEVICE QUEUE-FAMILIES SWAP-CHAIN-EXTENT
+                                                        SWAP-CHAIN-FRAME-BUFFER-POINTERS SWAP-CHAIN-IMAGE-FORMAT
+                                                        SWAP-CHAIN-IMAGE-VIEWS-POINTERS SWAP-CHAIN-IMAGES SWAP-CHAIN-POINTER
+                                                        SWAP-CHAIN-SUPPORT-DETAILS WINDOW-POINTER WINDOW-SURFACE-POINTER]]
+            [clojure-vulkan.image-views :as image-views]
             [clojure-vulkan.util :as util])
   (:import (java.nio IntBuffer)
            (org.lwjgl.glfw GLFW)
@@ -119,3 +123,17 @@
 
 (defn destroy-swap-chain []
   (KHRSwapchain/vkDestroySwapchainKHR LOGICAL-DEVICE SWAP-CHAIN-POINTER nil))
+
+(defn cleanup-swap-chain []
+  (doseq [swap-chain-frame-buffer-ptr SWAP-CHAIN-FRAME-BUFFER-POINTERS]
+    (VK13/vkDestroyFramebuffer LOGICAL-DEVICE ^long swap-chain-frame-buffer-ptr nil))
+  (doseq [swap-chain-image-view-ptr SWAP-CHAIN-IMAGE-VIEWS-POINTERS]
+    (VK13/vkDestroyImageView LOGICAL-DEVICE ^long swap-chain-image-view-ptr nil))
+  (KHRSwapchain/vkDestroySwapchainKHR LOGICAL-DEVICE SWAP-CHAIN-POINTER nil))
+
+(defn recreate-swap-chain []
+  (VK13/vkDeviceWaitIdle LOGICAL-DEVICE)
+  (cleanup-swap-chain)
+  (create-swap-chain)
+  (image-views/create-image-views)
+  (frame-buffers/create-frame-buffers))

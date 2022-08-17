@@ -1,7 +1,7 @@
 (ns clojure-vulkan.command-buffers
   (:require [clojure-vulkan.globals :as globals :refer [COMMAND-BUFFERS COMMAND-POOL-POINTER GRAPHICS-PIPELINE-POINTER
                                                         LOGICAL-DEVICE QUEUE-FAMILIES RENDER-PASS-POINTER SWAP-CHAIN-EXTENT
-                                                        SWAP-CHAIN-FRAME-BUFFER-POINTERS-VECTOR]]
+                                                        SWAP-CHAIN-FRAME-BUFFER-POINTERS]]
             [clojure-vulkan.util :as util])
   (:import (org.lwjgl.system MemoryStack)
            (org.lwjgl.vulkan VK13 VkClearColorValue VkClearValue VkCommandBuffer
@@ -21,9 +21,17 @@
         (globals/set-global! COMMAND-POOL-POINTER (.get command-pool-ptr 0))
         (throw (RuntimeException. "Failed to create command pool."))))))
 
-(defn destroy-command-pool []
+(defn- destroy-command-buffers
+  "No need for Vulkan cleanup, destroyed with their command pools."
+  []
+  (globals/reset-command-buffers))
+
+(defn destroy-command-pool
+  "Destroys command buffers as well."
+  []
   (VK13/vkDestroyCommandPool LOGICAL-DEVICE COMMAND-POOL-POINTER nil)
-  (globals/reset-command-pool-ptr))
+  (globals/reset-command-pool-ptr)
+  (destroy-command-buffers))
 
 (defn record-command-buffer [{:keys [^VkCommandBuffer command-buffer
                                      ^VkCommandBufferBeginInfo command-buffer-begin-info
@@ -90,10 +98,5 @@
                                 :command-buffer-begin-info       command-buffer-begin-info
                                 :render-pass-begin-info          render-pass-begin-info
                                 :scissor-buffers                 scissor-buffers
-                                :swap-chain-frame-buffer-pointer (nth SWAP-CHAIN-FRAME-BUFFER-POINTERS-VECTOR i)
+                                :swap-chain-frame-buffer-pointer (nth SWAP-CHAIN-FRAME-BUFFER-POINTERS i)
                                 :viewports-buffer                viewports-buffer})))))
-
-(defn destroy-command-buffers
-  "No need for Vulkan cleanup, destroyed with their command pools."
-  []
-  (globals/reset-command-buffers))

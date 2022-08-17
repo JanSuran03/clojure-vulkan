@@ -50,8 +50,8 @@
 (def ^VkExtent2D SWAP-CHAIN-EXTENT nil)
 (defn reset-swap-chain-extent [] (alter-var-root #'SWAP-CHAIN-EXTENT reset-to-nil))
 
-(def SWAP-CHAIN-IMAGE-VIEWS [])
-(defn reset-swap-chain-image-views [] (alter-var-root #'SWAP-CHAIN-IMAGE-VIEWS empty))
+(def SWAP-CHAIN-IMAGE-VIEWS-POINTERS [])
+(defn reset-swap-chain-image-views [] (alter-var-root #'SWAP-CHAIN-IMAGE-VIEWS-POINTERS empty))
 
 (def ^Long PIPELINE-LAYOUT-POINTER nullptr)
 (defn reset-pipeline-layout-ptr [] (alter-var-root #'PIPELINE-LAYOUT-POINTER reset-to-vk-null))
@@ -62,8 +62,8 @@
 (def ^Long GRAPHICS-PIPELINE-POINTER nullptr)
 (defn reset-graphics-pipeline-ptr [] (alter-var-root #'GRAPHICS-PIPELINE-POINTER reset-to-vk-null))
 
-(def SWAP-CHAIN-FRAME-BUFFER-POINTERS-VECTOR [])
-(defn reset-swap-chain-frame-buffers [] (alter-var-root #'SWAP-CHAIN-FRAME-BUFFER-POINTERS-VECTOR empty))
+(def SWAP-CHAIN-FRAME-BUFFER-POINTERS [])
+(defn reset-swap-chain-frame-buffers [] (alter-var-root #'SWAP-CHAIN-FRAME-BUFFER-POINTERS empty))
 
 (def ^Long COMMAND-POOL-POINTER nullptr)
 (defn reset-command-pool-ptr [] (alter-var-root #'COMMAND-POOL-POINTER reset-to-vk-null))
