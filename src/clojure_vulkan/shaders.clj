@@ -25,10 +25,6 @@
         (aset-short ret i (Byte/toUnsignedInt (aget signed-byte-out i))))
       ret)))
 
-;; let source = (seq (Files/readAllBytes (Path/of @#'shaders/shader-sources-root (into-array String ["shader.vert"]))))
-;; or (slurp-bytes (str shader-sources-root \/ shader-source-file))
-;; the tutorial way to do this, but why lol
-
 (defprotocol ISpirVShader
   (get-address [this])
   (get-bytebuffer [this]))

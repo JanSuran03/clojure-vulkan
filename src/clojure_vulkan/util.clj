@@ -63,11 +63,13 @@
       (.put buffer i))
     (.rewind buffer)))
 
+(defn app-nss [] (->> (all-ns)
+                      (filter #(str/starts-with? % "clojure-vulkan"))
+                      (map (comp symbol str))
+                      doall))
+
 (defn test-compile-speed []
-  (let [nss (->> (all-ns)
-                 (filter #(str/starts-with? % "clojure-vulkan"))
-                 (map (comp symbol str))
-                 doall)]
+  (let [nss (app-nss)]
     (println "Namespaces:" (count nss))
     (dotimes [_ 5]
       (time (doseq [ns nss]

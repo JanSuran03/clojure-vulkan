@@ -1,6 +1,6 @@
 (ns clojure-vulkan.frame-buffers
-  (:require [clojure-vulkan.globals :as globals :refer [LOGICAL-DEVICE RENDER-PASS-POINTER SWAP-CHAIN-EXTENT SWAP-CHAIN-IMAGE-VIEWS
-                                                        SWAP-CHAIN-FRAME-BUFFER-POINTERS-VECTOR]]
+  (:require [clojure-vulkan.globals :as globals :refer [LOGICAL-DEVICE RENDER-PASS-POINTER SWAP-CHAIN-EXTENT
+                                                        SWAP-CHAIN-IMAGE-VIEWS SWAP-CHAIN-FRAME-BUFFER-POINTERS-VECTOR]]
             [clojure-vulkan.util :as util])
   (:import (org.lwjgl.system MemoryStack)
            (org.lwjgl.vulkan VK13 VkExtent2D VkFramebufferCreateInfo)))

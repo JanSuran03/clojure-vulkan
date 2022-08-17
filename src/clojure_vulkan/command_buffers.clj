@@ -1,6 +1,7 @@
 (ns clojure-vulkan.command-buffers
-  (:require [clojure-vulkan.globals :as globals :refer [COMMAND-BUFFERS COMMAND-POOL-POINTER GRAPHICS-PIPELINE-POINTER LOGICAL-DEVICE QUEUE-FAMILIES
-                                                        RENDER-PASS-POINTER SWAP-CHAIN-EXTENT SWAP-CHAIN-FRAME-BUFFER-POINTERS-VECTOR]]
+  (:require [clojure-vulkan.globals :as globals :refer [COMMAND-BUFFERS COMMAND-POOL-POINTER GRAPHICS-PIPELINE-POINTER
+                                                        LOGICAL-DEVICE QUEUE-FAMILIES RENDER-PASS-POINTER SWAP-CHAIN-EXTENT
+                                                        SWAP-CHAIN-FRAME-BUFFER-POINTERS-VECTOR]]
             [clojure-vulkan.util :as util])
   (:import (org.lwjgl.system MemoryStack)
            (org.lwjgl.vulkan VK13 VkClearColorValue VkClearValue VkCommandBuffer
@@ -46,20 +47,20 @@
 
 (defn create-command-buffers []
   (util/with-memory-stack-push ^MemoryStack stack
-    (let [command-buffers-count #_(count SWAP-CHAIN-FRAME-BUFFER-POINTERS-VECTOR) 1
+    (let [command-buffers-count 3
           command-buffer-allocate-info (doto (VkCommandBufferAllocateInfo/calloc stack)
                                          (.sType VK13/VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO)
                                          (.commandPool COMMAND-POOL-POINTER)
                                          (.level VK13/VK_COMMAND_BUFFER_LEVEL_PRIMARY)
-                                         (.commandBufferCount 1))
+                                         (.commandBufferCount command-buffers-count))
           command-buffers-ptr (.mallocPointer stack command-buffers-count)
           render-area (doto (VkRect2D/calloc stack)
                         (.offset (.set (VkOffset2D/calloc stack) 0 0))
                         (.extent SWAP-CHAIN-EXTENT))
           _ (if (= (VK13/vkAllocateCommandBuffers LOGICAL-DEVICE command-buffer-allocate-info command-buffers-ptr)
                    VK13/VK_SUCCESS)
-              (dotimes [i command-buffers-count]
-                (alter-var-root #'COMMAND-BUFFERS conj (VkCommandBuffer. (.get command-buffers-ptr i) LOGICAL-DEVICE)))
+              (globals/set-global! COMMAND-BUFFERS (mapv #(VkCommandBuffer. (.get command-buffers-ptr ^int %) LOGICAL-DEVICE)
+                                                         (range command-buffers-count)))
               (throw (RuntimeException. "Failed to allocate command buffers.")))
           command-buffer-begin-info (doto (VkCommandBufferBeginInfo/calloc stack)
                                       (.sType VK13/VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO)

@@ -1,46 +1,48 @@
 package clojure_vulkan;
 
 public class Semaphores {
-    private long imageAvailableSemaphorePointer;
-    private long renderFinishedSemaphorePointer;
-    private long inFlightFencePointer;
+    private final long[] imageAvailableSemaphorePointers;
+    private final long[] renderFinishedSemaphorePointers;
+    private final long[] inFlightFencePointers;
 
-    public Semaphores() {
-        imageAvailableSemaphorePointer = 0;
-        renderFinishedSemaphorePointer = 0;
-        inFlightFencePointer = 0;
+    private int currentFrame = 0;
+    public int maxFramesInFlight;
+
+    public Semaphores(int maxFramesInFlight) {
+        this.maxFramesInFlight = maxFramesInFlight;
+        imageAvailableSemaphorePointers = new long[maxFramesInFlight];
+        renderFinishedSemaphorePointers = new long[maxFramesInFlight];
+        inFlightFencePointers = new long[maxFramesInFlight];
     }
 
-    public Semaphores(long imageAvailableSemaphorePointer, long renderFinishedSemaphorePointer, long inFlightFencePointer) {
-        this.imageAvailableSemaphorePointer = imageAvailableSemaphorePointer;
-        this.renderFinishedSemaphorePointer = renderFinishedSemaphorePointer;
-        this.inFlightFencePointer = inFlightFencePointer;
+    public long getImageAvailableSemaphorePointer(int index) {
+        return imageAvailableSemaphorePointers[index];
     }
 
-    public long getImageAvailableSemaphorePointer() {
-        return imageAvailableSemaphorePointer;
+    public long getRenderFinishedSemaphorePointer(int index) {
+        return renderFinishedSemaphorePointers[index];
     }
 
-    public long getRenderFinishedSemaphorePointer() {
-        return renderFinishedSemaphorePointer;
+    public long getInFlightFencePointer(int index) {
+        return inFlightFencePointers[index];
     }
 
-    public long getInFlightFencePointer() {
-        return inFlightFencePointer;
-    }
-
-    public Semaphores setImageAvailableSemaphorePointer(long newValue) {
-        imageAvailableSemaphorePointer = newValue;
+    public Semaphores setImageAvailableSemaphorePointer(int index, long newValue) {
+        imageAvailableSemaphorePointers[index] = newValue;
         return this;
     }
 
-    public Semaphores setRenderFinishedSemaphorePointer(long newValue) {
-        renderFinishedSemaphorePointer = newValue;
+    public Semaphores setRenderFinishedSemaphorePointer(int index, long newValue) {
+        renderFinishedSemaphorePointers[index] = newValue;
         return this;
     }
 
-    public Semaphores setInFlightFencePointer(long newValue) {
-        inFlightFencePointer = newValue;
+    public Semaphores setInFlightFencePointer(int index, long newValue) {
+        inFlightFencePointers[index] = newValue;
         return this;
+    }
+
+    public int nextFrame() {
+        return currentFrame = (currentFrame + 1) % maxFramesInFlight;
     }
 }

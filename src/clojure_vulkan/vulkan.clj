@@ -12,7 +12,8 @@
             [clojure-vulkan.render-pass :as render-pass]
             [clojure-vulkan.swap-chain :as swap-chain]
             [clojure-vulkan.validation-layers :as validation-layers]
-            [clojure-vulkan.window-surface :as window-surface]))
+            [clojure-vulkan.window-surface :as window-surface]
+            [clojure-vulkan.frame :as frame]))
 
 (defn init []
   (instance/create)
@@ -39,7 +40,7 @@
               (symbol "globals" (name sym))))))
 
 (defn terminate []
-  (render/destroy-semaphores-and-fences)
+  (frame/destroy-semaphores-and-fences)
   (command-buffers/destroy-command-buffers)
   (command-buffers/destroy-command-pool)
   (frame-buffers/destroy-frame-buffers)

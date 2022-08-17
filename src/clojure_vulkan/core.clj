@@ -2,11 +2,13 @@
 
 (ns clojure-vulkan.core
   (:require [clojure-vulkan.glfw :as glfw]
+            [clojure-vulkan.globals :refer [LOGICAL-DEVICE]]
             [clojure-vulkan.render :as render]
             [clojure-vulkan.util :as util]
             [clojure-vulkan.validation-layers :as validation-layers]
             [clojure-vulkan.vulkan :as vulkan]
-            [clojure-vulkan.window :as window]))
+            [clojure-vulkan.window :as window])
+  (:import (org.lwjgl.vulkan VK13)))
 
 (defn find-or-default [opts key]
   (if-let [key (find opts key)]
@@ -29,6 +31,7 @@
       (while (not (window/should-window-close?))
         (glfw/poll-events)
         (render/draw-frame))
+      (VK13/vkDeviceWaitIdle LOGICAL-DEVICE)
 
       (catch Throwable t
         (println "An error occured:" (.getMessage t)
