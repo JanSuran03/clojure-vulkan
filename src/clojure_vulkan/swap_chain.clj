@@ -1,9 +1,7 @@
 (ns clojure-vulkan.swap-chain
   (:require [clojure-vulkan.frame-buffers :as frame-buffers]
-            [clojure-vulkan.globals :as globals :refer [LOGICAL-DEVICE PHYSICAL-DEVICE QUEUE-FAMILIES SWAP-CHAIN-EXTENT
-                                                        SWAP-CHAIN-FRAME-BUFFER-POINTERS SWAP-CHAIN-IMAGE-FORMAT
-                                                        SWAP-CHAIN-IMAGE-VIEWS-POINTERS SWAP-CHAIN-IMAGES SWAP-CHAIN-POINTER
-                                                        SWAP-CHAIN-SUPPORT-DETAILS WINDOW-POINTER WINDOW-SURFACE-POINTER]]
+            [clojure-vulkan.globals :as globals :refer [LOGICAL-DEVICE PHYSICAL-DEVICE QUEUE-FAMILIES SWAP-CHAIN-EXTENT SWAP-CHAIN-IMAGE-FORMAT
+                                                        SWAP-CHAIN-IMAGES SWAP-CHAIN-POINTER SWAP-CHAIN-SUPPORT-DETAILS WINDOW-POINTER WINDOW-SURFACE-POINTER]]
             [clojure-vulkan.image-views :as image-views]
             [clojure-vulkan.util :as util])
   (:import (java.nio IntBuffer)
@@ -61,14 +59,14 @@
 (defn ^VkExtent2D choose-swap-extent [^VkSurfaceCapabilitiesKHR surface-capabilities]
   (if (= (.. surface-capabilities currentExtent width) UINT32-MAX)
     (util/with-memory-stack-push ^MemoryStack stack
-      (let [width-buffer (.mallocInt stack 1)
-            height-buffer (.mallocInt stack 1)
-            _ (GLFW/glfwGetFramebufferSize WINDOW-POINTER width-buffer height-buffer)
+      (let [width-ptr (.mallocInt stack 1)
+            height-ptr (.mallocInt stack 1)
+            _ (GLFW/glfwGetFramebufferSize WINDOW-POINTER width-ptr height-ptr)
             min-extent (.minImageExtent surface-capabilities)
             max-extent (.maxImageExtent surface-capabilities)]
         (doto (VkExtent2D/malloc stack)
-          (.set (util/clamp (.width min-extent) (.get width-buffer 0) (.width max-extent))
-                (util/clamp (.height min-extent) (.get height-buffer 0) (.height max-extent))))))
+          (.set (util/clamp (.width min-extent) (.get width-ptr 0) (.width max-extent))
+                (util/clamp (.height min-extent) (.get height-ptr 0) (.height max-extent))))))
     (.currentExtent surface-capabilities)))
 
 (defn create-swap-chain []
@@ -125,10 +123,8 @@
   (KHRSwapchain/vkDestroySwapchainKHR LOGICAL-DEVICE SWAP-CHAIN-POINTER nil))
 
 (defn cleanup-swap-chain []
-  (doseq [swap-chain-frame-buffer-ptr SWAP-CHAIN-FRAME-BUFFER-POINTERS]
-    (VK13/vkDestroyFramebuffer LOGICAL-DEVICE ^long swap-chain-frame-buffer-ptr nil))
-  (doseq [swap-chain-image-view-ptr SWAP-CHAIN-IMAGE-VIEWS-POINTERS]
-    (VK13/vkDestroyImageView LOGICAL-DEVICE ^long swap-chain-image-view-ptr nil))
+  (frame-buffers/destroy-frame-buffers)
+  (image-views/destroy-image-views)
   (KHRSwapchain/vkDestroySwapchainKHR LOGICAL-DEVICE SWAP-CHAIN-POINTER nil))
 
 (defn recreate-swap-chain []

@@ -13,7 +13,8 @@
             [clojure-vulkan.swap-chain :as swap-chain]
             [clojure-vulkan.validation-layers :as validation-layers]
             [clojure-vulkan.window-surface :as window-surface]
-            [clojure-vulkan.frame :as frame]))
+            [clojure-vulkan.frame :as frame]
+            [clojure-vulkan.util :as util]))
 
 (defn init []
   (instance/create)
@@ -40,17 +41,19 @@
               (symbol "globals" (name sym))))))
 
 (defn terminate []
-  (swap-chain/cleanup-swap-chain)
-  (frame/destroy-semaphores-and-fences)
-  (command-buffers/destroy-command-pool)
-  (graphics-pipeline/destroy-graphics-pipeline)
-  (graphics-pipeline/destroy-pipeline-layout)
-  (render-pass/destroy-render-pass)
-  (window-surface/destroy-surface)
-  (logical-device-and-queue/destroy-logical-device)
-  (when validation-layers/*enable-validation-layers*
-    (debug/destroy-debug-messenger nil))
-  (instance/destroy-instance)
-  (globals/reset-queue-families)
-  (globals/reset-swap-chain-support-details))
+  (util/try-all
+    #(println "Vulkan cleanup error occured: " (.getMessage ^Throwable %))
+    (swap-chain/cleanup-swap-chain)
+    (frame/destroy-semaphores-and-fences)
+    (command-buffers/destroy-command-pool)
+    (graphics-pipeline/destroy-graphics-pipeline)
+    (graphics-pipeline/destroy-pipeline-layout)
+    (render-pass/destroy-render-pass)
+    (window-surface/destroy-surface)
+    (logical-device-and-queue/destroy-logical-device)
+    (when validation-layers/*enable-validation-layers*
+      (debug/destroy-debug-messenger nil))
+    (instance/destroy-instance)
+    (globals/reset-queue-families)
+    (globals/reset-swap-chain-support-details)))
 

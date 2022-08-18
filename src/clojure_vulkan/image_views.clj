@@ -33,5 +33,5 @@
 
 (defn destroy-image-views []
   (doseq [image-view-ptr SWAP-CHAIN-IMAGE-VIEWS-POINTERS]
-    (VK13/vkDestroyImageView LOGICAL-DEVICE image-view-ptr nil))
+    (VK13/vkDestroyImageView LOGICAL-DEVICE ^long image-view-ptr nil))
   (globals/reset-swap-chain-image-views))

@@ -2,13 +2,14 @@
 
 (ns clojure-vulkan.core
   (:require [clojure-vulkan.glfw :as glfw]
-            [clojure-vulkan.globals :refer [LOGICAL-DEVICE]]
+            [clojure-vulkan.globals :refer [LOGICAL-DEVICE WINDOW-POINTER]]
             [clojure-vulkan.render :as render]
             [clojure-vulkan.util :as util]
             [clojure-vulkan.validation-layers :as validation-layers]
             [clojure-vulkan.vulkan :as vulkan]
             [clojure-vulkan.window :as window])
-  (:import (org.lwjgl.vulkan VK13)))
+  (:import (org.lwjgl.vulkan VK13)
+           (org.lwjgl.glfw GLFW)))
 
 (defn find-or-default [opts key]
   (if-let [key (find opts key)]
@@ -25,7 +26,7 @@
       (glfw/init)
       (window/create-window)
       (vulkan/init)
-      (window/show-window)
+      (GLFW/glfwShowWindow WINDOW-POINTER)
 
       ;; application loop
       (while (not (window/should-window-close?))

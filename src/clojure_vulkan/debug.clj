@@ -28,11 +28,10 @@
             (println (str "Validation layer callback (severity = " message-severity "): "
                           (.pMessageString callback-data)))))
         (if (= message-severity "ERROR")
-          (do (Thread/sleep 2000)
-              (throw (RuntimeException.
-                       (str "\n\n>>>>> VALIDATION LAYER ERROR:\n"
-                            (.pMessageString callback-data)
-                            \newline \newline))))))
+          (throw (RuntimeException.
+                   (str "\n\n>>>>> VALIDATION LAYER ERROR:\n"
+                        (.pMessageString callback-data)
+                        \newline \newline)))))
       VK13/VK_FALSE)))
 
 (defn create-debug-messenger-extension [^VkInstance instance ^VkDebugUtilsMessengerCreateInfoEXT create-info

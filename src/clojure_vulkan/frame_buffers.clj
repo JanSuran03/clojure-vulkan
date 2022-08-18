@@ -25,6 +25,6 @@
           (throw (RuntimeException. "Failed to create framebuffer.")))))))
 
 (defn destroy-frame-buffers []
-  (doseq [^Long frame-buffer SWAP-CHAIN-FRAME-BUFFER-POINTERS]
-    (VK13/vkDestroyFramebuffer LOGICAL-DEVICE frame-buffer nil)
+  (doseq [swap-chain-frame-buffer-ptr SWAP-CHAIN-FRAME-BUFFER-POINTERS]
+    (VK13/vkDestroyFramebuffer LOGICAL-DEVICE ^long swap-chain-frame-buffer-ptr nil)
     (globals/reset-swap-chain-frame-buffers)))

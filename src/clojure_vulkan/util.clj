@@ -80,3 +80,12 @@
 
 (defn clamp [^Integer min-value ^Integer value ^Integer max-value]
   (Math/min max-value (Math/max min-value value)))
+
+(defmacro try-all [f & expressions]
+  (let [gf (gensym "f__")]
+    `(let [~gf ~f]
+       (do ~@(map (fn [expr]
+                    `(try ~expr
+                          (catch Throwable t#
+                            (~gf t#))))
+                  expressions)))))

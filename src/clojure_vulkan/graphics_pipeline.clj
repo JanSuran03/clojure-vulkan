@@ -13,20 +13,21 @@
 (def ^:private dynamic-states-vec [VK13/VK_DYNAMIC_STATE_VIEWPORT VK13/VK_DYNAMIC_STATE_SCISSOR])
 
 (defn- create-shader-module [shader-in-spir-v-format]
-  (util/with-memory-stack-push ^MemoryStack stack
-    (let [create-info (doto (VkShaderModuleCreateInfo/calloc stack)
-                        (.sType VK13/VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO)
-                        (.pCode (shaders/get-bytebuffer shader-in-spir-v-format)))
-          shader-module-ptr (.mallocLong stack 1)]
-      (when (not= (VK13/vkCreateShaderModule LOGICAL-DEVICE create-info nil shader-module-ptr)
-                  VK13/VK_SUCCESS)
-        (throw (RuntimeException. "Failed to create shader module.")))
-      (.get shader-module-ptr 0))))
+  (let [stack (MemoryStack/stackGet)
+        bbuf (shaders/get-bytebuffer shader-in-spir-v-format)
+        create-info (doto (VkShaderModuleCreateInfo/calloc stack)
+                      (.sType VK13/VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO)
+                      (.pCode bbuf))
+        shader-module-ptr (.mallocLong stack 1)]
+    (when (not= (VK13/vkCreateShaderModule LOGICAL-DEVICE create-info nil shader-module-ptr)
+                VK13/VK_SUCCESS)
+      (throw (RuntimeException. "Failed to create shader module.")))
+    (.get shader-module-ptr 0)))
 
 (defn create-graphics-pipeline []
   (util/with-memory-stack-push ^MemoryStack stack
-    (let [vertex-shader-in-spir-v-format (shaders/compile-shader "shader.vert" :shader-type/vertex)
-          fragment-shader-in-spir-v-format (shaders/compile-shader "shader.frag" :shader-type/fragment)
+    (let [vertex-shader-in-spir-v-format (shaders/compile-shader "shader.vert" :shader-type/vertex "shader-vert.spv")
+          fragment-shader-in-spir-v-format (shaders/compile-shader "shader.frag" :shader-type/fragment "shader-frag.spv")
           vertex-shader-module (create-shader-module vertex-shader-in-spir-v-format)
           fragment-shader-module (create-shader-module fragment-shader-in-spir-v-format)
           entry-point (.UTF8 stack "main")
