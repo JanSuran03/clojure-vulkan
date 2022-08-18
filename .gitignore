@@ -11,3 +11,5 @@ pom.xml.asc
 .hgignore
 .hg/
 debug*
+/resources/shaders/compiled
+/resources/shaders/precompiled-vulkan-shaders.edn

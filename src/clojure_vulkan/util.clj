@@ -1,4 +1,5 @@
 (ns clojure-vulkan.util
+  (:refer-clojure :exclude [case])
   (:require [clojure.string :as str]
             [me.raynes.fs :as fs])
   (:import (java.io File)
@@ -89,3 +90,72 @@
                           (catch Throwable t#
                             (~gf t#))))
                   expressions)))))
+
+(defmacro case
+  "All symbols are evaluated, even in grouped case-lists. Can supply default via
+  :case/default-throw to allow having a larger body at the bottom.
+
+  (case result
+    KHRSwapchain/VK_ERROR_OUT_OF_DATE_KHR
+    :out-of-date
+
+    :case/default-throw
+    (throw (RuntimeException. \"Failed to acquire swap chain image.\"))
+
+    (VK13/VK_SUCCESS KHRSwapchain/VK_SUBOPTIMAL_KHR)
+    (do-something
+      :really
+      :really
+      :long))
+
+  (clojure.core/case result
+    -1000001004
+    :out-of-date
+
+    (0 1000001003)
+    (do-something
+      :really
+      :really
+      :long)
+
+    (throw (RuntimeException. \"Failed to acquire swap chain image.\")))"
+  [expr & clauses]
+  (let [err (volatile! nil)
+        throw-expr (volatile! nil)
+        try-eval (fn [condition]
+                   (if-let [v (try (eval condition)
+                                   (catch Throwable t (vreset! err t)))]
+                     v
+                     (if (nil? @err)
+                       nil
+                       (throw @err))))
+        expanded (loop [[condition then :as clauses] clauses
+                        ret []]
+                   (cond (nil? condition)
+                         ret
+
+                         (nil? then)
+                         (conj ret condition)
+
+                         (= condition :case/default-throw)
+                         (if (nil? @throw-expr)
+                           (do (vreset! throw-expr then)
+                               (recur (nnext clauses)
+                                      ret))
+                           (throw (IllegalStateException. (str "Cannot have two defaults:\n"
+                                                               @throw-expr ";\n" then))))
+
+                         :else
+                         (recur (nnext clauses)
+                                (conj ret (cond (symbol? condition)
+                                                (try-eval condition)
+
+                                                (list? condition)
+                                                (apply list (map try-eval condition))
+
+                                                :else
+                                                condition)
+                                      then))))]
+    (if (even? (count expanded))
+      `(clojure.core/case ~expr ~@expanded ~(deref throw-expr))
+      `(clojure.core/case ~expr ~@expanded ~@(when-not (nil? @throw-expr) [@throw-expr])))))

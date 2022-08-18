@@ -5,6 +5,8 @@
            (org.lwjgl.vulkan VK13)))
 
 (def ^Integer MAX-FRAMES-IN-FLIGHT 2)
+(def FRAMES [])
+(def FRAME-BUFFER-RESIZED? (atom false))
 
 (defrecord Frame [image-available-semaphore-ptr
                   render-finished-semaphore-ptr
@@ -27,8 +29,6 @@
 
 (defn ^LongBuffer alloc-in-flight-fence-ptr [^Frame f ^MemoryStack stack]
   (.longs stack (get-in-flight-fence-ptr f)))
-
-(def FRAMES [])
 
 (def ^Long ^:private current-frame-counter* (atom 0))
 

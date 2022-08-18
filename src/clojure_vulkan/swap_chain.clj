@@ -3,7 +3,10 @@
             [clojure-vulkan.globals :as globals :refer [LOGICAL-DEVICE PHYSICAL-DEVICE QUEUE-FAMILIES SWAP-CHAIN-EXTENT SWAP-CHAIN-IMAGE-FORMAT
                                                         SWAP-CHAIN-IMAGES SWAP-CHAIN-POINTER SWAP-CHAIN-SUPPORT-DETAILS WINDOW-POINTER WINDOW-SURFACE-POINTER]]
             [clojure-vulkan.image-views :as image-views]
-            [clojure-vulkan.util :as util])
+            [clojure-vulkan.util :as util]
+            [clojure-vulkan.command-buffers :as command-buffers]
+            [clojure-vulkan.graphics-pipeline :as graphics-pipeline]
+            [clojure-vulkan.render-pass :as render-pass])
   (:import (java.nio IntBuffer)
            (org.lwjgl.glfw GLFW)
            (org.lwjgl.system MemoryStack)
@@ -72,8 +75,8 @@
 (defn create-swap-chain []
   (util/with-memory-stack-push ^MemoryStack stack
     (let [{:keys [formats-ptr present-modes-ptr present-modes-count ^VkSurfaceCapabilitiesKHR surface-capabilities]}
-          (or (not-empty SWAP-CHAIN-SUPPORT-DETAILS)
-              (query-swap-chain-support PHYSICAL-DEVICE))
+          (or                                               ;(not-empty SWAP-CHAIN-SUPPORT-DETAILS)
+            (query-swap-chain-support PHYSICAL-DEVICE))
           surface-format (choose-swap-surface-format formats-ptr)
           present-mode (choose-swap-presentation-mode present-modes-ptr present-modes-count)
           extent (choose-swap-extent surface-capabilities)
@@ -82,31 +85,33 @@
                                    (> image-count (.maxImageCount surface-capabilities)))
                             (.ints stack (.maxImageCount surface-capabilities))
                             (.ints stack ^Integer (inc (.minImageCount surface-capabilities))))
-          ^VkSwapchainCreateInfoKHR create-info (doto (VkSwapchainCreateInfoKHR/calloc stack)
-                                                  (.sType KHRSwapchain/VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR)
-                                                  (.surface WINDOW-SURFACE-POINTER)
-                                                  (.minImageCount image-count)
-                                                  (.imageFormat (.format surface-format))
-                                                  (.imageColorSpace (.colorSpace surface-format))
-                                                  (.imageExtent extent)
-                                                  (.imageArrayLayers 1)
-                                                  (.imageUsage VK13/VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT))
-          _ (do (if (= (:graphics-family QUEUE-FAMILIES) (:present-family QUEUE-FAMILIES))
-                  (doto create-info
+          ^VkSwapchainCreateInfoKHR swap-chain-create-info (doto (VkSwapchainCreateInfoKHR/calloc stack)
+                                                             (.sType KHRSwapchain/VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR)
+                                                             (.surface WINDOW-SURFACE-POINTER)
+                                                             (.minImageCount image-count)
+                                                             (.imageFormat (.format surface-format))
+                                                             (.imageColorSpace (.colorSpace surface-format))
+                                                             (.imageExtent extent)
+                                                             (.imageArrayLayers 1)
+                                                             (.imageUsage VK13/VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT))
+          _ (do (when-not (zero? SWAP-CHAIN-POINTER)
+                  (.oldSwapchain swap-chain-create-info SWAP-CHAIN-POINTER))
+                (if (= (:graphics-family QUEUE-FAMILIES) (:present-family QUEUE-FAMILIES))
+                  (doto swap-chain-create-info
                     (.imageSharingMode VK13/VK_SHARING_MODE_EXCLUSIVE)
                     (.queueFamilyIndexCount 0))
-                  (doto create-info
+                  (doto swap-chain-create-info
                     (.imageSharingMode VK13/VK_SHARING_MODE_CONCURRENT)
                     (.queueFamilyIndexCount 2)
                     (.pQueueFamilyIndices (.ints stack (:graphics-family QUEUE-FAMILIES) (:present-family QUEUE-FAMILIES)))))
-                (doto create-info
+                (doto swap-chain-create-info
                   (.preTransform (.currentTransform surface-capabilities))
                   (.compositeAlpha KHRSurface/VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR)
                   (.presentMode present-mode)
                   (.clipped true)
                   (.oldSwapchain VK13/VK_NULL_HANDLE)))
           swap-chain-ptr* (.longs stack VK13/VK_NULL_HANDLE)
-          _ (do (when (not= (KHRSwapchain/vkCreateSwapchainKHR LOGICAL-DEVICE create-info nil swap-chain-ptr*)
+          _ (do (when (not= (KHRSwapchain/vkCreateSwapchainKHR LOGICAL-DEVICE swap-chain-create-info nil swap-chain-ptr*)
                             VK13/VK_SUCCESS)
                   (throw (RuntimeException. "Failed to create swapchain.")))
                 (globals/set-global! SWAP-CHAIN-POINTER (.get swap-chain-ptr* 0))
@@ -123,13 +128,29 @@
   (KHRSwapchain/vkDestroySwapchainKHR LOGICAL-DEVICE SWAP-CHAIN-POINTER nil))
 
 (defn cleanup-swap-chain []
+  (command-buffers/destroy-command-buffers)
+  (graphics-pipeline/destroy-graphics-pipeline)
+  (graphics-pipeline/destroy-pipeline-layout)
+  (render-pass/destroy-render-pass)
   (frame-buffers/destroy-frame-buffers)
   (image-views/destroy-image-views)
   (KHRSwapchain/vkDestroySwapchainKHR LOGICAL-DEVICE SWAP-CHAIN-POINTER nil))
 
 (defn recreate-swap-chain []
-  (VK13/vkDeviceWaitIdle LOGICAL-DEVICE)
-  (cleanup-swap-chain)
-  (create-swap-chain)
-  (image-views/create-image-views)
-  (frame-buffers/create-frame-buffers))
+  (let [stack (MemoryStack/stackGet)
+        width-buffer (.ints stack 0)
+        height-buffer (.ints stack 0)]
+    (GLFW/glfwGetFramebufferSize WINDOW-POINTER width-buffer height-buffer)
+    (while (or (zero? (.get width-buffer 0))
+               (zero? (.get height-buffer 0)))
+      (GLFW/glfwGetFramebufferSize WINDOW-POINTER width-buffer height-buffer)
+      (GLFW/glfwWaitEvents))
+    (VK13/vkDeviceWaitIdle LOGICAL-DEVICE)
+    (cleanup-swap-chain)
+
+    (create-swap-chain)
+    (image-views/create-image-views)
+    (render-pass/create-render-pass)
+    (graphics-pipeline/create-graphics-pipeline)
+    (frame-buffers/create-frame-buffers)
+    (command-buffers/create-command-buffers)))

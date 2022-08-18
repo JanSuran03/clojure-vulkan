@@ -21,7 +21,7 @@
         (globals/set-global! COMMAND-POOL-POINTER (.get command-pool-ptr 0))
         (throw (RuntimeException. "Failed to create command pool."))))))
 
-(defn- destroy-command-buffers
+(defn destroy-command-buffers
   "No need for Vulkan cleanup, destroyed with their command pools."
   []
   (globals/reset-command-buffers))

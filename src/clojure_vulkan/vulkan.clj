@@ -39,6 +39,19 @@
                  (clojure.string/starts-with? v "reset-")))
        (map (fn [sym]
               (symbol "globals" (name sym))))))
+; Vulkan instance
+; debug messenger
+; window surface
+; physical device
+; logical device
+; swap chain
+; image views
+; render pass
+; graphics pipeline
+; frame buffers
+; command pool
+; command buffers
+; sync objects
 
 (defn terminate []
   (util/try-all
