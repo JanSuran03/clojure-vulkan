@@ -14,7 +14,8 @@
             [clojure-vulkan.validation-layers :as validation-layers]
             [clojure-vulkan.window-surface :as window-surface]
             [clojure-vulkan.frame :as frame]
-            [clojure-vulkan.util :as util]))
+            [clojure-vulkan.util :as util]
+            [clojure-vulkan.math.vertex :as vertex]))
 
 (defn init []
   (instance/create)
@@ -28,6 +29,7 @@
   (graphics-pipeline/create-graphics-pipeline)
   (frame-buffers/create-frame-buffers)
   (command-buffers/create-command-pool)
+  (vertex/create-vertex-buffer)
   (command-buffers/create-command-buffers)
   (render/create-sync-objects))
 
@@ -57,6 +59,8 @@
   (util/try-all
     #(println "Vulkan cleanup error occured: " (.getMessage ^Throwable %))
     (swap-chain/cleanup-swap-chain)
+    (vertex/destroy-vertex-buffer)
+    (vertex/free-vertex-buffer-memory)
     (frame/destroy-semaphores-and-fences)
     (command-buffers/destroy-command-pool)
     (graphics-pipeline/destroy-graphics-pipeline)

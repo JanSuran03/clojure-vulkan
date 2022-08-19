@@ -1,8 +1,9 @@
 (ns clojure-vulkan.command-buffers
   (:require [clojure-vulkan.globals :as globals :refer [COMMAND-BUFFERS COMMAND-POOL-POINTER GRAPHICS-PIPELINE-POINTER
                                                         LOGICAL-DEVICE QUEUE-FAMILIES RENDER-PASS-POINTER SWAP-CHAIN-EXTENT
-                                                        SWAP-CHAIN-FRAME-BUFFER-POINTERS]]
-            [clojure-vulkan.util :as util])
+                                                        SWAP-CHAIN-FRAME-BUFFER-POINTERS VERTEX-BUFFER-POINTER]]
+            [clojure-vulkan.util :as util]
+            [clojure-vulkan.math.vertex :as vertex])
   (:import (org.lwjgl.system MemoryStack)
            (org.lwjgl.vulkan VK13 VkClearColorValue VkClearValue VkCommandBuffer
                              VkCommandBufferAllocateInfo VkCommandBufferBeginInfo VkCommandPoolCreateInfo VkOffset2D
@@ -37,6 +38,7 @@
                                      ^VkCommandBufferBeginInfo command-buffer-begin-info
                                      ^VkRenderPassBeginInfo render-pass-begin-info
                                      ^VkRect2D$Buffer scissor-buffers
+                                     ^MemoryStack stack
                                      swap-chain-frame-buffer-pointer
                                      ^VkViewport$Buffer viewports-buffer]}]
   (when (not= (VK13/vkBeginCommandBuffer command-buffer command-buffer-begin-info)
@@ -47,7 +49,10 @@
   (VK13/vkCmdBindPipeline command-buffer VK13/VK_PIPELINE_BIND_POINT_GRAPHICS GRAPHICS-PIPELINE-POINTER) ; graphics or compute pipeline?
   (VK13/vkCmdSetViewport command-buffer 0 viewports-buffer)
   (VK13/vkCmdSetScissor command-buffer 0 scissor-buffers)
-  (VK13/vkCmdDraw command-buffer 3 1 0 0)
+  (let [vertex-buffers (.longs stack VERTEX-BUFFER-POINTER)
+        offsets (.longs stack 0)]
+    (VK13/vkCmdBindVertexBuffers command-buffer 0 vertex-buffers offsets))
+  (VK13/vkCmdDraw command-buffer (:components-per-vertex vertex/current-triangle-vbo-characterictics) 1 0 0)
   (VK13/vkCmdEndRenderPass command-buffer)
   (when (not= (VK13/vkEndCommandBuffer command-buffer)
               VK13/VK_SUCCESS)
@@ -99,4 +104,5 @@
                                 :render-pass-begin-info          render-pass-begin-info
                                 :scissor-buffers                 scissor-buffers
                                 :swap-chain-frame-buffer-pointer (nth SWAP-CHAIN-FRAME-BUFFER-POINTERS i)
-                                :viewports-buffer                viewports-buffer})))))
+                                :viewports-buffer                viewports-buffer
+                                :stack                           stack})))))

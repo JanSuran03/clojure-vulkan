@@ -70,3 +70,9 @@
 
 (def COMMAND-BUFFERS [])
 (defn reset-command-buffers [] (alter-var-root #'COMMAND-BUFFERS empty))
+
+(def ^Long VERTEX-BUFFER-POINTER nullptr)
+(defn reset-vertex-buffer-ptr [] (alter-var-root #'VERTEX-BUFFER-POINTER reset-to-vk-null))
+
+(def ^Long VERTEX-BUFFER-MEMORY-POINTER nullptr)
+(defn reset-vertex-buffer-memory-ptr [] (alter-var-root #'VERTEX-BUFFER-MEMORY-POINTER reset-to-vk-null))

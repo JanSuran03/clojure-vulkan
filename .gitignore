@@ -13,3 +13,4 @@ pom.xml.asc
 debug*
 /resources/shaders/compiled
 /resources/shaders/precompiled-vulkan-shaders.edn
+hs_err_pid*
