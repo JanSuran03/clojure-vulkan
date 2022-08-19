@@ -7,8 +7,6 @@
            (org.lwjgl.vulkan EXTDebugUtils VK13 VkAllocationCallbacks VkDebugUtilsMessengerCallbackDataEXT VkDebugUtilsMessengerCallbackEXTI
                              VkDebugUtilsMessengerCreateInfoEXT VkInstance)))
 
-(def max-chars-on-single-line 90)
-
 (def debug-callback
   (reify VkDebugUtilsMessengerCallbackEXTI
     (invoke [this message-severity message-type callback-data-ptr user-data-ptr]

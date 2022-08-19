@@ -1,7 +1,8 @@
 (ns clojure-vulkan.graphics-pipeline
   (:require [clojure-vulkan.globals :as globals :refer [GRAPHICS-PIPELINE-POINTER LOGICAL-DEVICE PIPELINE-LAYOUT-POINTER RENDER-PASS-POINTER SWAP-CHAIN-EXTENT]]
             [clojure-vulkan.shaders :as shaders]
-            [clojure-vulkan.util :as util])
+            [clojure-vulkan.util :as util]
+            [clojure-vulkan.math.vertex :as vertex])
   (:import (clojure_vulkan.shaders SpirVShader)
            (org.lwjgl.system MemoryStack)
            (org.lwjgl.vulkan VK13 VkExtent2D VkGraphicsPipelineCreateInfo VkOffset2D VkPipelineColorBlendAttachmentState
@@ -42,10 +43,12 @@
                                               (.stage VK13/VK_SHADER_STAGE_FRAGMENT_BIT)
                                               (.module fragment-shader-module)
                                               (.pName entry-point))
+          processed-vertex-shader-attributes (vertex/analyze-shader-characteristics "shader.vert")
+          processed-fragment-shader-attributes (vertex/analyze-shader-characteristics "shader.frag")
           vertex-input-state-create-info (doto (VkPipelineVertexInputStateCreateInfo/calloc stack)
                                            (.sType VK13/VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO)
-                                           (.pVertexBindingDescriptions nil)
-                                           (.pVertexAttributeDescriptions nil))
+                                           (.pVertexBindingDescriptions (vertex/get-binding-descriptions processed-vertex-shader-attributes))
+                                           (.pVertexAttributeDescriptions (vertex/get-attribute-descriptions processed-vertex-shader-attributes)))
           input-assembly-state-create-info (doto (VkPipelineInputAssemblyStateCreateInfo/calloc stack)
                                              (.sType VK13/VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO)
                                              (.topology VK13/VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST) ; triangle from every 3 new vertices without reuse

@@ -64,17 +64,26 @@
       (.put buffer i))
     (.rewind buffer)))
 
-(defn app-nss [] (->> (all-ns)
-                      (filter #(str/starts-with? % "clojure-vulkan"))
-                      (map (comp symbol str))
-                      doall))
+(defn app-nss []
+  (->> (all-ns)
+       (filter #(str/starts-with? % "clojure-vulkan"))
+       (map (comp symbol str))
+       doall))
 
 (defn test-compile-speed []
   (let [nss (app-nss)]
-    (println "Namespaces:" (count nss))
-    (dotimes [_ 5]
+    (println "Namespaces: " (count nss))
+    (dotimes [_ 10]
       (time (doseq [ns nss]
               (require `[~ns :reload true]))))))
+
+(defn compile-all []
+  (let [nss (app-nss)]
+    (time (doseq [ns nss]
+            (time (compile ns))))))
+
+(defn delete-compiled []
+  (fs/delete-dir "target/classes/clojure_vulkan"))
 
 (defn struct-buffer->seq [^StructBuffer buffer]
   (-> buffer .iterator iterator-seq))
