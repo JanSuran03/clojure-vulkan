@@ -19,9 +19,9 @@
              (Vector3f. r g b))
   (list x y r g b))
 
-(def ^"[F" vertices (into-array Float/TYPE (concat (vertex 0 -0.5 0 0 0)
-                                                   (vertex 0.5 0.5 0.5 0.5 0.5)
-                                                   (vertex -0.5 0.5 1 1 1))))
+(def ^"[F" vertices (into-array Float/TYPE (concat (vertex 0 -0.5 1.0 1.0 0)
+                                                   (vertex 0.5 0.5 0 0.5 0.5)
+                                                   (vertex -0.5 0.5 1 0 1))))
 
 (defn analyze-shader-attribute-descriptions [shader-source]
   (map (memfn ^ShaderAnalyzer$ShaderLayout asHashMap)
@@ -57,7 +57,8 @@
               (doto ^VkVertexInputAttributeDescription (.get attribute-descriptions location)
                 (.binding 0)                                ;; id of the description this is bound to
                 (.location location)
-                (.format format))
+                (.format format)
+                (.offset byte-offset))
               (+ byte-offset sizeof))
             0
             (sort-by :location < in))
