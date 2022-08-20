@@ -33,7 +33,7 @@
      (throw (NullPointerException. ~(str "NullPointerException: " (resolve v))))
      (do ~@body)))
 
-(defn bit-ors [& bits] (reduce bit-or bits))
+(defmacro bit-ors [& bits] (reduce bit-or (map eval bits)))
 
 (def ^:dynamic *doto-debug* false)
 
