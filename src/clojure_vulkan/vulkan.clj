@@ -15,7 +15,8 @@
             [clojure-vulkan.window-surface :as window-surface]
             [clojure-vulkan.frame :as frame]
             [clojure-vulkan.util :as util]
-            [clojure-vulkan.math.vertex :as vertex]))
+            [clojure-vulkan.math.vertex :as vertex])
+  (:import (org.lwjgl.vulkan VK13)))
 
 (defn init []
   (instance/create)
@@ -59,6 +60,7 @@
   (util/try-all
     #(println "Vulkan cleanup error occured: " (.getMessage ^Throwable %))
     (swap-chain/cleanup-swap-chain)
+    (globals/set-global! globals/SWAP-CHAIN-POINTER VK13/VK_NULL_HANDLE)
     (vertex/destroy-vertex-buffer)
     (vertex/free-vertex-buffer-memory)
     (frame/destroy-semaphores-and-fences)

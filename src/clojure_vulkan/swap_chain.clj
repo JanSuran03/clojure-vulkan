@@ -94,9 +94,7 @@
                                                              (.imageExtent extent)
                                                              (.imageArrayLayers 1)
                                                              (.imageUsage VK13/VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT))
-          _ (do (when-not (zero? SWAP-CHAIN-POINTER)
-                  (.oldSwapchain swap-chain-create-info SWAP-CHAIN-POINTER))
-                (if (= (:graphics-family QUEUE-FAMILIES) (:present-family QUEUE-FAMILIES))
+          _ (do (if (= (:graphics-family QUEUE-FAMILIES) (:present-family QUEUE-FAMILIES))
                   (doto swap-chain-create-info
                     (.imageSharingMode VK13/VK_SHARING_MODE_EXCLUSIVE)
                     (.queueFamilyIndexCount 0))
@@ -108,8 +106,7 @@
                   (.preTransform (.currentTransform surface-capabilities))
                   (.compositeAlpha KHRSurface/VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR)
                   (.presentMode present-mode)
-                  (.clipped true)
-                  (.oldSwapchain VK13/VK_NULL_HANDLE)))
+                  (.clipped true)))
           swap-chain-ptr* (.longs stack VK13/VK_NULL_HANDLE)
           _ (do (when (not= (KHRSwapchain/vkCreateSwapchainKHR LOGICAL-DEVICE swap-chain-create-info nil swap-chain-ptr*)
                             VK13/VK_SUCCESS)
@@ -123,9 +120,6 @@
       (globals/set-global! SWAP-CHAIN-IMAGE-FORMAT (.format surface-format))
       (globals/set-global! SWAP-CHAIN-EXTENT (doto (VkExtent2D/create)
                                                (.set extent))))))
-
-(defn destroy-swap-chain []
-  (KHRSwapchain/vkDestroySwapchainKHR LOGICAL-DEVICE SWAP-CHAIN-POINTER nil))
 
 (defn cleanup-swap-chain []
   (command-buffers/destroy-command-buffers)

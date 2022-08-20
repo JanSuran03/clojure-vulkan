@@ -1,5 +1,6 @@
 (ns clojure-vulkan.math.vertex
-  (:require [clojure-vulkan.globals :as globals :refer [LOGICAL-DEVICE PHYSICAL-DEVICE VERTEX-BUFFER-MEMORY-POINTER VERTEX-BUFFER-POINTER]]
+  (:require [clojure-vulkan.buffer :as buffer]
+            [clojure-vulkan.globals :as globals :refer [LOGICAL-DEVICE PHYSICAL-DEVICE VERTEX-BUFFER-MEMORY-POINTER VERTEX-BUFFER-POINTER]]
             [clojure-vulkan.math.glsl :as glsl]
             [clojure-vulkan.math.vector-2f]
             [clojure-vulkan.math.vector-3f]
@@ -9,7 +10,7 @@
            (clojure_vulkan.math.vector_3f Vector3f)
            (clojure_vulkan ShaderAnalyzer ShaderAnalyzer$ShaderLayout MemoryUtils)
            (org.lwjgl.system MemoryStack)
-           (org.lwjgl.vulkan VK13 VkBufferCreateInfo VkVertexInputAttributeDescription VkVertexInputBindingDescription VkMemoryRequirements VkPhysicalDeviceMemoryProperties VkMemoryAllocateInfo)
+           (org.lwjgl.vulkan VK13 VkVertexInputAttributeDescription VkVertexInputBindingDescription VkPhysicalDeviceMemoryProperties VkBufferCreateInfo)
            (org.lwjgl PointerBuffer)))
 
 (deftype Vertex [^Vector2f pos ^Vector3f color])
@@ -78,40 +79,42 @@
 
 (defn create-vertex-buffer []
   (util/with-memory-stack-push ^MemoryStack stack
-    (let [buffer-create-info (doto (VkBufferCreateInfo/calloc stack)
-                               (.sType VK13/VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO)
-                               (.size (* ^int (:in-stride current-triangle-vbo-characterictics) ; bytes per vertex
-                                         (/ (count vertices) ; vertices
-                                            (:components-per-vertex current-triangle-vbo-characterictics))))
-                               (.usage VK13/VK_BUFFER_USAGE_VERTEX_BUFFER_BIT)
-                               (.sharingMode VK13/VK_SHARING_MODE_EXCLUSIVE)
-                               (.flags 0))
-          vertex-buffer-ptr (.mallocLong stack 1)
-          _ (if (= (VK13/vkCreateBuffer LOGICAL-DEVICE buffer-create-info nil vertex-buffer-ptr)
-                   VK13/VK_SUCCESS)
-              (globals/set-global! VERTEX-BUFFER-POINTER (.get vertex-buffer-ptr 0))
-              (throw (RuntimeException. "Failed to create vertex buffer.")))
-          memory-requirements (VkMemoryRequirements/malloc stack)
-          ;; alignment -> the offset in bytes where the buffer begins in the allocated region in memory (depends on usage and flags)
-          _ (VK13/vkGetBufferMemoryRequirements LOGICAL-DEVICE VERTEX-BUFFER-POINTER memory-requirements)
-          memory-allocate-info (doto (VkMemoryAllocateInfo/calloc stack)
-                                 (.sType VK13/VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO)
-                                 (.allocationSize (.size memory-requirements)) ; in bytes, of course
-                                 (.memoryTypeIndex (find-memory-type (.memoryTypeBits memory-requirements)
-                                                                     (bit-or VK13/VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
-                                                                             VK13/VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
-                                                                     stack)))
-          vertex-buffer-memory-ptr (.mallocLong stack 1)
-          _ (if (= (VK13/vkAllocateMemory LOGICAL-DEVICE memory-allocate-info nil vertex-buffer-memory-ptr)
-                   VK13/VK_SUCCESS)
-              (globals/set-global! VERTEX-BUFFER-MEMORY-POINTER (.get vertex-buffer-memory-ptr 0))
-              (throw (RuntimeException. "Failed to allocate vertex buffer memory.")))
-          _ (VK13/vkBindBufferMemory LOGICAL-DEVICE VERTEX-BUFFER-POINTER VERTEX-BUFFER-MEMORY-POINTER 0) ; 0 = memory offset
-          ^PointerBuffer data-ptr (.mallocPointer stack 1)]
-      (VK13/vkMapMemory LOGICAL-DEVICE VERTEX-BUFFER-MEMORY-POINTER #_offset 0 (.size buffer-create-info) #_flags 0 data-ptr)
-      (MemoryUtils/memcpy (.getByteBuffer data-ptr 0 (int (.size buffer-create-info)))
-                          vertices)
-      (VK13/vkUnmapMemory LOGICAL-DEVICE VERTEX-BUFFER-MEMORY-POINTER))))
+    (let [buffer-size (* ^int (:in-stride current-triangle-vbo-characterictics) ; bytes per vertex
+                         (/ (count vertices)                ; vertices
+                            (:components-per-vertex current-triangle-vbo-characterictics)))
+          buffer-ptr* (.mallocLong stack 1)
+          buffer-memory-ptr* (.mallocLong stack 1)
+
+          [staging-buffer-ptr
+           staging-buffer-memory-ptr
+           ^VkBufferCreateInfo staging-buffer-create-info]
+          (buffer/create-buffer buffer-size                 ;; create staging buffer
+                                VK13/VK_BUFFER_USAGE_TRANSFER_SRC_BIT
+                                (bit-or VK13/VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+                                        VK13/VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
+                                buffer-ptr*
+                                buffer-memory-ptr*
+                                stack)
+          ^PointerBuffer data-ptr (.mallocPointer stack 1)
+          _ (do (VK13/vkMapMemory LOGICAL-DEVICE staging-buffer-memory-ptr #_offset 0 buffer-size #_flags 0 data-ptr)
+                (MemoryUtils/memcpy (.getByteBuffer data-ptr 0 (int (.size staging-buffer-create-info)))
+                                    vertices)
+                (VK13/vkUnmapMemory LOGICAL-DEVICE staging-buffer-memory-ptr))
+          [vertex-buffer-ptr
+           vertex-buffer-memory-ptr]
+          (buffer/create-buffer buffer-size                 ;; create vertex buffer
+                                (bit-or VK13/VK_BUFFER_USAGE_VERTEX_BUFFER_BIT
+                                        VK13/VK_BUFFER_USAGE_TRANSFER_DST_BIT)
+                                (bit-or VK13/VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+                                        VK13/VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
+                                buffer-ptr*
+                                buffer-memory-ptr*
+                                stack)]
+      (buffer/copy-buffer staging-buffer-ptr vertex-buffer-ptr buffer-size stack)
+      (VK13/vkDestroyBuffer LOGICAL-DEVICE staging-buffer-ptr nil)
+      (VK13/vkFreeMemory LOGICAL-DEVICE staging-buffer-memory-ptr nil)
+      (do (globals/set-global! VERTEX-BUFFER-POINTER vertex-buffer-ptr)
+          (globals/set-global! VERTEX-BUFFER-MEMORY-POINTER vertex-buffer-memory-ptr)))))
 
 (defn destroy-vertex-buffer []
   (VK13/vkDestroyBuffer LOGICAL-DEVICE VERTEX-BUFFER-POINTER nil)
