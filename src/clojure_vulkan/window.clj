@@ -1,9 +1,9 @@
 (ns clojure-vulkan.window
   (:require [clojure-vulkan.glfw :refer [glfw-boolean]]
             [clojure-vulkan.globals :as globals :refer [WINDOW-POINTER]]
-            [clojure-vulkan.util :refer [nullptr]]
             [clojure-vulkan.frame :as frame])
-  (:import (org.lwjgl.glfw GLFW GLFWFramebufferSizeCallback GLFWMouseButtonCallback)))
+  (:import (org.lwjgl.glfw GLFW GLFWFramebufferSizeCallback)
+           (org.lwjgl.vulkan VK13)))
 
 
 (def ^Integer window-width 800)
@@ -11,7 +11,7 @@
 (def ^String window-title "Hello Vulkan")
 
 (defn -create-window []
-  (if-let [window-ptr (GLFW/glfwCreateWindow window-width window-height window-title nullptr nullptr)]
+  (if-let [window-ptr (GLFW/glfwCreateWindow window-width window-height window-title VK13/VK_NULL_HANDLE VK13/VK_NULL_HANDLE)]
     (globals/set-global! WINDOW-POINTER window-ptr)
     (throw (RuntimeException. "Failed to create GLFW window."))))
 

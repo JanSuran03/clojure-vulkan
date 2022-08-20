@@ -1,8 +1,9 @@
 (ns clojure-vulkan.buffer
   (:require [clojure-vulkan.globals :refer [COMMAND-POOL-POINTER GRAPHICS-QUEUE LOGICAL-DEVICE PHYSICAL-DEVICE]])
   (:import (org.lwjgl.system MemoryStack)
-           (org.lwjgl.vulkan VK13 VkBufferCreateInfo VkMemoryAllocateInfo VkMemoryRequirements
-                             VkPhysicalDeviceMemoryProperties VkCommandBufferAllocateInfo VkCommandBuffer VkCommandBufferBeginInfo VkBufferCopy VkSubmitInfo)
+           (org.lwjgl.vulkan VK13 VkBufferCopy VkBufferCreateInfo VkCommandBuffer VkCommandBufferAllocateInfo
+                             VkCommandBufferBeginInfo VkMemoryAllocateInfo VkMemoryRequirements
+                             VkPhysicalDeviceMemoryProperties VkSubmitInfo)
            (java.nio LongBuffer)))
 
 (defn- find-memory-type [^Integer type-filter ^Integer memory-property-flags ^MemoryStack stack]

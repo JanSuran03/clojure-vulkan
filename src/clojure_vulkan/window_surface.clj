@@ -1,9 +1,9 @@
 (ns clojure-vulkan.window-surface
   (:require [clojure-vulkan.globals :as globals :refer [VULKAN-INSTANCE WINDOW-POINTER WINDOW-SURFACE-POINTER]]
             [clojure-vulkan.util :as util])
-  (:import (org.lwjgl.system MemoryStack)
-           (org.lwjgl.vulkan VK13 KHRSurface)
-           (org.lwjgl.glfw GLFWVulkan)))
+  (:import (org.lwjgl.glfw GLFWVulkan)
+           (org.lwjgl.system MemoryStack)
+           (org.lwjgl.vulkan VK13 KHRSurface)))
 
 (defn create-surface []
   (util/with-memory-stack-push ^MemoryStack stack

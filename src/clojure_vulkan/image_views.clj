@@ -1,5 +1,6 @@
 (ns clojure-vulkan.image-views
-  (:require [clojure-vulkan.globals :as globals :refer [LOGICAL-DEVICE SWAP-CHAIN-IMAGE-FORMAT SWAP-CHAIN-IMAGE-VIEWS-POINTERS SWAP-CHAIN-IMAGES]]
+  (:require [clojure-vulkan.globals :as globals :refer [LOGICAL-DEVICE SWAP-CHAIN-IMAGE-FORMAT
+                                                        SWAP-CHAIN-IMAGE-VIEWS-POINTERS SWAP-CHAIN-IMAGES]]
             [clojure-vulkan.util :as util])
   (:import (org.lwjgl.system MemoryStack)
            (org.lwjgl.vulkan VK13 VkImageViewCreateInfo)))

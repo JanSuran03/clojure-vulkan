@@ -2,7 +2,8 @@
   (:require [clojure-vulkan.globals :as globals :refer [LOGICAL-DEVICE RENDER-PASS-POINTER SWAP-CHAIN-IMAGE-FORMAT]]
             [clojure-vulkan.util :as util])
   (:import (org.lwjgl.system MemoryStack)
-           (org.lwjgl.vulkan VkAttachmentDescription VK13 KHRSwapchain VkAttachmentReference VkSubpassDescription VkRenderPassCreateInfo VkSubpassDependency)))
+           (org.lwjgl.vulkan KHRSwapchain VkAttachmentDescription VK13  VkAttachmentReference VkRenderPassCreateInfo
+                             VkSubpassDependency VkSubpassDescription)))
 
 (defn create-render-pass []
   (util/with-memory-stack-push ^MemoryStack stack

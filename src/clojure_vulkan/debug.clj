@@ -1,6 +1,6 @@
 (ns clojure-vulkan.debug
   (:require [clojure-vulkan.globals :as globals :refer [DEBUG-MESSENGER-POINTER VULKAN-INSTANCE]]
-            [clojure-vulkan.util :as util :refer [nullptr]]
+            [clojure-vulkan.util :as util]
             [clojure-vulkan.validation-layers :as validation-layers])
   (:import (java.nio LongBuffer)
            (org.lwjgl.system MemoryStack)
@@ -35,7 +35,7 @@
 (defn create-debug-messenger-extension [^VkInstance instance ^VkDebugUtilsMessengerCreateInfoEXT create-info
                                         ^VkAllocationCallbacks allocation-callbacks ^LongBuffer debug-messenger-ptr]
   (when (not= (VK13/vkGetInstanceProcAddr instance "vkCreateDebugUtilsMessengerEXT")
-              nullptr)
+              VK13/VK_NULL_HANDLE)
     (= (EXTDebugUtils/vkCreateDebugUtilsMessengerEXT instance create-info allocation-callbacks debug-messenger-ptr)
        VK13/VK_SUCCESS)))
 
@@ -51,7 +51,7 @@
                                 EXTDebugUtils/VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT
                                 EXTDebugUtils/VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT))
     (.pfnUserCallback debug-callback)
-    (.pUserData nullptr)))
+    (.pUserData VK13/VK_NULL_HANDLE)))
 
 (defn setup-debug-messenger []
   (when validation-layers/*enable-validation-layers*
@@ -64,6 +64,7 @@
           (throw (RuntimeException. "Failed to set up debug messenger.")))))))
 
 (defn destroy-debug-messenger [^VkAllocationCallbacks allocation-callbacks]
-  (when (not= (VK13/vkGetInstanceProcAddr VULKAN-INSTANCE "vkDestroyDebugUtilsMessengerEXT") nullptr)
+  (when (not= (VK13/vkGetInstanceProcAddr VULKAN-INSTANCE "vkDestroyDebugUtilsMessengerEXT")
+              VK13/VK_NULL_HANDLE)
     (EXTDebugUtils/vkDestroyDebugUtilsMessengerEXT VULKAN-INSTANCE DEBUG-MESSENGER-POINTER allocation-callbacks)
     (globals/reset-debug-messenger)))

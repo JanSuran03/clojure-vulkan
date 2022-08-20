@@ -9,9 +9,9 @@
   (:import (clojure_vulkan.math.vector_2f Vector2f)
            (clojure_vulkan.math.vector_3f Vector3f)
            (clojure_vulkan ShaderAnalyzer ShaderAnalyzer$ShaderLayout MemoryUtils)
+           (org.lwjgl PointerBuffer)
            (org.lwjgl.system MemoryStack)
-           (org.lwjgl.vulkan VK13 VkVertexInputAttributeDescription VkVertexInputBindingDescription VkPhysicalDeviceMemoryProperties VkBufferCreateInfo)
-           (org.lwjgl PointerBuffer)))
+           (org.lwjgl.vulkan VK13 VkBufferCreateInfo VkPhysicalDeviceMemoryProperties VkVertexInputAttributeDescription VkVertexInputBindingDescription)))
 
 (deftype Vertex [^Vector2f pos ^Vector3f color])
 

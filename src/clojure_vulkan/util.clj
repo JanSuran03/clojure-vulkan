@@ -7,8 +7,6 @@
            (org.lwjgl.system MemoryStack MemoryUtil StructBuffer)
            (org.lwjgl.vulkan VK13)))
 
-(defonce ^Long nullptr MemoryUtil/NULL)
-
 (defmacro with-memory-stack-push [stack & body]
   `(with-open [^MemoryStack ~stack (MemoryStack/stackPush)]
      ~@body))

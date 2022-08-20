@@ -1,5 +1,4 @@
 (ns clojure-vulkan.globals
-  (:require [clojure-vulkan.util :refer [nullptr]])
   (:import (org.lwjgl.vulkan VK13 VkDevice VkExtent2D VkInstance VkPhysicalDevice VkQueue)))
 
 (defmacro set-global! [global-var new-value]
@@ -32,7 +31,7 @@
 (def ^Long WINDOW-SURFACE-POINTER VK13/VK_NULL_HANDLE)
 (defn reset-window-surface [] (alter-var-root #'WINDOW-SURFACE-POINTER reset-to-vk-null))
 
-(def ^Long WINDOW-POINTER nullptr)
+(def ^Long WINDOW-POINTER VK13/VK_NULL_HANDLE)
 (defn reset-window-ptr [] (alter-var-root #'WINDOW-POINTER reset-to-vk-null))
 
 (def SWAP-CHAIN-SUPPORT-DETAILS {})
@@ -53,26 +52,26 @@
 (def SWAP-CHAIN-IMAGE-VIEWS-POINTERS [])
 (defn reset-swap-chain-image-views [] (alter-var-root #'SWAP-CHAIN-IMAGE-VIEWS-POINTERS empty))
 
-(def ^Long PIPELINE-LAYOUT-POINTER nullptr)
+(def ^Long PIPELINE-LAYOUT-POINTER VK13/VK_NULL_HANDLE)
 (defn reset-pipeline-layout-ptr [] (alter-var-root #'PIPELINE-LAYOUT-POINTER reset-to-vk-null))
 
-(def ^Long RENDER-PASS-POINTER nullptr)
+(def ^Long RENDER-PASS-POINTER VK13/VK_NULL_HANDLE)
 (defn reset-render-pass-ptr [] (alter-var-root #'RENDER-PASS-POINTER reset-to-vk-null))
 
-(def ^Long GRAPHICS-PIPELINE-POINTER nullptr)
+(def ^Long GRAPHICS-PIPELINE-POINTER VK13/VK_NULL_HANDLE)
 (defn reset-graphics-pipeline-ptr [] (alter-var-root #'GRAPHICS-PIPELINE-POINTER reset-to-vk-null))
 
 (def SWAP-CHAIN-FRAME-BUFFER-POINTERS [])
 (defn reset-swap-chain-frame-buffers [] (alter-var-root #'SWAP-CHAIN-FRAME-BUFFER-POINTERS empty))
 
-(def ^Long COMMAND-POOL-POINTER nullptr)
+(def ^Long COMMAND-POOL-POINTER VK13/VK_NULL_HANDLE)
 (defn reset-command-pool-ptr [] (alter-var-root #'COMMAND-POOL-POINTER reset-to-vk-null))
 
 (def COMMAND-BUFFERS [])
 (defn reset-command-buffers [] (alter-var-root #'COMMAND-BUFFERS empty))
 
-(def ^Long VERTEX-BUFFER-POINTER nullptr)
+(def ^Long VERTEX-BUFFER-POINTER VK13/VK_NULL_HANDLE)
 (defn reset-vertex-buffer-ptr [] (alter-var-root #'VERTEX-BUFFER-POINTER reset-to-vk-null))
 
-(def ^Long VERTEX-BUFFER-MEMORY-POINTER nullptr)
+(def ^Long VERTEX-BUFFER-MEMORY-POINTER VK13/VK_NULL_HANDLE)
 (defn reset-vertex-buffer-memory-ptr [] (alter-var-root #'VERTEX-BUFFER-MEMORY-POINTER reset-to-vk-null))

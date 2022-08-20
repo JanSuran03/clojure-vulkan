@@ -1,16 +1,17 @@
 (ns clojure-vulkan.swap-chain
-  (:require [clojure-vulkan.frame-buffers :as frame-buffers]
+  (:require [clojure-vulkan.command-buffers :as command-buffers]
+            [clojure-vulkan.frame-buffers :as frame-buffers]
             [clojure-vulkan.globals :as globals :refer [LOGICAL-DEVICE PHYSICAL-DEVICE QUEUE-FAMILIES SWAP-CHAIN-EXTENT SWAP-CHAIN-IMAGE-FORMAT
                                                         SWAP-CHAIN-IMAGES SWAP-CHAIN-POINTER SWAP-CHAIN-SUPPORT-DETAILS WINDOW-POINTER WINDOW-SURFACE-POINTER]]
-            [clojure-vulkan.image-views :as image-views]
-            [clojure-vulkan.util :as util]
-            [clojure-vulkan.command-buffers :as command-buffers]
             [clojure-vulkan.graphics-pipeline :as graphics-pipeline]
-            [clojure-vulkan.render-pass :as render-pass])
+            [clojure-vulkan.image-views :as image-views]
+            [clojure-vulkan.render-pass :as render-pass]
+            [clojure-vulkan.util :as util])
   (:import (java.nio IntBuffer)
            (org.lwjgl.glfw GLFW)
            (org.lwjgl.system MemoryStack)
-           (org.lwjgl.vulkan KHRSurface KHRSwapchain VK13 VkExtent2D VkPhysicalDevice VkSurfaceCapabilitiesKHR VkSurfaceFormatKHR VkSurfaceFormatKHR$Buffer VkSwapchainCreateInfoKHR)))
+           (org.lwjgl.vulkan KHRSurface KHRSwapchain VK13 VkExtent2D VkPhysicalDevice VkSurfaceCapabilitiesKHR VkSurfaceFormatKHR
+                             VkSurfaceFormatKHR$Buffer VkSwapchainCreateInfoKHR)))
 
 (defonce UINT32-MAX 0xffffffff)
 

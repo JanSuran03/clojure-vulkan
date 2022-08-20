@@ -1,11 +1,11 @@
 (ns clojure-vulkan.shaders
   (:refer-clojure :exclude [load])
-  (:require [clojure.java.io :as io]
-            [me.raynes.fs :as fs]
-            [clojure.edn :as edn])
+  (:require [clojure.edn :as edn]
+            [clojure.java.io :as io]
+            [me.raynes.fs :as fs])
   (:import (java.io ByteArrayOutputStream File)
-           (java.nio ByteBuffer DirectByteBuffer Buffer)
-           (org.lwjgl.system NativeResource MemoryStack)
+           (java.nio DirectByteBuffer Buffer)
+           (org.lwjgl.system MemoryStack NativeResource)
            (org.lwjgl.util.shaderc Shaderc)
            (org.lwjgl.vulkan VK13)))
 

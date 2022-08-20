@@ -1,9 +1,8 @@
 (ns clojure-vulkan.render
-  (:require
-    [clojure-vulkan.frame :as frame :refer [FRAMES MAX-FRAMES-IN-FLIGHT]]
-    [clojure-vulkan.globals :as globals :refer [COMMAND-BUFFERS GRAPHICS-QUEUE LOGICAL-DEVICE PRESENT-QUEUE SWAP-CHAIN-POINTER]]
-    [clojure-vulkan.util :as util]
-    [clojure-vulkan.swap-chain :as swap-chain])
+  (:require [clojure-vulkan.frame :as frame :refer [FRAMES MAX-FRAMES-IN-FLIGHT]]
+            [clojure-vulkan.globals :as globals :refer [COMMAND-BUFFERS GRAPHICS-QUEUE LOGICAL-DEVICE PRESENT-QUEUE SWAP-CHAIN-POINTER]]
+            [clojure-vulkan.swap-chain :as swap-chain]
+            [clojure-vulkan.util :as util])
   (:import (clojure_vulkan.frame Frame)
            (org.lwjgl.system MemoryStack Pointer)
            (org.lwjgl.vulkan KHRSwapchain VK13 VkFenceCreateInfo VkPresentInfoKHR VkSemaphoreCreateInfo VkSubmitInfo)))
