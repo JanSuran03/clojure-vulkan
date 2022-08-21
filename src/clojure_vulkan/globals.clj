@@ -75,3 +75,9 @@
 
 (def ^Long VERTEX-BUFFER-MEMORY-POINTER VK13/VK_NULL_HANDLE)
 (defn reset-vertex-buffer-memory-ptr [] (alter-var-root #'VERTEX-BUFFER-MEMORY-POINTER reset-to-vk-null))
+
+(def ^Long INDEX-BUFFER-POINTER VK13/VK_NULL_HANDLE)
+(defn reset-index-buffer-ptr [] (alter-var-root #'INDEX-BUFFER-POINTER reset-to-vk-null))
+
+(def ^Long INDEX-BUFFER-MEMORY-POINTER VK13/VK_NULL_HANDLE)
+(defn reset-index-buffer-memory-ptr [] (alter-var-root #'INDEX-BUFFER-MEMORY-POINTER reset-to-vk-null))

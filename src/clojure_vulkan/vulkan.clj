@@ -31,6 +31,7 @@
   (frame-buffers/create-frame-buffers)
   (command-buffers/create-command-pool)
   (vertex/create-vertex-buffer)
+  (vertex/create-index-buffer)
   (command-buffers/create-command-buffers)
   (render/create-sync-objects))
 
@@ -61,6 +62,8 @@
     #(println "Vulkan cleanup error occured: " (.getMessage ^Throwable %))
     (swap-chain/cleanup-swap-chain)
     (globals/set-global! globals/SWAP-CHAIN-POINTER VK13/VK_NULL_HANDLE)
+    (vertex/destroy-index-buffer)
+    (vertex/free-index-buffer-memory)
     (vertex/destroy-vertex-buffer)
     (vertex/free-vertex-buffer-memory)
     (frame/destroy-semaphores-and-fences)

@@ -1,7 +1,7 @@
 (ns clojure-vulkan.command-buffers
   (:require [clojure-vulkan.globals :as globals :refer [COMMAND-BUFFERS COMMAND-POOL-POINTER GRAPHICS-PIPELINE-POINTER
-                                                        LOGICAL-DEVICE QUEUE-FAMILIES RENDER-PASS-POINTER SWAP-CHAIN-EXTENT
-                                                        SWAP-CHAIN-FRAME-BUFFER-POINTERS VERTEX-BUFFER-POINTER]]
+                                                        INDEX-BUFFER-POINTER LOGICAL-DEVICE QUEUE-FAMILIES RENDER-PASS-POINTER
+                                                        SWAP-CHAIN-EXTENT SWAP-CHAIN-FRAME-BUFFER-POINTERS VERTEX-BUFFER-POINTER]]
             [clojure-vulkan.util :as util]
             [clojure-vulkan.math.vertex :as vertex])
   (:import (org.lwjgl.system MemoryStack)
@@ -52,7 +52,13 @@
   (let [vertex-buffers (.longs stack VERTEX-BUFFER-POINTER)
         offsets (.longs stack 0)]
     (VK13/vkCmdBindVertexBuffers command-buffer 0 vertex-buffers offsets))
-  (VK13/vkCmdDraw command-buffer (:components-per-vertex vertex/current-triangle-vbo-characterictics) 1 0 0)
+  (VK13/vkCmdBindIndexBuffer command-buffer INDEX-BUFFER-POINTER 0 VK13/VK_INDEX_TYPE_UINT16) ;; short
+  #_(VK13/vkCmdDraw command-buffer (:components-per-vertex vertex/current-triangle-vbo-characterictics) 1 0 0)
+  (VK13/vkCmdDrawIndexed command-buffer (count vertex/indices)
+                         #_instance-count 1
+                         #_first-index 0
+                         #_vertex-offset 0
+                         #_first-instance 0)
   (VK13/vkCmdEndRenderPass command-buffer)
   (when (not= (VK13/vkEndCommandBuffer command-buffer)
               VK13/VK_SUCCESS)
