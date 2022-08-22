@@ -1,7 +1,7 @@
 (ns clojure-vulkan.uniform
   (:require [clojure-vulkan.buffer :as buffer]
             [clojure-vulkan.frame :as frame]
-            [clojure-vulkan.globals :as globals :refer [DESCRIPTOR-SET-LAYOUT-POINTER LOGICAL-DEVICE]]
+            [clojure-vulkan.globals :as globals :refer [DESCRIPTOR-SET-LAYOUT-POINTER LOGICAL-DEVICE UNIFORM-BUFFER-POINTERS UNIFORM-BUFFER-MEMORY-POINTERS]]
             [clojure-vulkan.math.vertex :as vertex]
             [clojure-vulkan.util :as util])
   (:import (org.lwjgl.system MemoryStack)
@@ -40,10 +40,17 @@
           [uniform-buffer-ptrs uniform-buffer-memory-ptrs]
           (apply util/nths
                  (repeatedly frame/MAX-FRAMES-IN-FLIGHT
-                             #(fn [_]
-                                (buffer/create-buffer buffer-size VK13/VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT (util/bit-ors VK13/VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
-                                                                                                                        VK13/VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
-                                                      buffer-ptr* buffer-memory-ptr* stack)
-                                [(.get buffer-ptr* 0) (.get buffer-memory-ptr* 0)])))])))
+                             (fn []
+                               (buffer/create-buffer buffer-size VK13/VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT (util/bit-ors VK13/VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+                                                                                                                       VK13/VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
+                                                     buffer-ptr* buffer-memory-ptr* stack)
+                               [(.get buffer-ptr* 0) (.get buffer-memory-ptr* 0)])))]
+      (globals/set-global! UNIFORM-BUFFER-POINTERS uniform-buffer-ptrs)
+      (globals/set-global! UNIFORM-BUFFER-MEMORY-POINTERS uniform-buffer-memory-ptrs))))
 
-(defn destroy-uniform-buffers [])
+(defn destroy-uniform-buffers []
+  (dotimes [i frame/MAX-FRAMES-IN-FLIGHT]
+    (VK13/vkDestroyBuffer LOGICAL-DEVICE ^long (nth UNIFORM-BUFFER-POINTERS i) nil)
+    (VK13/vkFreeMemory LOGICAL-DEVICE ^long (nth UNIFORM-BUFFER-MEMORY-POINTERS i) nil))
+  (globals/reset-uniform-buffer-ptrs)
+  (globals/reset-uniform-buffer-memory-ptrs))

@@ -84,3 +84,9 @@
 
 (def ^Long DESCRIPTOR-SET-LAYOUT-POINTER VK13/VK_NULL_HANDLE)
 (defn reset-descriptor-set-layout-ptr [] (alter-var-root #'DESCRIPTOR-SET-LAYOUT-POINTER reset-to-vk-null))
+
+(def UNIFORM-BUFFER-POINTERS [])
+(defn reset-uniform-buffer-ptrs [] (alter-var-root #'UNIFORM-BUFFER-POINTERS empty))
+
+(def UNIFORM-BUFFER-MEMORY-POINTERS [])
+(defn reset-uniform-buffer-memory-ptrs [] (alter-var-root #'UNIFORM-BUFFER-MEMORY-POINTERS empty))

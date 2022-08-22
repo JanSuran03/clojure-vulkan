@@ -114,7 +114,7 @@
                                           (.blendConstants 3 (float 0)))
           pipeline-layout-create-info (doto (VkPipelineLayoutCreateInfo/calloc stack)
                                         (.sType VK13/VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO)
-                                        (.pSetLayouts DESCRIPTOR-SET-LAYOUT-POINTER)
+                                        (.pSetLayouts (.longs stack DESCRIPTOR-SET-LAYOUT-POINTER))
                                         (.pPushConstantRanges nil))
           pipeline-layout-ptr (.longs stack VK13/VK_NULL_HANDLE)
           _ (if (= (VK13/vkCreatePipelineLayout LOGICAL-DEVICE pipeline-layout-create-info nil pipeline-layout-ptr)
