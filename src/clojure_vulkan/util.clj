@@ -166,3 +166,9 @@
     (if (even? (count expanded))
       `(clojure.core/case ~expr ~@expanded ~(deref throw-expr))
       `(clojure.core/case ~expr ~@expanded ~@(when-not (nil? @throw-expr) [@throw-expr])))))
+
+(defn nths
+  "Returns a seq of vectors of 1st item from each coll, then the second, etc.
+  [[3 5 7] [6 10 14] [9 15 21] [12 20 28]] => ([3 6 9 12] [5 10 15 20] [7 14 21 28])"
+  [& colls]
+  (apply (partial map vector) colls))

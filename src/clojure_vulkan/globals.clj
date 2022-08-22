@@ -81,3 +81,6 @@
 
 (def ^Long INDEX-BUFFER-MEMORY-POINTER VK13/VK_NULL_HANDLE)
 (defn reset-index-buffer-memory-ptr [] (alter-var-root #'INDEX-BUFFER-MEMORY-POINTER reset-to-vk-null))
+
+(def ^Long DESCRIPTOR-SET-LAYOUT-POINTER VK13/VK_NULL_HANDLE)
+(defn reset-descriptor-set-layout-ptr [] (alter-var-root #'DESCRIPTOR-SET-LAYOUT-POINTER reset-to-vk-null))

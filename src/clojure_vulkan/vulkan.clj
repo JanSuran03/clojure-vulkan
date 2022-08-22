@@ -13,6 +13,7 @@
             [clojure-vulkan.render :as render]
             [clojure-vulkan.render-pass :as render-pass]
             [clojure-vulkan.swap-chain :as swap-chain]
+            [clojure-vulkan.uniform :as uniform]
             [clojure-vulkan.util :as util]
             [clojure-vulkan.validation-layers :as validation-layers]
             [clojure-vulkan.window-surface :as window-surface])
@@ -27,11 +28,13 @@
   (swap-chain/create-swap-chain)
   (image-views/create-image-views)
   (render-pass/create-render-pass)
+  (uniform/create-descriptor-set-layout)
   (graphics-pipeline/create-graphics-pipeline)
   (frame-buffers/create-frame-buffers)
   (command-buffers/create-command-pool)
   (vertex/create-vertex-buffer)
   (vertex/create-index-buffer)
+  (uniform/create-uniform-buffers)
   (command-buffers/create-command-buffers)
   (render/create-sync-objects))
 
@@ -61,6 +64,8 @@
   (util/try-all
     #(println "Vulkan cleanup error occured: " (.getMessage ^Throwable %))
     (swap-chain/cleanup-swap-chain)
+    (uniform/destroy-uniform-buffers)
+    (uniform/destroy-descriptor-set-layout)
     (globals/set-global! globals/SWAP-CHAIN-POINTER VK13/VK_NULL_HANDLE)
     (vertex/destroy-index-buffer)
     (vertex/free-index-buffer-memory)

@@ -1,5 +1,6 @@
 (ns clojure-vulkan.graphics-pipeline
-  (:require [clojure-vulkan.globals :as globals :refer [GRAPHICS-PIPELINE-POINTER LOGICAL-DEVICE PIPELINE-LAYOUT-POINTER RENDER-PASS-POINTER SWAP-CHAIN-EXTENT]]
+  (:require [clojure-vulkan.globals :as globals :refer [DESCRIPTOR-SET-LAYOUT-POINTER GRAPHICS-PIPELINE-POINTER LOGICAL-DEVICE
+                                                        PIPELINE-LAYOUT-POINTER RENDER-PASS-POINTER SWAP-CHAIN-EXTENT]]
             [clojure-vulkan.shaders :as shaders]
             [clojure-vulkan.util :as util]
             [clojure-vulkan.math.vertex :as vertex])
@@ -113,7 +114,7 @@
                                           (.blendConstants 3 (float 0)))
           pipeline-layout-create-info (doto (VkPipelineLayoutCreateInfo/calloc stack)
                                         (.sType VK13/VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO)
-                                        (.pSetLayouts nil)
+                                        (.pSetLayouts DESCRIPTOR-SET-LAYOUT-POINTER)
                                         (.pPushConstantRanges nil))
           pipeline-layout-ptr (.longs stack VK13/VK_NULL_HANDLE)
           _ (if (= (VK13/vkCreatePipelineLayout LOGICAL-DEVICE pipeline-layout-create-info nil pipeline-layout-ptr)

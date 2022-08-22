@@ -7,9 +7,9 @@
             [clojure-vulkan.math.vector-3f]
             [clojure-vulkan.shaders :as shaders]
             [clojure-vulkan.util :as util])
-  (:import (clojure_vulkan.math.vector_2f Vector2f)
+  (:import (clojure_vulkan ShaderAnalyzer ShaderAnalyzer$ShaderLayout MemoryUtils)
+           (clojure_vulkan.math.vector_2f Vector2f)
            (clojure_vulkan.math.vector_3f Vector3f)
-           (clojure_vulkan ShaderAnalyzer ShaderAnalyzer$ShaderLayout MemoryUtils)
            (org.lwjgl PointerBuffer)
            (org.lwjgl.system MemoryStack)
            (org.lwjgl.vulkan VK13 VkBufferCreateInfo VkPhysicalDeviceMemoryProperties VkVertexInputAttributeDescription VkVertexInputBindingDescription)))
