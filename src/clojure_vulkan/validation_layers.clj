@@ -23,7 +23,9 @@
                                        "\nRequired layers: " (str/join ", " *validation-layers*))))))))
 
 (defn get-required-extensions [^MemoryStack stack]
-  (let [^PointerBuffer glfw-extensions (GLFWVulkan/glfwGetRequiredInstanceExtensions)]
+  (let [^PointerBuffer glfw-extensions (or (GLFWVulkan/glfwGetRequiredInstanceExtensions)
+                                           (throw (RuntimeException. (str "Required Vulkan instance extensions couldn't be "
+                                                                          "queried - your graphics card doesn't support Vulkan."))))]
     (if *enable-validation-layers*
       (doto (.mallocPointer stack (inc (.capacity glfw-extensions)))
         (.put glfw-extensions)

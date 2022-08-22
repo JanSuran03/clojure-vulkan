@@ -12,4 +12,9 @@ public class MemoryUtils {
         for (short s : data)
             buf.putShort(s);
     }
+
+    public static void memcpyIntegers(ByteBuffer buf, int[]data){
+        for(int i:data)
+            buf.putInt(i);
+    }
 }

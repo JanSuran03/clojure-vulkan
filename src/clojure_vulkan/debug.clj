@@ -12,10 +12,10 @@
     (invoke [this message-severity message-type callback-data-ptr user-data-ptr]
       (let [^VkDebugUtilsMessengerCallbackDataEXT callback-data (VkDebugUtilsMessengerCallbackDataEXT/create ^long callback-data-ptr)
             message-severity (case message-severity
-                               #=(bit-shift-left 1 0) "VERBOSE"
-                               #=(bit-shift-left 1 4) "INFO"
-                               #=(bit-shift-left 1 8) "WARNING"
-                               #=(bit-shift-left 1 12) "ERROR")]
+                               0x1 "VERBOSE"
+                               0x10 "INFO"
+                               0x100 "WARNING"
+                               0x1000 "ERROR")]
         (if util/*current-debug-filename*
           (spit util/*current-debug-filename*
                 (str "Validation layer callback:\n"

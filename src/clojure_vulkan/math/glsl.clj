@@ -55,4 +55,5 @@
     :float float
     :vec2 vec2f
     :vec3 vec3f
-    :vec4 vec4f))
+    :vec4 vec4f
+    nil))

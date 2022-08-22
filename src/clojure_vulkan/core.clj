@@ -1,7 +1,8 @@
 (set! *warn-on-reflection* true)
 
 (ns clojure-vulkan.core
-  (:require [clojure-vulkan.glfw :as glfw]
+  (:require [clojure.edn :as edn]
+            [clojure-vulkan.glfw :as glfw]
             [clojure-vulkan.globals :refer [LOGICAL-DEVICE WINDOW-POINTER]]
             [clojure-vulkan.render :as render]
             [clojure-vulkan.util :as util]
@@ -19,30 +20,31 @@
 (list :file-debug)
 
 (defn -main [& [{:keys [file-debug] :as opts}]]
-  (binding [validation-layers/*enable-validation-layers* (find-or-default opts :validation)
-            util/*current-debug-filename* (when file-debug (util/debug-filename))]
-    (try
-      ;; init
-      (glfw/init)
-      (window/create-window)
-      (vulkan/init)
-      (GLFW/glfwShowWindow WINDOW-POINTER)
+  (let [setup (edn/read-string (slurp "config.edn"))]
+    (binding [validation-layers/*enable-validation-layers* (:enable-validation-layers setup)
+              util/*current-debug-filename* (when file-debug (util/debug-filename))]
+      (try
+        ;; init
+        (glfw/init)
+        (window/create-window)
+        (vulkan/init)
+        (GLFW/glfwShowWindow WINDOW-POINTER)
 
-      ;; application loop
-      (while (not (window/should-window-close?))
-        (glfw/poll-events)
-        (render/draw-frame))
-      (VK13/vkDeviceWaitIdle LOGICAL-DEVICE)
+        ;; application loop
+        (while (not (window/should-window-close?))
+          (glfw/poll-events)
+          (render/draw-frame))
+        (VK13/vkDeviceWaitIdle LOGICAL-DEVICE)
 
-      (catch Throwable t
-        (println "An error occured:" (.getMessage t)
-                 (.printStackTrace t))
-        #_(.printStackTrace t)
-        (throw t))
+        (catch Throwable t
+          (println "An error occured:" (.getMessage t)
+                   (.printStackTrace t))
+          #_(.printStackTrace t)
+          (throw t))
 
 
-      ;; termination
-      (finally
-        (window/destroy-window)
-        (glfw/terminate)
-        (vulkan/terminate)))))
+        ;; termination
+        (finally
+          (window/destroy-window)
+          (glfw/terminate)
+          (vulkan/terminate))))))

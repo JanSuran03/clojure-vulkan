@@ -3,45 +3,58 @@ package clojure_vulkan;
 import clojure.lang.Keyword;
 import clojure.lang.PersistentHashMap;
 
-import java.util.Vector;
+import java.util.*;
 
 public class ShaderAnalyzer {
     enum Mode {
         IN,
-        OUT
+        OUT,
+        UNIFORM
     }
 
     public static class ShaderLayout {
-        static Keyword
-                locationKW = Keyword.intern("location"),
+        final static Keyword
                 typeKW = Keyword.intern("type"),
                 nameKW = Keyword.intern("name"),
                 modeKW = Keyword.intern("mode"),
                 inKW = Keyword.intern("in"),
-                outKW = Keyword.intern("out");
+                outKW = Keyword.intern("out"),
+                uniformKW = Keyword.intern("uniform");
+        private static final HashMap<Mode, Keyword> modeToKW = new HashMap<>(Map.of(
+                Mode.IN, inKW,
+                Mode.OUT, outKW,
+                Mode.UNIFORM, uniformKW));
         private int location;
+        private int binding;
         private String type;
         private String name;
 
         private Mode mode;
 
 
-        public PersistentHashMap asHashMap() {
-            return PersistentHashMap.create(
-                    modeKW, mode == Mode.IN ? inKW : outKW,
-                    locationKW, location,
-                    typeKW, Keyword.intern(type),
-                    nameKW, name);
+        public PersistentHashMap hashMap() {
+            Keyword mode_kw = modeToKW.get(mode);
+            PersistentHashMap ret = PersistentHashMap.create(
+                    modeKW, mode_kw,
+                    nameKW, name,
+                    typeKW, Keyword.intern(type == null ? "unknown" : type));
+            return (PersistentHashMap)
+                    (mode_kw == uniformKW ?
+                            ret.assoc(bindingKW, binding)
+                            : ret.assoc(locationKW, location));
         }
 
         ShaderLayout() {
         }
     }
 
+    final static Keyword
+            locationKW = Keyword.intern("location"),
+            bindingKW = Keyword.intern("binding");
+
     static final int
             locationLength = "(location".length(),
-            inLength = "in".length(),
-            outLength = "out".length();
+            bindingLength = "(binding".length();
 
     private static String dropSpaces(String s) {
         String ret = s;
@@ -51,17 +64,33 @@ public class ShaderAnalyzer {
         return ret;
     }
 
+    private static final HashSet<Character> terminatingWord = new HashSet<>(Set.of(' ', ',', ';'));
+
+    private static String dropWord(String s) {
+        for (int i = 0; i < s.length(); i++)
+            if (terminatingWord.contains(s.charAt(i)))
+                return s.substring(i);
+        return "";
+    }
+
     public static Vector<ShaderLayout> analyze(String s) {
         String src = s;
         Vector<ShaderLayout> analyzedLocations = new Vector<>();
-        int layoutIndexOf;
         int locationIndexOf;
+        int bindingIndexOf;
         char ch;
-        while ((layoutIndexOf = src.indexOf("layout")) != -1) {
+        while (src.contains("layout")) {
             ShaderLayout currentLayout = new ShaderLayout();
-            src = src.substring(layoutIndexOf);
             locationIndexOf = src.indexOf("(location");
-            src = src.substring(locationIndexOf + locationLength);
+            if (locationIndexOf == -1)
+                locationIndexOf = 10000;
+            bindingIndexOf = src.indexOf("(binding");
+            if (bindingIndexOf == -1)
+                bindingIndexOf = 10000;
+            Keyword winner = locationIndexOf < bindingIndexOf ? locationKW : bindingKW;
+            src = src.substring(winner == locationKW ?
+                    locationIndexOf + locationLength :
+                    bindingIndexOf + bindingLength);
             src = dropSpaces(src);
             src = src.substring(1);
             src = dropSpaces(src);
@@ -70,35 +99,49 @@ public class ShaderAnalyzer {
                 sb.append(ch);
                 src = src.substring(1);
             }
-            int location = Integer.parseInt(sb.toString());
+            int locationOrBinding = Integer.parseInt(sb.toString());
             src = src.substring(1);
             src = dropSpaces(src);
 
             Mode mode = src.startsWith("in") ? Mode.IN
                     : (src.startsWith("out") ? Mode.OUT
-                    : null);
+                    : (src.startsWith("uniform") ? Mode.UNIFORM
+                    : null));
             if (mode != null) {
                 currentLayout.mode = mode;
-                currentLayout.location = location;
-                src = src.substring(mode == Mode.IN ? inLength : outLength);
+                if (winner == locationKW) {
+                    currentLayout.location = locationOrBinding;
+                } else {
+                    currentLayout.binding = locationOrBinding;
+                }
+                src = dropWord(src);
                 src = dropSpaces(src);
                 sb = new StringBuilder();
                 while (src.charAt(0) != ' ') {
                     sb.append(src.charAt(0));
                     src = src.substring(1);
                 }
-                currentLayout.type = sb.toString();
-                src = dropSpaces(src);
-                sb = new StringBuilder();
-                while (src.charAt(0) != ';') {
-                    sb.append(src.charAt(0));
-                    src = src.substring(1);
+                if (mode == Mode.IN || mode == Mode.OUT) {
+                    currentLayout.type = sb.toString();
+                    src = dropSpaces(src);
+                    sb = new StringBuilder();
+                    while (src.charAt(0) != ';') {
+                        sb.append(src.charAt(0));
+                        src = src.substring(1);
+                    }
+                    currentLayout.name = sb.toString();
+                } else {
+                    currentLayout.name = sb.toString();
+                    src = dropSpaces(src);
+                    sb = new StringBuilder();
+                    while (!terminatingWord.contains(src.charAt(0))) {
+                        sb.append(src.charAt(0));
+                        src = src.substring(1);
+                    }
                 }
-                currentLayout.name = sb.toString();
                 analyzedLocations.add(currentLayout);
             }
         }
         return analyzedLocations;
     }
 }
-

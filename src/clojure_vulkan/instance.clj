@@ -22,17 +22,17 @@
                                               (.pApplicationInfo app-info)
                                               (.ppEnabledExtensionNames (validation-layers/get-required-extensions stack))
                                               (.ppEnabledLayerNames nil))
-          ^VkInstanceCreateInfo create-info (if validation-layers/*enable-validation-layers*
-                                              (let [^VkDebugUtilsMessengerCreateInfoEXT debug-create-info
-                                                    (debug/init-debug-messenger-create-info
-                                                      (VkDebugUtilsMessengerCreateInfoEXT/calloc stack))]
-                                                (doto create-info
-                                                  (.ppEnabledLayerNames (util/string-seq-as-pointer-buffer stack validation-layers/*validation-layers*))
-                                                  (.pNext (.address debug-create-info)))))
+          ^VkInstanceCreateInfo instance-create-info (doto create-info
+                                              (.ppEnabledLayerNames (util/string-seq-as-pointer-buffer stack validation-layers/*validation-layers*)))
+          _ (when validation-layers/*enable-validation-layers*
+            (let [^VkDebugUtilsMessengerCreateInfoEXT debug-create-info
+                  (debug/init-debug-messenger-create-info
+                    (VkDebugUtilsMessengerCreateInfoEXT/calloc stack))]
+              (.pNext instance-create-info (.address debug-create-info))))
           instance-ptr (.mallocPointer stack 1)]
-      (when (not= (VK13/vkCreateInstance create-info nil instance-ptr) VK13/VK_SUCCESS)
+      (when (not= (VK13/vkCreateInstance instance-create-info nil instance-ptr) VK13/VK_SUCCESS)
         (throw (RuntimeException. "Failed to create Vulkan instance.")))
-      (globals/set-global! VULKAN-INSTANCE (VkInstance. (.get instance-ptr 0) create-info)))))
+      (globals/set-global! VULKAN-INSTANCE (VkInstance. (.get instance-ptr 0) instance-create-info)))))
 
 (defn destroy-instance []
   (util/assert-not-null VULKAN-INSTANCE (VK13/vkDestroyInstance VULKAN-INSTANCE nil))

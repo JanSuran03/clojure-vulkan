@@ -30,17 +30,18 @@
 (def ^"[S" indices (into-array Short/TYPE [0 1 2 2 3 0]))
 
 (defn analyze-shader-attribute-descriptions [shader-source]
-  (map (memfn ^ShaderAnalyzer$ShaderLayout asHashMap)
+  (map (memfn ^ShaderAnalyzer$ShaderLayout hashMap)
        (ShaderAnalyzer/analyze (slurp (str shaders/shader-sources-root shader-source)))))
 
 (defn analyze-shader-characteristics [shader-source]
   (let [attribute-descriptions (analyze-shader-attribute-descriptions shader-source)]
     (as-> attribute-descriptions m
-          (map #(let [type (glsl/kw->type (:type %))]
+          (map #(if-let [type (glsl/kw->type (:type %))]
                   (assoc % :component-sizeof (glsl/component-sizeof type)
                            :components (glsl/components type)
                            :format (glsl/format type)
-                           :sizeof (glsl/sizeof type)))
+                           :sizeof (glsl/sizeof type))
+                  %)
                m)
           (group-by :mode m)
           (assoc m :in-stride (apply + (map :sizeof (:in m)))
@@ -52,7 +53,7 @@
   (let [input-binding-descriptions (VkVertexInputBindingDescription/calloc 1 stack)]
     (doto ^VkVertexInputBindingDescription (.get input-binding-descriptions 0)
       (.binding 0)                                          ;; binding id of the description
-      (.stride ^int (:in-stride current-triangle-vbo-characterictics))
+      (.stride (int (:in-stride current-triangle-vbo-characterictics)))
       (.inputRate VK13/VK_VERTEX_INPUT_RATE_VERTEX))
     input-binding-descriptions))
 
