@@ -53,12 +53,12 @@
                                              (.topology VK13/VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST) ; triangle from every 3 new vertices without reuse
                                              (.primitiveRestartEnable false))
           viewports (doto (VkViewport/calloc 1 stack)
-                      (.x 0)
-                      (.y 0)
+                      (.x (float 0))
+                      (.y (float (.height ^VkExtent2D SWAP-CHAIN-EXTENT))) ; ESSENTIAL FOR Y-AXIS VIEWPORT FLIPPING
                       (.width (float (.width ^VkExtent2D SWAP-CHAIN-EXTENT)))
-                      (.height (float (.height ^VkExtent2D SWAP-CHAIN-EXTENT)))
+                      (.height (float (- (.height ^VkExtent2D SWAP-CHAIN-EXTENT)))) ; ESSENTIAL FOR Y-AXIS VIEWPORT FLIPPING
                       (.minDepth (float 0))
-                      (.maxDepth (float 0)))
+                      (.maxDepth (float 1)))
           scissors (doto (VkRect2D/calloc 1 stack)
                      (.offset (.set (VkOffset2D/calloc stack) 0 0))
                      (.extent SWAP-CHAIN-EXTENT))
@@ -77,7 +77,7 @@
                                             (.rasterizerDiscardEnable false) ; basically enables the rasterizer
                                             (.polygonMode VK13/VK_POLYGON_MODE_FILL)
                                             (.lineWidth (float 1)) ; VkPhysicalDeviceFeatures/WIDELINES if otherwise
-                                            (.cullMode VK13/VK_CULL_MODE_BACK_BIT)
+                                            (.cullMode VK13/VK_CULL_MODE_FRONT_BIT) ; ESSENTIAL FOR Y-AXIS VIEWPORT FLIPPING
                                             (.frontFace VK13/VK_FRONT_FACE_CLOCKWISE)
                                             (.depthBiasEnable false)
                                             (.depthBiasConstantFactor (float 0))

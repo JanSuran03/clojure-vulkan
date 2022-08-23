@@ -90,9 +90,9 @@
           _ (.float32 ^VkClearColorValue (.color clear-values) (.floats stack 0 0 0 1))
           viewports-buffer (doto (VkViewport/calloc 1 stack)
                              (.x (float 0))
-                             (.y (float 0))
+                             (.y (float (.height SWAP-CHAIN-EXTENT))) ; ESSENTIAL FOR Y-AXIS VIEWPORT FLIPPING
                              (.width (float (.width SWAP-CHAIN-EXTENT)))
-                             (.height (float (.height SWAP-CHAIN-EXTENT)))
+                             (.height (float (- (.height SWAP-CHAIN-EXTENT)))) ; ESSENTIAL FOR Y-AXIS VIEWPORT FLIPPING
                              (.minDepth (float 0))
                              (.maxDepth (float 1)))
           render-pass-begin-info (doto (VkRenderPassBeginInfo/calloc stack)
