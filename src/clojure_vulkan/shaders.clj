@@ -2,6 +2,7 @@
   (:refer-clojure :exclude [load])
   (:require [clojure.edn :as edn]
             [clojure.java.io :as io]
+            [clojure-vulkan.util :as util]
             [me.raynes.fs :as fs])
   (:import (java.io ByteArrayOutputStream File)
            (java.nio DirectByteBuffer Buffer)
@@ -33,8 +34,8 @@
   (load [this]
     (set! shader-database (try (edn/read-string (slurp precompiled-shaders-database-file))
                                (catch Throwable t
-                                 (println "Couldn't open and edn-read precompiled shaders database file: "
-                                          precompiled-shaders-database-file)
+                                 (util/log "Couldn't open and edn-read precompiled shaders database file: "
+                                           precompiled-shaders-database-file)
                                  (.printStackTrace t)
                                  (throw t)))))
   (add-src->bytecode-out [this src-file bytecode-file bytecode]
@@ -67,7 +68,7 @@
 (def THE-DATABASE (ShaderDatabase. nil))
 
 (when-not (fs/exists? precompiled-shaders-database-file)
-  (println "Creating precompiled shders database file: " precompiled-shaders-database-file)
+  (util/log "Creating precompiled shders database file: " precompiled-shaders-database-file)
   (spit precompiled-shaders-database-file "{}"))
 
 (load THE-DATABASE)
@@ -123,7 +124,7 @@
                         (Shaderc/shaderc_compiler_release compiler))
                   spv-bytecode (Shaderc/shaderc_result_get_bytes result)]
               (if (nil? spv-filepath)
-                (println "Couldn't save precompiled shader bytecode: destination not supplied.")
+                (util/log "Couldn't save precompiled shader bytecode: destination not supplied.")
                 (add-src->bytecode-out THE-DATABASE shader-source-file spv-filepath spv-bytecode))
               (SpirVShader. result spv-bytecode))
             (catch Throwable t (.printStackTrace t)))

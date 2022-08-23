@@ -5,11 +5,18 @@
   (:import (java.io File)
            (java.util Date)
            (org.lwjgl.system MemoryStack MemoryUtil StructBuffer)
-           (org.lwjgl.vulkan VK13)))
+           (org.lwjgl.vulkan VK13)
+           (org.joml Vector3f)))
 
 (defmacro with-memory-stack-push [stack & body]
   `(with-open [^MemoryStack ~stack (MemoryStack/stackPush)]
      ~@body))
+
+(defmacro log
+  "Used to avoid `println` when searching for temporary logs (this function should
+  be used for permanent logs)."
+  [& args]
+  `(println ~@args))
 
 (defn partition-string-by [^String s ^long n]
   (let [len (.length s)]
@@ -32,8 +39,6 @@
      (do ~@body)))
 
 (defmacro bit-ors [& bits] (reduce bit-or (map eval bits)))
-
-(def ^:dynamic *doto-debug* false)
 
 (def ^:dynamic *current-debug-filename* nil)
 
@@ -70,7 +75,7 @@
 
 (defn test-compile-speed []
   (let [nss (app-nss)]
-    (println "Namespaces: " (count nss))
+    (log "Namespaces: " (count nss))
     (dotimes [_ 10]
       (time (doseq [ns nss]
               (require `[~ns :reload true]))))))

@@ -23,7 +23,7 @@
                      \newline)
                 :append true)
           (binding [*out* *err*]
-            (println (str "Validation layer callback (severity = " message-severity "): "
+            (util/log (str "Validation layer callback (severity = " message-severity "): "
                           (.pMessageString callback-data)))))
         (case message-severity
           "ERROR" (throw (RuntimeException.
@@ -31,7 +31,7 @@
                                 (.pMessageString callback-data)
                                 \newline \newline)))
           "WARNING" (binding [*out* *err*]
-                      (println "Validation layer warning!\n"
+                      (util/log "Validation layer warning!\n"
                                "***********************************"))
           nil))
       VK13/VK_FALSE)))

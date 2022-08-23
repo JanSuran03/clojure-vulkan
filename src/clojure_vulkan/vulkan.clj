@@ -62,7 +62,7 @@
 
 (defn terminate []
   (util/try-all
-    #(println "Vulkan cleanup error occured: " (.getMessage ^Throwable %))
+    #(util/log "Vulkan cleanup error occured: " (.getMessage ^Throwable %))
     (swap-chain/cleanup-swap-chain)
     (uniform/destroy-uniform-buffers)
     (uniform/destroy-descriptor-set-layout)

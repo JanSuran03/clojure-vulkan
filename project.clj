@@ -64,11 +64,11 @@
           [org.clojure/clojure "1.11.1"]
           [org.clojure/core.async "1.5.648"]
           [org.clojure.typed/checker.jvm "1.10.0-alpha1"]
-          ]
+          [org.joml/joml "1.10.4"]]
     (lwjgl-deps-with-natives)))
 
 (defproject clojure-vulkan "0.1.0-SNAPSHOT"
+  :dependencies ~all-dependencies
   :java-source-paths ["src/java"]
   :jvm-opts ^:replace ~(jvm-opts)
-  :dependencies ~all-dependencies
   :repl-options {:init-ns clojure-vulkan.core})

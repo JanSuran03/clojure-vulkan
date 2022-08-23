@@ -1,5 +1,6 @@
 (ns clojure-vulkan.buffer
-  (:require [clojure-vulkan.globals :refer [COMMAND-POOL-POINTER GRAPHICS-QUEUE LOGICAL-DEVICE PHYSICAL-DEVICE]])
+  (:require [clojure-vulkan.globals :refer [COMMAND-POOL-POINTER GRAPHICS-QUEUE LOGICAL-DEVICE PHYSICAL-DEVICE]]
+            [clojure-vulkan.util :as util])
   (:import (org.lwjgl.system MemoryStack)
            (org.lwjgl.vulkan VK13 VkBufferCopy VkBufferCreateInfo VkCommandBuffer VkCommandBufferAllocateInfo
                              VkCommandBufferBeginInfo VkMemoryAllocateInfo VkMemoryRequirements
@@ -44,12 +45,12 @@
                                           (throw (RuntimeException. "Failed to allocate buffer memory.")))]
         (try (VK13/vkBindBufferMemory LOGICAL-DEVICE buffer-pointer buffer-memory-pointer 0)
              (catch Throwable t
-               (println "Failed to bind buffer memory: deallocating memory.")
+               (util/log "Failed to bind buffer memory: deallocating memory.")
                (VK13/vkFreeMemory LOGICAL-DEVICE buffer-memory-pointer nil)
                (throw t)))
         [buffer-pointer buffer-memory-pointer buffer-create-info])
       (catch Throwable t
-        (println "Error in memory buffer allocation process: deleting assigned buffer.")
+        (util/log "Error in memory buffer allocation process: deleting assigned buffer.")
         (VK13/vkDestroyBuffer LOGICAL-DEVICE buffer-pointer nil)
         (throw t)))))
 

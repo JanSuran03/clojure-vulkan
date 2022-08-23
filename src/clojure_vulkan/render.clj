@@ -2,7 +2,8 @@
   (:require [clojure-vulkan.frame :as frame :refer [FRAMES MAX-FRAMES-IN-FLIGHT]]
             [clojure-vulkan.globals :as globals :refer [COMMAND-BUFFERS GRAPHICS-QUEUE LOGICAL-DEVICE PRESENT-QUEUE SWAP-CHAIN-POINTER]]
             [clojure-vulkan.swap-chain :as swap-chain]
-            [clojure-vulkan.util :as util])
+            [clojure-vulkan.util :as util]
+            [clojure-vulkan.uniform :as uniform])
   (:import (clojure_vulkan.frame Frame)
            (org.lwjgl.system MemoryStack Pointer)
            (org.lwjgl.vulkan KHRSwapchain VK13 VkFenceCreateInfo VkPresentInfoKHR VkSemaphoreCreateInfo VkSubmitInfo)))
@@ -57,6 +58,7 @@
             (let [wait-semaphores (frame/alloc-image-available-semaphore-ptr this-frame stack)
                   wait-stages (.ints stack VK13/VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
                   signal-semaphores (frame/alloc-render-finished-semaphore-ptr this-frame stack)
+                  _ (uniform/update-uniform-buffer (.get image-index-ptr 0) stack)
                   submit-info (doto (VkSubmitInfo/calloc stack)
                                 (.sType VK13/VK_STRUCTURE_TYPE_SUBMIT_INFO)
                                 (.waitSemaphoreCount 1)

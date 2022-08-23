@@ -37,7 +37,7 @@
         (VK13/vkDeviceWaitIdle LOGICAL-DEVICE)
 
         (catch Throwable t
-          (println "An error occured:" (.getMessage t)
+          (util/log "An error occured:" (.getMessage t)
                    (.printStackTrace t))
           #_(.printStackTrace t)
           (throw t))

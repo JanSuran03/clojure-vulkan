@@ -41,6 +41,7 @@
     <orderEntry type="library" name="Leiningen: org.clojure/tools.analyzer:1.1.0" level="project" />
     <orderEntry type="library" name="Leiningen: org.clojure/tools.namespace:0.3.0-alpha4" level="project" />
     <orderEntry type="library" name="Leiningen: org.clojure/tools.reader:1.1.1" level="project" />
+    <orderEntry type="library" name="Leiningen: org.joml/joml:1.10.4" level="project" />
     <orderEntry type="library" name="Leiningen: org.lwjgl/lwjgl-assimp:3.3.1" level="project" />
     <orderEntry type="library" name="Leiningen: org.lwjgl/lwjgl-assimp:3.3.1:natives-linux" level="project" />
     <orderEntry type="library" name="Leiningen: org.lwjgl/lwjgl-assimp:3.3.1:natives-macos" level="project" />

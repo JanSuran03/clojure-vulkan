@@ -1,15 +1,15 @@
 (ns clojure-vulkan.uniform
   (:require [clojure-vulkan.buffer :as buffer]
             [clojure-vulkan.frame :as frame]
-            [clojure-vulkan.globals :as globals :refer [DESCRIPTOR-SET-LAYOUT-POINTER LOGICAL-DEVICE UNIFORM-BUFFER-POINTERS UNIFORM-BUFFER-MEMORY-POINTERS]]
+            [clojure-vulkan.globals :as globals :refer [DESCRIPTOR-SET-LAYOUT-POINTER LOGICAL-DEVICE SWAP-CHAIN-EXTENT SWAP-CHAIN-IMAGES
+                                                        UNIFORM-BUFFER-POINTERS UNIFORM-BUFFER-MEMORY-POINTERS]]
             [clojure-vulkan.math.vertex :as vertex]
             [clojure-vulkan.util :as util])
-  (:import (org.lwjgl.system MemoryStack)
-           (org.lwjgl.vulkan VK13 VkDescriptorSetLayoutCreateInfo VkDescriptorSetLayoutBinding)))
-
-(deftype UniformBufferObject [^:unsynchronized-mutable ^"[F" model
-                              ^:unsynchronized-mutable ^"[F" view
-                              ^:unsynchronized-mutable ^"[F" projection])
+  (:import (org.joml Matrix4f Vector3f)
+           (org.lwjgl.glfw GLFW)
+           (org.lwjgl.system MemoryStack)
+           (org.lwjgl.vulkan VK13 VkDescriptorSetLayoutCreateInfo VkDescriptorSetLayoutBinding VkExtent2D)
+           (clojure_vulkan MemoryUtils UniformBufferObject)))
 
 (defn create-descriptor-set-layout []
   (util/with-memory-stack-push ^MemoryStack stack
@@ -32,14 +32,15 @@
   (VK13/vkDestroyDescriptorSetLayout LOGICAL-DEVICE DESCRIPTOR-SET-LAYOUT-POINTER nil)
   (globals/reset-descriptor-set-layout-ptr))
 
+(def buffer-size (* #_num-matrix4f-fields 3 #_floats-per-matrix 16 Float/BYTES))
+
 (defn create-uniform-buffers []
   (util/with-memory-stack-push ^MemoryStack stack
-    (let [buffer-size (* #_num-fields 3 #_array-of-n-floats 3 #_sizeof-float Float/BYTES)
-          buffer-ptr* (.mallocLong stack 1)
+    (let [buffer-ptr* (.mallocLong stack 1)
           buffer-memory-ptr* (.mallocLong stack 1)
           [uniform-buffer-ptrs uniform-buffer-memory-ptrs]
           (apply util/nths
-                 (repeatedly frame/MAX-FRAMES-IN-FLIGHT
+                 (repeatedly (count SWAP-CHAIN-IMAGES)
                              (fn []
                                (buffer/create-buffer buffer-size VK13/VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT (util/bit-ors VK13/VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
                                                                                                                        VK13/VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
@@ -54,3 +55,19 @@
     (VK13/vkFreeMemory LOGICAL-DEVICE ^long (nth UNIFORM-BUFFER-MEMORY-POINTERS i) nil))
   (globals/reset-uniform-buffer-ptrs)
   (globals/reset-uniform-buffer-memory-ptrs))
+
+(defn update-uniform-buffer [current-frame-index ^MemoryStack stack]
+  (let [model (.rotateX (Matrix4f.) (GLFW/glfwGetTime))
+        view (.lookAt (Matrix4f.) (Vector3f. 2 2 2) (Vector3f. 0 0 0) (Vector3f. 0 0 1))
+        proj (.perspective (Matrix4f.)
+                           (float (Math/toRadians 45))
+                           (float (/ (.width ^VkExtent2D SWAP-CHAIN-EXTENT)
+                                     (.height ^VkExtent2D SWAP-CHAIN-EXTENT)))
+                           (float 0.1)
+                           (float 10)
+                           true)
+        ubo (UniformBufferObject. model view proj)
+        data-ptr (.mallocPointer stack 1)]
+    (VK13/vkMapMemory LOGICAL-DEVICE (nth UNIFORM-BUFFER-MEMORY-POINTERS current-frame-index) #_offset 0 buffer-size #_flags 0 data-ptr)
+    (MemoryUtils/memcpyUBO (.getByteBuffer data-ptr 0 buffer-size) ubo)
+    (VK13/vkUnmapMemory LOGICAL-DEVICE (nth UNIFORM-BUFFER-MEMORY-POINTERS current-frame-index))))
