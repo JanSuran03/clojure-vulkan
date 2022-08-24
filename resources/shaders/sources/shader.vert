@@ -12,7 +12,9 @@ layout (binding = 0) uniform UniformBufferObject {
 } mvp;
 
 void main(){
-//  gl_Position = mvp.projection * mvp.view * mvp.view * vec4(inPosition, 0.0, 1.0);
-    gl_Position = vec4(inPosition, 0.0, 1.0);
+
+    gl_Position = mvp.projection * mvp.view * mvp.model * vec4(inPosition, 0.0, 1.0);
+    //gl_Position =  mvp.model * vec4(inPosition, 0.0, 1.0);
+    //gl_Position = vec4(inPosition, 0.0, 1.0);
     fragColor = inColor;
 }

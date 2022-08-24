@@ -1,1 +1,2 @@
-{:enable-validation-layers true}
+{:enable-validation-layers true
+ :file-debug               false}

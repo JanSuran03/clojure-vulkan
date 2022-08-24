@@ -1,6 +1,7 @@
 (ns clojure-vulkan.command-buffers
-  (:require [clojure-vulkan.globals :as globals :refer [COMMAND-BUFFERS COMMAND-POOL-POINTER GRAPHICS-PIPELINE-POINTER
-                                                        INDEX-BUFFER-POINTER LOGICAL-DEVICE QUEUE-FAMILIES RENDER-PASS-POINTER
+  (:require [clojure-vulkan.globals :as globals :refer [COMMAND-BUFFERS COMMAND-POOL-POINTER DESCRIPTOR-SET-POINTERS
+                                                        GRAPHICS-PIPELINE-POINTER INDEX-BUFFER-POINTER LOGICAL-DEVICE
+                                                        PIPELINE-LAYOUT-POINTER QUEUE-FAMILIES RENDER-PASS-POINTER
                                                         SWAP-CHAIN-EXTENT SWAP-CHAIN-FRAME-BUFFER-POINTERS VERTEX-BUFFER-POINTER]]
             [clojure-vulkan.util :as util]
             [clojure-vulkan.math.vertex :as vertex])
@@ -40,7 +41,8 @@
                                      ^VkRect2D$Buffer scissor-buffers
                                      ^MemoryStack stack
                                      swap-chain-frame-buffer-pointer
-                                     ^VkViewport$Buffer viewports-buffer]}]
+                                     ^VkViewport$Buffer viewports-buffer
+                                     command-buffer-index]}]
   (when (not= (VK13/vkBeginCommandBuffer command-buffer command-buffer-begin-info)
               VK13/VK_SUCCESS)
     (throw (RuntimeException. "Failed to begin recording command buffer.")))
@@ -54,6 +56,12 @@
     (VK13/vkCmdBindVertexBuffers command-buffer 0 vertex-buffers offsets))
   (VK13/vkCmdBindIndexBuffer command-buffer INDEX-BUFFER-POINTER 0 VK13/VK_INDEX_TYPE_UINT16) ;; short
   #_(VK13/vkCmdDraw command-buffer (:components-per-vertex vertex/current-triangle-vbo-characterictics) 1 0 0)
+  (VK13/vkCmdBindDescriptorSets command-buffer
+                                VK13/VK_PIPELINE_BIND_POINT_GRAPHICS
+                                PIPELINE-LAYOUT-POINTER
+                                0
+                                (.longs stack ^long (nth DESCRIPTOR-SET-POINTERS command-buffer-index))
+                                nil)
   (VK13/vkCmdDrawIndexed command-buffer (count vertex/indices)
                          #_instance-count 1
                          #_first-index 0
@@ -111,4 +119,5 @@
                                 :scissor-buffers                 scissor-buffers
                                 :swap-chain-frame-buffer-pointer (nth SWAP-CHAIN-FRAME-BUFFER-POINTERS i)
                                 :viewports-buffer                viewports-buffer
-                                :stack                           stack})))))
+                                :stack                           stack
+                                :command-buffer-index            i})))))

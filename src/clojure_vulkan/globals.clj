@@ -7,6 +7,10 @@
 (defn- reset-to-nil [_] nil)
 (defn- reset-to-vk-null [_] VK13/VK_NULL_HANDLE)
 
+(def ^:dynamic *config* {})
+;; **************************************************
+;; GLOBALS
+;; **************************************************
 (def ^Long DEBUG-MESSENGER-POINTER VK13/VK_NULL_HANDLE)
 (defn reset-debug-messenger [] (alter-var-root #'DEBUG-MESSENGER-POINTER reset-to-vk-null))
 
@@ -33,7 +37,9 @@
 
 (def ^Long WINDOW-POINTER VK13/VK_NULL_HANDLE)
 (defn reset-window-ptr [] (alter-var-root #'WINDOW-POINTER reset-to-vk-null))
-
+;; **************************************************
+;; SWAP CHAIN
+;; **************************************************
 (def SWAP-CHAIN-SUPPORT-DETAILS {})
 (defn reset-swap-chain-support-details [] (alter-var-root #'SWAP-CHAIN-SUPPORT-DETAILS empty))
 
@@ -66,7 +72,9 @@
 
 (def ^Long COMMAND-POOL-POINTER VK13/VK_NULL_HANDLE)
 (defn reset-command-pool-ptr [] (alter-var-root #'COMMAND-POOL-POINTER reset-to-vk-null))
-
+;; **************************************************
+;; BUFFERS
+;; **************************************************
 (def COMMAND-BUFFERS [])
 (defn reset-command-buffers [] (alter-var-root #'COMMAND-BUFFERS empty))
 
@@ -81,12 +89,20 @@
 
 (def ^Long INDEX-BUFFER-MEMORY-POINTER VK13/VK_NULL_HANDLE)
 (defn reset-index-buffer-memory-ptr [] (alter-var-root #'INDEX-BUFFER-MEMORY-POINTER reset-to-vk-null))
-
-(def ^Long DESCRIPTOR-SET-LAYOUT-POINTER VK13/VK_NULL_HANDLE)
-(defn reset-descriptor-set-layout-ptr [] (alter-var-root #'DESCRIPTOR-SET-LAYOUT-POINTER reset-to-vk-null))
-
+;; **************************************************
+;; UNIFORMS
+;; **************************************************
 (def UNIFORM-BUFFER-POINTERS [])
 (defn reset-uniform-buffer-ptrs [] (alter-var-root #'UNIFORM-BUFFER-POINTERS empty))
 
 (def UNIFORM-BUFFER-MEMORY-POINTERS [])
 (defn reset-uniform-buffer-memory-ptrs [] (alter-var-root #'UNIFORM-BUFFER-MEMORY-POINTERS empty))
+
+(def DESCRIPTOR-POOL-POINTER VK13/VK_NULL_HANDLE)
+(defn reset-descriptor-pool-ptr [] (alter-var-root #'DESCRIPTOR-POOL-POINTER reset-to-vk-null))
+
+(def ^Long DESCRIPTOR-SET-LAYOUT-POINTER VK13/VK_NULL_HANDLE)
+(defn reset-descriptor-set-layout-ptr [] (alter-var-root #'DESCRIPTOR-SET-LAYOUT-POINTER reset-to-vk-null))
+
+(def DESCRIPTOR-SET-POINTERS [])
+(defn reset-descriptor-sets-ptrs [] (alter-var-root #'DESCRIPTOR-SET-POINTERS empty))

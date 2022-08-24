@@ -1,6 +1,10 @@
 package clojure_vulkan;
 
+import org.joml.Matrix4f;
+
 import java.nio.ByteBuffer;
+import java.util.HashMap;
+import java.util.Map;
 
 public class MemoryUtils {
     public static void memcpyFloats(ByteBuffer buf, float[] data) {
@@ -30,5 +34,22 @@ public class MemoryUtils {
 
     public static void memcpyUBO(ByteBuffer buf, UniformBufferObject ubo) {
         ubo.copyInfoByteBuffer(buf);
+    }
+
+    private static final HashMap<Class<?>, Integer> SIZEOF_CACHE = new HashMap<>(Map.of(
+            Matrix4f.class, 16 * Float.BYTES
+    ));
+
+    public static int sizeof(Object o) {
+        if (o == null)
+            throw new NullPointerException("Cannot get the size of null.");
+        Integer ret = SIZEOF_CACHE.get(o.getClass());
+        if (ret == null)
+            throw new RuntimeException("Cannot determine the size of " + o + " with class: " + o.getClass());
+        return ret;
+    }
+
+    public static int alignAs(int offset, int alignment) {
+        return offset % alignment == 0 ? offset : ((offset - 1) | (alignment - 1)) + 1;
     }
 }

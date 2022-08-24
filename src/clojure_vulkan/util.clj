@@ -4,9 +4,8 @@
             [me.raynes.fs :as fs])
   (:import (java.io File)
            (java.util Date)
-           (org.lwjgl.system MemoryStack MemoryUtil StructBuffer)
-           (org.lwjgl.vulkan VK13)
-           (org.joml Vector3f)))
+           (org.lwjgl.system MemoryStack StructBuffer)
+           (org.lwjgl.vulkan VK13)))
 
 (defmacro with-memory-stack-push [stack & body]
   `(with-open [^MemoryStack ~stack (MemoryStack/stackPush)]
@@ -132,48 +131,46 @@
 
     (throw (RuntimeException. \"Failed to acquire swap chain image.\")))"
   [expr & clauses]
-  (let [err (volatile! nil)
-        throw-expr (volatile! nil)
-        try-eval (fn [condition]
-                   (if-let [v (try (eval condition)
-                                   (catch Throwable t (vreset! err t)))]
-                     v
-                     (if (nil? @err)
-                       nil
-                       (throw @err))))
-        expanded (loop [[condition then :as clauses] clauses
-                        ret []]
-                   (cond (nil? condition)
+  (let [try-eval (fn [condition]
+                   (let [[v err] (try [(eval condition) nil]
+                                      (catch Throwable t [nil t]))]
+                     (if err
+                       (binding [*out* *err*]
+                         (log (str "ERROR: TRIED EVALUATING `" condition "` as an already defined constant"
+                                       " expression. Did you forget to import the class?"))
+                         (throw err))
+                       v)))
+        {:keys [expanded throw-expr*]}
+        (loop [[condition then :as clauses] clauses
+               ret []
+               throw-expr* nil]
+          (cond (nil? condition)
+                {:expanded ret :throw-expr throw-expr*}
+
+                (nil? then)
+                {:expanded (conj ret condition) :throw-expr throw-expr*}
+
+                (= condition :case/default-throw)
+                (if (nil? throw-expr*)
+                  (recur (nnext clauses)
                          ret
+                         then)
+                  (throw (IllegalStateException. (str "Cannot have two defaults:\n"
+                                                      throw-expr* ";\n" then))))
 
-                         (nil? then)
-                         (conj ret condition)
-
-                         (= condition :case/default-throw)
-                         (if (nil? @throw-expr)
-                           (do (vreset! throw-expr then)
-                               (recur (nnext clauses)
-                                      ret))
-                           (throw (IllegalStateException. (str "Cannot have two defaults:\n"
-                                                               @throw-expr ";\n" then))))
-
-                         :else
-                         (recur (nnext clauses)
-                                (conj ret (cond (symbol? condition)
-                                                (try-eval condition)
-
-                                                (list? condition)
-                                                (apply list (map try-eval condition))
-
-                                                :else
-                                                condition)
-                                      then))))]
+                :else
+                (recur (nnext clauses)
+                       (conj ret (cond (symbol? condition) (try-eval condition)
+                                       (list? condition) (apply list (map try-eval condition))
+                                       :else condition)
+                             then)
+                       throw-expr*)))]
     (if (even? (count expanded))
-      `(clojure.core/case ~expr ~@expanded ~(deref throw-expr))
-      `(clojure.core/case ~expr ~@expanded ~@(when-not (nil? @throw-expr) [@throw-expr])))))
+      `(clojure.core/case ~expr ~@expanded ~throw-expr*)
+      `(clojure.core/case ~expr ~@expanded ~@(when-not (nil? throw-expr*) [throw-expr*])))))
 
 (defn nths
   "Returns a seq of vectors of 1st item from each coll, then the second, etc.
-  [[3 5 7] [6 10 14] [9 15 21] [12 20 28]] => ([3 6 9 12] [5 10 15 20] [7 14 21 28])"
+  [[a1 b1 c1] [a2 b2 c2] [a3 b3 c3] [a4 b4 c4]] => [a1 a2 a3 a4] [b1 b2 b3 b4] [c1 c2 c3 c4])"
   [& colls]
   (apply (partial map vector) colls))

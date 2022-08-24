@@ -35,6 +35,8 @@
   (vertex/create-vertex-buffer)
   (vertex/create-index-buffer)
   (uniform/create-uniform-buffers)
+  (uniform/create-descriptor-pool)
+  (uniform/create-descriptor-sets)
   (command-buffers/create-command-buffers)
   (render/create-sync-objects))
 
@@ -46,24 +48,12 @@
                  (clojure.string/starts-with? v "reset-")))
        (map (fn [sym]
               (symbol "globals" (name sym))))))
-; Vulkan instance
-; debug messenger
-; window surface
-; physical device
-; logical device
-; swap chain
-; image views
-; render pass
-; graphics pipeline
-; frame buffers
-; command pool
-; command buffers
-; sync objects
 
 (defn terminate []
   (util/try-all
     #(util/log "Vulkan cleanup error occured: " (.getMessage ^Throwable %))
     (swap-chain/cleanup-swap-chain)
+    (uniform/destroy-descriptor-pool)
     (uniform/destroy-uniform-buffers)
     (uniform/destroy-descriptor-set-layout)
     (globals/set-global! globals/SWAP-CHAIN-POINTER VK13/VK_NULL_HANDLE)

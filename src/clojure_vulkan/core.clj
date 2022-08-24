@@ -3,7 +3,7 @@
 (ns clojure-vulkan.core
   (:require [clojure.edn :as edn]
             [clojure-vulkan.glfw :as glfw]
-            [clojure-vulkan.globals :refer [LOGICAL-DEVICE WINDOW-POINTER]]
+            [clojure-vulkan.globals :refer [*config* LOGICAL-DEVICE WINDOW-POINTER]]
             [clojure-vulkan.render :as render]
             [clojure-vulkan.util :as util]
             [clojure-vulkan.validation-layers :as validation-layers]
@@ -12,17 +12,11 @@
   (:import (org.lwjgl.vulkan VK13)
            (org.lwjgl.glfw GLFW)))
 
-(defn find-or-default [opts key]
-  (if-let [key (find opts key)]
-    (get opts key)
-    true))
-
-(list :file-debug)
-
 (defn -main [& [{:keys [file-debug] :as opts}]]
-  (let [setup (edn/read-string (slurp "config.edn"))]
-    (binding [validation-layers/*enable-validation-layers* (:enable-validation-layers setup)
-              util/*current-debug-filename* (when file-debug (util/debug-filename))]
+  (let [config (edn/read-string (slurp "config.edn"))]
+    (binding [*config* config
+              util/*current-debug-filename* (when (:file-debug config) (util/debug-filename))
+              validation-layers/*enable-validation-layers* (:enable-validation-layers config)]
       (try
         ;; init
         (glfw/init)
@@ -38,13 +32,14 @@
 
         (catch Throwable t
           (util/log "An error occured:" (.getMessage t)
-                   (.printStackTrace t))
+                    (.printStackTrace t))
           #_(.printStackTrace t)
           (throw t))
 
 
         ;; termination
         (finally
-          (window/destroy-window)
-          (glfw/terminate)
-          (vulkan/terminate))))))
+          (util/try-all #(util/log "An error occurred in one of the major cleanup sections: " (.printStackTrace ^Throwable %))
+            (window/destroy-window)
+            (glfw/terminate)
+            (vulkan/terminate)))))))
