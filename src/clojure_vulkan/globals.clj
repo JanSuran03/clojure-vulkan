@@ -106,3 +106,6 @@
 
 (def DESCRIPTOR-SET-POINTERS [])
 (defn reset-descriptor-sets-ptrs [] (alter-var-root #'DESCRIPTOR-SET-POINTERS empty))
+
+(def old-time (atom 0))
+(def delta-time (atom 0))

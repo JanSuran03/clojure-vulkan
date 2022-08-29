@@ -17,7 +17,8 @@
             [clojure-vulkan.util :as util]
             [clojure-vulkan.validation-layers :as validation-layers]
             [clojure-vulkan.window-surface :as window-surface])
-  (:import (org.lwjgl.vulkan VK13)))
+  (:import (org.lwjgl.glfw GLFW)
+           (org.lwjgl.vulkan VK13)))
 
 (defn init []
   (instance/create)
@@ -38,16 +39,8 @@
   (uniform/create-descriptor-pool)
   (uniform/create-descriptor-sets)
   (command-buffers/create-command-buffers)
-  (render/create-sync-objects))
-
-(defn find-resets []
-  (->> (find-ns 'clojure-vulkan.globals)
-       ns-publics
-       keys
-       (filter (fn [v]
-                 (clojure.string/starts-with? v "reset-")))
-       (map (fn [sym]
-              (symbol "globals" (name sym))))))
+  (render/create-sync-objects)
+  (reset! globals/old-time (GLFW/glfwGetTime)))
 
 (defn terminate []
   (util/try-all

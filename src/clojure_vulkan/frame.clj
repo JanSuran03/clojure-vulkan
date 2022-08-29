@@ -1,8 +1,10 @@
 (ns clojure-vulkan.frame
-  (:require [clojure-vulkan.globals :refer [LOGICAL-DEVICE]])
+  (:require [clojure-vulkan.globals :refer [LOGICAL-DEVICE]]
+            [clojure-vulkan.globals :as globals])
   (:import (java.nio LongBuffer)
            (org.lwjgl.system MemoryStack)
-           (org.lwjgl.vulkan VK13)))
+           (org.lwjgl.vulkan VK13)
+           (org.lwjgl.glfw GLFW)))
 
 (def ^Integer MAX-FRAMES-IN-FLIGHT 2)
 (def FRAMES [])
@@ -39,6 +41,9 @@
   (nth FRAMES (get-current-frame-counter)))
 
 (defn next-frame []
+  (let [new-time (GLFW/glfwGetTime)]
+    (reset! globals/delta-time (- new-time @globals/old-time))
+    (reset! globals/old-time new-time))
   (swap! current-frame-counter* #(rem (inc %) MAX-FRAMES-IN-FLIGHT)))
 
 (defn destroy-semaphores-and-fences []

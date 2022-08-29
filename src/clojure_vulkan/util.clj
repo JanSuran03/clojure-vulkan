@@ -137,7 +137,7 @@
                      (if err
                        (binding [*out* *err*]
                          (log (str "ERROR: TRIED EVALUATING `" condition "` as an already defined constant"
-                                       " expression. Did you forget to import the class?"))
+                                   " expression. Did you forget to import the class?"))
                          (throw err))
                        v)))
         {:keys [expanded throw-expr*]}

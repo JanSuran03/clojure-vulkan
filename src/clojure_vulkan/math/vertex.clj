@@ -16,18 +16,33 @@
 
 (deftype Vertex [^Vector2f pos ^Vector3f color])
 
-(defn vertex [x y r g b]
+(defn vertex [x y z r g b]
   #_(Vertex. (Vector2f. x y)
              (Vector3f. r g b))
-  (list x y r g b))
+  (list x y z r g b))
 
-(def ^"[F" vertices (into-array Float/TYPE (concat (vertex -0.5 -0.5 1 0 0) ; red
-                                                   (vertex +0.5 -0.5 0 1 0) ; green
-                                                   (vertex +0.5 +0.5 0 0 1) ; blue
-                                                   (vertex -0.5 +0.5 0.5 0 0.5) ; violet
-                                                   )))
 
-(def ^"[S" indices (into-array Short/TYPE [0 1 2 2 3 0]))
+(def ^"[F" vertices (into-array Float/TYPE #_(concat (vertex -0.5 -0.5 1 0 0) ; red
+                                                     (vertex +0.5 -0.5 0 1 0) ; green
+                                                     (vertex +0.5 +0.5 0 0 1) ; blue
+                                                     (vertex -0.5 +0.5 0.5 0 0.5) ; violet
+                                                     )
+                                (concat (list -0.5 -0.5 0 1 1 0)
+                                        (list +0.5 -0.5 0 1 0 1)
+                                        (list +0.5 -0.5 1 0 1 1)
+                                        (list -0.5 -0.5 1 1 0 0)
+                                        (list -0.5 +0.5 0 0 1 0)
+                                        (list +0.5 +0.5 0 0 0 1)
+                                        (list +0.5 +0.5 1 1 1 1)
+                                        (list -0.5 +0.5 1 0 0 0))))
+
+(def ^"[S" indices (into-array Short/TYPE #_[0 1 2 2 3 0]
+                               [0 1 4, 1 5 4
+                                1 2 5, 2 6 5
+                                2 3 6, 3 7 6
+                                3 0 7, 0 4 7
+                                3 2 0, 2 1 0
+                                4 5 7, 5 6 7]))
 
 (defn analyze-shader-attribute-descriptions [shader-source]
   (map (memfn ^ShaderAnalyzer$ShaderLayout hashMap)

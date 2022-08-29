@@ -12,7 +12,9 @@
   (:import (org.lwjgl.vulkan VK13)
            (org.lwjgl.glfw GLFW)))
 
-(defn -main [& [{:keys [file-debug] :as opts}]]
+(require '[clojure.reflect :as reflect])
+
+(defn -main [& _]
   (let [config (edn/read-string (slurp "config.edn"))]
     (binding [*config* config
               util/*current-debug-filename* (when (:file-debug config) (util/debug-filename))

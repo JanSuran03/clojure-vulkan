@@ -1,9 +1,10 @@
 (ns clojure-vulkan.window
-  (:require [clojure-vulkan.glfw :refer [glfw-boolean]]
-            [clojure-vulkan.globals :as globals :refer [WINDOW-POINTER]]
-            [clojure-vulkan.frame :as frame])
-  (:import (org.lwjgl.glfw GLFW GLFWFramebufferSizeCallback)
-           (org.lwjgl.vulkan VK13)))
+  (:require [clojure-vulkan.frame :as frame]
+            [clojure-vulkan.glfw :refer [glfw-boolean]]
+            [clojure-vulkan.globals :as globals :refer [WINDOW-POINTER]])
+  (:import (clojure_vulkan GLFWKeyEvents)
+    (org.lwjgl.glfw GLFW GLFWFramebufferSizeCallback GLFWKeyCallback)
+    (org.lwjgl.vulkan VK13)))
 
 
 (def ^Integer window-width 800)
@@ -23,7 +24,10 @@
   (-create-window)
   (GLFW/glfwSetFramebufferSizeCallback WINDOW-POINTER (proxy [GLFWFramebufferSizeCallback] []
                                                         (invoke [window-ptr width height]
-                                                          (reset! frame/FRAME-BUFFER-RESIZED? true)))))
+                                                          (reset! frame/FRAME-BUFFER-RESIZED? true))))
+  (GLFW/glfwSetKeyCallback WINDOW-POINTER (proxy [GLFWKeyCallback] []
+                                            (invoke [window-ptr key scancode action mods]
+                                              (GLFWKeyEvents/processKeyEvent key scancode action mods)))))
 
 (defn destroy-window []
   (GLFW/glfwDestroyWindow WINDOW-POINTER)
