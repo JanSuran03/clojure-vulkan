@@ -1,6 +1,6 @@
 (ns clojure-vulkan.render
   (:require [clojure-vulkan.frame :as frame :refer [FRAMES MAX-FRAMES-IN-FLIGHT]]
-            [clojure-vulkan.globals :as globals :refer [COMMAND-BUFFERS GRAPHICS-QUEUE PRESENT-QUEUE SWAP-CHAIN-POINTER]]
+            [clojure-vulkan.globals :as globals :refer [GRAPHICS-QUEUE PRESENT-QUEUE SWAP-CHAIN-POINTER]]
             [clojure-vulkan.swap-chain :as swap-chain]
             [clojure-vulkan.util :as util]
             [clojure-vulkan.uniform :as uniform])
@@ -65,7 +65,7 @@
                                 (.waitSemaphoreCount 1)
                                 (.pWaitSemaphores wait-semaphores)
                                 (.pWaitDstStageMask wait-stages)
-                                (.pCommandBuffers (.pointers stack ^Pointer (nth COMMAND-BUFFERS (.get image-index-ptr 0))))
+                                (.pCommandBuffers (.pointers stack ^Pointer (.elementAt (.get VulkanGlobals/COMMAND_BUFFERS) (.get image-index-ptr 0))))
                                 (.pSignalSemaphores signal-semaphores))
                   _ (VK13/vkResetFences (VulkanGlobals/getLogicalDevice) (frame/alloc-in-flight-fence-ptr this-frame stack))
                   _ (when (not= (VK13/vkQueueSubmit GRAPHICS-QUEUE submit-info (frame/get-in-flight-fence-ptr this-frame))

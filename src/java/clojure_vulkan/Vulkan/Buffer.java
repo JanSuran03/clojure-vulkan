@@ -2,13 +2,15 @@ package clojure_vulkan.Vulkan;
 
 import org.lwjgl.system.NativeResource;
 import org.lwjgl.vulkan.VK13;
+import org.lwjgl.vulkan.VkBufferCreateInfo;
 
 public class Buffer implements NativeResource {
     public Buffer() {
     }
 
-    public long bufferPtr;
-    public long bufferMemoryPtr;
+    private long bufferPtr;
+    private long bufferMemoryPtr;
+    private VkBufferCreateInfo bufferCreateInfo;
 
     @Override
     public void free() {
@@ -30,5 +32,16 @@ public class Buffer implements NativeResource {
 
     public void bufferMemoryPointer(long ptr) {
         bufferMemoryPtr = ptr;
+    }
+
+    public VkBufferCreateInfo bufferCreateInfo() {
+        if (bufferCreateInfo == null) {
+            throw new RuntimeException("Failed to get the value of bufferCreateInfo.");
+        }
+        return bufferCreateInfo;
+    }
+
+    public void bufferCreateInfo(VkBufferCreateInfo createInfo) {
+        bufferCreateInfo = createInfo;
     }
 }

@@ -16,7 +16,6 @@
             [clojure-vulkan.texture :as texture]
             [clojure-vulkan.uniform :as uniform]
             [clojure-vulkan.util :as util]
-            [clojure-vulkan.validation-layers :as validation-layers]
             [clojure-vulkan.window-surface :as window-surface])
   (:import (clojure_vulkan.Vulkan VulkanGlobals)
            (org.lwjgl.glfw GLFW)
@@ -50,7 +49,7 @@
     #(util/log "Vulkan cleanup error occured: " (.getMessage ^Throwable %))
     (swap-chain/cleanup-swap-chain)
     (uniform/destroy-descriptor-pool)
-    (uniform/destroy-uniform-buffers)
+    (.free VulkanGlobals/UNIFORM_BUFFERS)
     (uniform/destroy-descriptor-set-layout)
     (globals/set-global! globals/SWAP-CHAIN-POINTER VK13/VK_NULL_HANDLE)
     (.free globals/INDEX-BUFFER)
@@ -64,9 +63,11 @@
     (render-pass/destroy-render-pass)
     (window-surface/destroy-surface)
     (.free VulkanGlobals/LOGICAL_DEVICE)
-    (when validation-layers/*enable-validation-layers*
+    (.free VulkanGlobals/PHYSICAL_DEVICE)
+    (when VulkanGlobals/VALIDATION_LAYERS_ENABLED
+      (VulkanGlobals/disableValidationLayers)
       (debug/destroy-debug-messenger nil))
     (instance/destroy-instance)
-    (globals/reset-queue-families)
+    (.free VulkanGlobals/QUEUE_FAMILIES)
     (globals/reset-swap-chain-support-details)))
 

@@ -1,5 +1,5 @@
 (ns clojure-vulkan.logical-device-and-queue
-  (:require [clojure-vulkan.globals :as globals :refer [GRAPHICS-QUEUE PHYSICAL-DEVICE PRESENT-QUEUE QUEUE-FAMILIES]]
+  (:require [clojure-vulkan.globals :as globals :refer [GRAPHICS-QUEUE PRESENT-QUEUE]]
             [clojure-vulkan.physical-device :as physical-device]
             [clojure-vulkan.util :as util]
             [clojure-vulkan.validation-layers :as validation-layers])
@@ -10,7 +10,7 @@
 
 (defn create-logical-device []
   (util/with-memory-stack-push ^MemoryStack stack
-    (let [{:keys [graphics-family present-family]} QUEUE-FAMILIES
+    (let [{:keys [graphics-family present-family]} (.get VulkanGlobals/QUEUE_FAMILIES)
           unique-queue-families (hash-set graphics-family present-family)
           ^VkDeviceQueueCreateInfo$Buffer queue-create-infos (VkDeviceQueueCreateInfo/calloc (count unique-queue-families) stack)
           _ (doseq [[i queue-family] (map-indexed (fn [i family] [i family]) unique-queue-families)]
@@ -28,10 +28,10 @@
                                                          validation-layers/*enable-validation-layers*
                                                          (.ppEnabledLayerNames (util/string-seq-as-pointer-buffer stack validation-layers/*validation-layers*)))
           device-ptr (.pointers stack VK13/VK_NULL_HANDLE)
-          _ (when (not= (VK13/vkCreateDevice PHYSICAL-DEVICE device-create-info nil device-ptr)
+          _ (when (not= (VK13/vkCreateDevice (.get VulkanGlobals/PHYSICAL_DEVICE) device-create-info nil device-ptr)
                         VK13/VK_SUCCESS)
               (throw (RuntimeException. "Failed to create a logical device.")))
-          device (VkDevice. (.get device-ptr 0) PHYSICAL-DEVICE device-create-info)
+          device (VkDevice. (.get device-ptr 0) (.get VulkanGlobals/PHYSICAL_DEVICE) device-create-info)
           graphics-queue-ptr (.pointers stack VK13/VK_NULL_HANDLE)
           present-queue-ptr (.pointers stack VK13/VK_NULL_HANDLE)]
       (VK13/vkGetDeviceQueue device graphics-family 0 graphics-queue-ptr)

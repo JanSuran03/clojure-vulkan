@@ -1,9 +1,9 @@
 (ns clojure-vulkan.util
   (:refer-clojure :exclude [case])
   (:require [clojure.string :as str]
-            [clojure-vulkan.globals :refer [PHYSICAL-DEVICE]]
             [me.raynes.fs :as fs])
-  (:import (java.io File)
+  (:import (clojure_vulkan.Vulkan VulkanGlobals)
+           (java.io File)
            (java.util Date)
            (org.lwjgl.system MemoryStack StructBuffer)
            (org.lwjgl.vulkan VK13 VkPhysicalDeviceMemoryProperties)))
@@ -178,7 +178,7 @@
 
 (defn find-memory-type [^Integer type-filter ^Integer memory-property-flags ^MemoryStack stack kind]
   (let [memory-properties (VkPhysicalDeviceMemoryProperties/malloc stack)]
-    (VK13/vkGetPhysicalDeviceMemoryProperties PHYSICAL-DEVICE memory-properties)
+    (VK13/vkGetPhysicalDeviceMemoryProperties (.get VulkanGlobals/PHYSICAL_DEVICE) memory-properties)
     (or (some (fn [^Integer i]
                 (when (and (not= 0 (bit-and type-filter (bit-shift-left 1 i)))
                            (= (bit-and (.propertyFlags (.memoryTypes memory-properties i))

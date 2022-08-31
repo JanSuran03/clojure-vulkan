@@ -1,10 +1,10 @@
 (ns clojure-vulkan.frame-buffers
-  (:require [clojure-vulkan.globals :as globals :refer [RENDER-PASS-POINTER SWAP-CHAIN-EXTENT
-                                                        SWAP-CHAIN-IMAGE-VIEWS-POINTERS SWAP-CHAIN-FRAME-BUFFER-POINTERS]]
+  (:require [clojure-vulkan.globals :as globals :refer [RENDER-PASS-POINTER SWAP-CHAIN-IMAGE-VIEWS-POINTERS
+                                                        SWAP-CHAIN-FRAME-BUFFER-POINTERS]]
             [clojure-vulkan.util :as util])
   (:import (clojure_vulkan.Vulkan VulkanGlobals)
            (org.lwjgl.system MemoryStack)
-           (org.lwjgl.vulkan VK13 VkExtent2D VkFramebufferCreateInfo)))
+           (org.lwjgl.vulkan VK13 VkFramebufferCreateInfo)))
 
 (defn create-frame-buffers []
   (util/with-memory-stack-push ^MemoryStack stack
@@ -14,8 +14,8 @@
                                      (.sType VK13/VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO)
                                      (.renderPass RENDER-PASS-POINTER)
                                      (.attachmentCount 1)
-                                     (.width (.width ^VkExtent2D SWAP-CHAIN-EXTENT))
-                                     (.height (.height ^VkExtent2D SWAP-CHAIN-EXTENT))
+                                     (.width (.width (.get VulkanGlobals/SWAP_CHAIN_EXTENT)))
+                                     (.height (.height (.get VulkanGlobals/SWAP_CHAIN_EXTENT)))
                                      (.layers 1))]
       (doseq [^Long image-view SWAP-CHAIN-IMAGE-VIEWS-POINTERS]
         (.put attachments-buffer 0 image-view)

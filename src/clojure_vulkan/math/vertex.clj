@@ -83,9 +83,7 @@
           buffer-ptr* (.mallocLong stack 1)
           buffer-memory-ptr* (.mallocLong stack 1)
 
-          [staging-buffer-ptr
-           staging-buffer-memory-ptr
-           ^VkBufferCreateInfo staging-buffer-create-info]
+          staging-buffer
           (buffer/create-buffer buffer-size                 ;; create staging buffer
                                 VK13/VK_BUFFER_USAGE_TRANSFER_SRC_BIT
                                 (bit-or VK13/VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
@@ -94,9 +92,8 @@
                                 buffer-memory-ptr*
                                 stack)
           ^PointerBuffer data-ptr* (.mallocPointer stack 1)
-          _ (buffer/staging-buffer-memcpy staging-buffer-memory-ptr buffer-size data-ptr* vertices :buffer-copy/floats)
-          [vertex-buffer-ptr
-           vertex-buffer-memory-ptr]
+          _ (buffer/staging-buffer-memcpy (.bufferMemoryPointer staging-buffer) buffer-size data-ptr* vertices :buffer-copy/floats)
+          vertex-buffer
           (buffer/create-buffer buffer-size                 ;; create vertex buffer
                                 (bit-or VK13/VK_BUFFER_USAGE_VERTEX_BUFFER_BIT
                                         VK13/VK_BUFFER_USAGE_TRANSFER_DST_BIT)
@@ -105,19 +102,17 @@
                                 buffer-ptr*
                                 buffer-memory-ptr*
                                 stack)]
-      (buffer/copy-buffer staging-buffer-ptr vertex-buffer-ptr buffer-size stack)
-      (VK13/vkDestroyBuffer (VulkanGlobals/getLogicalDevice) staging-buffer-ptr nil)
-      (VK13/vkFreeMemory (VulkanGlobals/getLogicalDevice) staging-buffer-memory-ptr nil)
-      (.bufferPointer VERTEX-BUFFER vertex-buffer-ptr)
-      (.bufferMemoryPointer VERTEX-BUFFER vertex-buffer-memory-ptr))))
+      (buffer/copy-buffer (.bufferPointer staging-buffer) (.bufferPointer vertex-buffer) buffer-size stack)
+      (VK13/vkDestroyBuffer (VulkanGlobals/getLogicalDevice) (.bufferPointer staging-buffer) nil)
+      (VK13/vkFreeMemory (VulkanGlobals/getLogicalDevice) (.bufferMemoryPointer staging-buffer) nil)
+      (globals/set-global! VERTEX-BUFFER vertex-buffer))))
 
 (defn create-index-buffer []
   (util/with-memory-stack-push ^MemoryStack stack
     (let [buffer-size (* (count indices) Short/SIZE)
           buffer-ptr* (.mallocLong stack 1)
           buffer-memory-ptr* (.mallocLong stack 1)
-          [staging-buffer-ptr
-           staging-buffer-memory-ptr]
+          staging-buffer
           (buffer/create-buffer buffer-size
                                 VK13/VK_BUFFER_USAGE_TRANSFER_SRC_BIT
                                 (bit-or VK13/VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
@@ -126,9 +121,8 @@
                                 buffer-memory-ptr*
                                 stack)
           data-ptr* (.mallocPointer stack 1)
-          _ (buffer/staging-buffer-memcpy staging-buffer-memory-ptr buffer-size data-ptr* indices :buffer-copy/shorts)
-          [index-buffer-ptr
-           index-buffer-memory-ptr]
+          _ (buffer/staging-buffer-memcpy (.bufferMemoryPointer staging-buffer) buffer-size data-ptr* indices :buffer-copy/shorts)
+          index-buffer
           (buffer/create-buffer buffer-size
                                 (bit-or VK13/VK_BUFFER_USAGE_TRANSFER_DST_BIT
                                         VK13/VK_BUFFER_USAGE_INDEX_BUFFER_BIT)
@@ -136,8 +130,6 @@
                                 buffer-ptr*
                                 buffer-memory-ptr*
                                 stack)]
-      (buffer/copy-buffer staging-buffer-ptr index-buffer-ptr buffer-size stack)
-      (VK13/vkDestroyBuffer (VulkanGlobals/getLogicalDevice) staging-buffer-ptr nil)
-      (VK13/vkFreeMemory (VulkanGlobals/getLogicalDevice) staging-buffer-memory-ptr nil)
-      (.bufferPointer ^Buffer INDEX-BUFFER index-buffer-ptr)
-      (.bufferMemoryPointer ^Buffer INDEX-BUFFER index-buffer-memory-ptr))))
+      (buffer/copy-buffer (.bufferPointer staging-buffer) (.bufferPointer index-buffer) buffer-size stack)
+      (.free staging-buffer)
+      (globals/set-global! INDEX-BUFFER index-buffer))))

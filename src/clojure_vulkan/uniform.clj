@@ -1,15 +1,16 @@
 (ns clojure-vulkan.uniform
   (:require [clojure-vulkan.buffer :as buffer]
-            [clojure-vulkan.globals :as globals :refer [DESCRIPTOR-POOL-POINTER DESCRIPTOR-SET-LAYOUT-POINTER DESCRIPTOR-SET-POINTERS SWAP-CHAIN-EXTENT
-                                                        SWAP-CHAIN-IMAGES UNIFORM-BUFFERS]]
+            [clojure-vulkan.globals :as globals :refer [DESCRIPTOR-POOL-POINTER DESCRIPTOR-SET-LAYOUT-POINTER DESCRIPTOR-SET-POINTERS
+                                                        SWAP-CHAIN-IMAGES]]
             [clojure-vulkan.math.vertex :as vertex]
             [clojure-vulkan.util :as util])
   (:import (clojure_vulkan UniformBufferObject)
            (clojure_vulkan.Vulkan Buffer VulkanGlobals)
+           (java.util Collection Vector)
            (org.joml Matrix4f)
            (org.lwjgl.glfw GLFW)
            (org.lwjgl.system MemoryStack)
-           (org.lwjgl.vulkan VK13 VkDescriptorBufferInfo VkDescriptorPoolCreateInfo VkDescriptorPoolSize VkDescriptorSetAllocateInfo VkDescriptorSetLayoutBinding VkDescriptorSetLayoutCreateInfo VkExtent2D VkWriteDescriptorSet)))
+           (org.lwjgl.vulkan VK13 VkDescriptorBufferInfo VkDescriptorPoolCreateInfo VkDescriptorPoolSize VkDescriptorSetAllocateInfo VkDescriptorSetLayoutBinding VkDescriptorSetLayoutCreateInfo VkWriteDescriptorSet)))
 
 (defn create-descriptor-set-layout []
   (util/with-memory-stack-push ^MemoryStack stack
@@ -47,11 +48,7 @@
                         (doto (Buffer.)
                           (.bufferPointer (.get buffer-ptr* 0))
                           (.bufferMemoryPointer (.get buffer-memory-ptr* 0)))))]
-      (globals/set-global! UNIFORM-BUFFERS uniform-buffers))))
-
-(defn destroy-uniform-buffers []
-  (dotimes [i (count SWAP-CHAIN-IMAGES)]
-    (.free ^Buffer (nth UNIFORM-BUFFERS i))))
+      (.set VulkanGlobals/UNIFORM_BUFFERS (Vector. ^Collection uniform-buffers)))))
 
 (defn update-uniform-buffer [current-frame-index ^MemoryStack stack]
   (let [model (.rotate (Matrix4f.) (* (GLFW/glfwGetTime)
@@ -59,14 +56,15 @@
         view (.lookAt (Matrix4f.) 2 2 2,, 0 0 0,, 0 0 1)
         proj (.perspective (Matrix4f.)
                            (float (Math/toRadians 45))
-                           (float (/ (- (.width ^VkExtent2D SWAP-CHAIN-EXTENT))
-                                     (.height ^VkExtent2D SWAP-CHAIN-EXTENT)))
+                           (float (/ (- (.width (.get VulkanGlobals/SWAP_CHAIN_EXTENT)))
+                                     (.height (.get VulkanGlobals/SWAP_CHAIN_EXTENT))))
                            (float 0.1)
                            (float 10)
                            true)
         ubo (UniformBufferObject. model view proj)
         data-ptr* (.mallocPointer stack 1)]
-    (buffer/staging-buffer-memcpy (.bufferMemoryPointer ^Buffer (nth UNIFORM-BUFFERS current-frame-index)) buffer-size data-ptr* ubo :buffer-copy/uniform-buffer-object)))
+    (buffer/staging-buffer-memcpy (.bufferMemoryPointer ^Buffer (.elementAt (.get VulkanGlobals/UNIFORM_BUFFERS) current-frame-index))
+                                  buffer-size data-ptr* ubo :buffer-copy/uniform-buffer-object)))
 
 (defn create-descriptor-pool []
   (util/with-memory-stack-push ^MemoryStack stack
@@ -114,7 +112,7 @@
                                  (.pImageInfo nil)
                                  (.pTexelBufferView nil))
           descriptor-set-ptrs (mapv (fn [i]
-                                      (.buffer descriptor-buffer-info (.bufferPointer ^Buffer (nth UNIFORM-BUFFERS i)))
+                                      (.buffer descriptor-buffer-info (.bufferPointer ^Buffer (.elementAt (.get VulkanGlobals/UNIFORM_BUFFERS) i)))
                                       (.dstSet write-descriptor-set (.get descriptor-sets-ptr ^int i))
                                       (VK13/vkUpdateDescriptorSets (VulkanGlobals/getLogicalDevice) write-descriptor-set nil)
                                       (.get descriptor-sets-ptr))

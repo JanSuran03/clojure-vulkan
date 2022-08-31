@@ -1,11 +1,12 @@
 (ns clojure-vulkan.command-buffers
-  (:require [clojure-vulkan.globals :as globals :refer [COMMAND-BUFFERS COMMAND-POOL-POINTER DESCRIPTOR-SET-POINTERS
+  (:require [clojure-vulkan.globals :as globals :refer [COMMAND-POOL-POINTER DESCRIPTOR-SET-POINTERS
                                                         GRAPHICS-PIPELINE-POINTER INDEX-BUFFER
-                                                        PIPELINE-LAYOUT-POINTER QUEUE-FAMILIES RENDER-PASS-POINTER
-                                                        SWAP-CHAIN-EXTENT SWAP-CHAIN-FRAME-BUFFER-POINTERS VERTEX-BUFFER]]
+                                                        PIPELINE-LAYOUT-POINTER RENDER-PASS-POINTER
+                                                        SWAP-CHAIN-FRAME-BUFFER-POINTERS VERTEX-BUFFER]]
             [clojure-vulkan.util :as util]
             [clojure-vulkan.math.vertex :as vertex])
   (:import (clojure_vulkan.Vulkan Buffer VulkanGlobals)
+           (java.util Collection Vector)
            (org.lwjgl.system MemoryStack)
            (org.lwjgl.vulkan VK13 VkClearColorValue VkClearValue VkCommandBuffer
                              VkCommandBufferAllocateInfo VkCommandBufferBeginInfo VkCommandPoolCreateInfo VkOffset2D
@@ -16,7 +17,7 @@
     (let [command-pool-create-info (doto (VkCommandPoolCreateInfo/calloc stack)
                                      (.sType VK13/VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO)
                                      (.flags VK13/VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT)
-                                     (.queueFamilyIndex (:graphics-family QUEUE-FAMILIES)))
+                                     (.queueFamilyIndex (.graphicsFamily VulkanGlobals/QUEUE_FAMILIES)))
           command-pool-ptr (.mallocLong stack 1)]
 
       (if (= (VK13/vkCreateCommandPool (VulkanGlobals/getLogicalDevice) command-pool-create-info nil command-pool-ptr)
@@ -24,17 +25,12 @@
         (globals/set-global! COMMAND-POOL-POINTER (.get command-pool-ptr 0))
         (throw (RuntimeException. "Failed to create command pool."))))))
 
-(defn destroy-command-buffers
-  "No need for Vulkan cleanup, destroyed with their command pools."
-  []
-  (globals/reset-command-buffers))
-
 (defn destroy-command-pool
   "Destroys command buffers as well."
   []
   (VK13/vkDestroyCommandPool (VulkanGlobals/getLogicalDevice) COMMAND-POOL-POINTER nil)
   (globals/reset-command-pool-ptr)
-  (destroy-command-buffers))
+  (.free VulkanGlobals/COMMAND_BUFFERS))
 
 (defn record-command-buffer [{:keys [^VkCommandBuffer command-buffer
                                      ^VkCommandBufferBeginInfo command-buffer-begin-info
@@ -83,11 +79,12 @@
           command-buffers-ptr (.mallocPointer stack command-buffers-count)
           render-area (doto (VkRect2D/calloc stack)
                         (.offset (.set (VkOffset2D/calloc stack) 0 0))
-                        (.extent SWAP-CHAIN-EXTENT))
+                        (.extent (.get VulkanGlobals/SWAP_CHAIN_EXTENT)))
           _ (if (= (VK13/vkAllocateCommandBuffers (VulkanGlobals/getLogicalDevice) command-buffer-allocate-info command-buffers-ptr)
                    VK13/VK_SUCCESS)
-              (globals/set-global! COMMAND-BUFFERS (mapv #(VkCommandBuffer. (.get command-buffers-ptr ^int %) (VulkanGlobals/getLogicalDevice))
-                                                         (range command-buffers-count)))
+              (.set VulkanGlobals/COMMAND_BUFFERS
+                    (Vector. ^Collection (mapv #(VkCommandBuffer. (.get command-buffers-ptr ^int %) (VulkanGlobals/getLogicalDevice))
+                                               (range command-buffers-count))))
               (throw (RuntimeException. "Failed to allocate command buffers.")))
           command-buffer-begin-info (doto (VkCommandBufferBeginInfo/calloc stack)
                                       (.sType VK13/VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO)
@@ -98,9 +95,9 @@
           _ (.float32 ^VkClearColorValue (.color clear-values) (.floats stack 0 0 0 1))
           viewports-buffer (doto (VkViewport/calloc 1 stack)
                              (.x (float 0))
-                             (.y (float (.height SWAP-CHAIN-EXTENT))) ; ESSENTIAL FOR Y-AXIS VIEWPORT FLIPPING
-                             (.width (float (.width SWAP-CHAIN-EXTENT)))
-                             (.height (float (- (.height SWAP-CHAIN-EXTENT)))) ; ESSENTIAL FOR Y-AXIS VIEWPORT FLIPPING
+                             (.y (float (.height (.get VulkanGlobals/SWAP_CHAIN_EXTENT)))) ; ESSENTIAL FOR Y-AXIS VIEWPORT FLIPPING
+                             (.width (float (.width (.get VulkanGlobals/SWAP_CHAIN_EXTENT))))
+                             (.height (float (- (.height (.get VulkanGlobals/SWAP_CHAIN_EXTENT))))) ; ESSENTIAL FOR Y-AXIS VIEWPORT FLIPPING
                              (.minDepth (float 0))
                              (.maxDepth (float 1)))
           render-pass-begin-info (doto (VkRenderPassBeginInfo/calloc stack)
@@ -111,9 +108,9 @@
                                    (.pClearValues clear-values))
           scissor-buffers (doto (VkRect2D/calloc 1 stack)
                             (.offset (.set (VkOffset2D/calloc stack) 0 0))
-                            (.extent SWAP-CHAIN-EXTENT))]
+                            (.extent (.get VulkanGlobals/SWAP_CHAIN_EXTENT)))]
       (dotimes [i command-buffers-count]
-        (record-command-buffer {:command-buffer                  (nth COMMAND-BUFFERS i)
+        (record-command-buffer {:command-buffer                  (.elementAt (.get VulkanGlobals/COMMAND_BUFFERS) i)
                                 :command-buffer-begin-info       command-buffer-begin-info
                                 :render-pass-begin-info          render-pass-begin-info
                                 :scissor-buffers                 scissor-buffers

@@ -2,7 +2,7 @@
   (:require [clojure-vulkan.buffer :as buffer]
             [clojure-vulkan.globals :as globals :refer [IMAGE-MEMORY-POINTER IMAGE-POINTER]]
             [clojure-vulkan.util :as util])
-  (:import (clojure_vulkan.Vulkan VulkanGlobals)
+  (:import (clojure_vulkan.Vulkan VulkanGlobals Buffer)
            (java.nio IntBuffer ByteBuffer LongBuffer)
            (org.lwjgl.stb STBImage)
            (org.lwjgl.system MemoryStack)
@@ -19,15 +19,14 @@
           _ (when (nil? pixels)
               (throw (RuntimeException. (str "Texture " texture-filepath " couldn't be loaded."))))
           [^LongBuffer buffer-ptr* ^LongBuffer buffer-memory-ptr*] (repeatedly #(.mallocLong stack 1))
-          [staging-buffer-ptr staging-buffer-memory-ptr staging-buffer-create-info]
+          staging-buffer
           (buffer/create-buffer image-size VK13/VK_BUFFER_USAGE_TRANSFER_SRC_BIT (util/bit-ors VK13/VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
                                                                                                VK13/VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
                                 buffer-ptr* buffer-memory-ptr* stack)
           data-ptr* (.mallocPointer stack 1)
-          _ (do (buffer/staging-buffer-memcpy staging-buffer-memory-ptr image-size data-ptr* pixels :buffer-copy/byte-buffer)
+          _ (do (buffer/staging-buffer-memcpy (.bufferMemoryPointer staging-buffer) image-size data-ptr* pixels :buffer-copy/byte-buffer)
                 (STBImage/stbi_image_free pixels))
-          _ (do (VK13/vkDestroyBuffer (VulkanGlobals/getLogicalDevice) staging-buffer-ptr nil)
-                (VK13/vkFreeMemory (VulkanGlobals/getLogicalDevice) staging-buffer-memory-ptr nil))
+          _ (.free ^Buffer staging-buffer)
           image-ptr* (.mallocLong stack 1)
           image-create-info (doto (VkImageCreateInfo/calloc stack)
                               (.sType VK13/VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO)

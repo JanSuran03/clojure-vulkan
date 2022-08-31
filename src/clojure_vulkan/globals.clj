@@ -1,6 +1,6 @@
 (ns clojure-vulkan.globals
   (:import (clojure_vulkan.Vulkan Buffer)
-           (org.lwjgl.vulkan VK13 VkDevice VkExtent2D VkInstance VkPhysicalDevice VkQueue)))
+           (org.lwjgl.vulkan VK13  VkInstance VkQueue)))
 
 (defmacro set-global! [global-var new-value]
   `(alter-var-root (var ~global-var) (constantly ~new-value)))
@@ -17,12 +17,6 @@
 
 (def ^VkInstance VULKAN-INSTANCE nil)
 (defn reset-vulkan-instance [] (alter-var-root #'VULKAN-INSTANCE reset-to-nil))
-
-(def ^VkPhysicalDevice PHYSICAL-DEVICE nil)
-(defn reset-physical-device [] (alter-var-root #'PHYSICAL-DEVICE reset-to-nil))
-
-(def QUEUE-FAMILIES {})
-(defn reset-queue-families [] (alter-var-root #'QUEUE-FAMILIES empty))
 
 (def ^VkQueue GRAPHICS-QUEUE nil)
 (defn reset-graphics-queue [] (alter-var-root #'GRAPHICS-QUEUE reset-to-nil))
@@ -50,9 +44,6 @@
 (def ^Integer SWAP-CHAIN-IMAGE-FORMAT VK13/VK_NULL_HANDLE)
 (defn reset-swap-chain-image-format [] (alter-var-root #'SWAP-CHAIN-IMAGE-FORMAT reset-to-vk-null))
 
-(def ^VkExtent2D SWAP-CHAIN-EXTENT nil)
-(defn reset-swap-chain-extent [] (alter-var-root #'SWAP-CHAIN-EXTENT reset-to-nil))
-
 (def SWAP-CHAIN-IMAGE-VIEWS-POINTERS [])
 (defn reset-swap-chain-image-views [] (alter-var-root #'SWAP-CHAIN-IMAGE-VIEWS-POINTERS empty))
 
@@ -73,17 +64,13 @@
 ;; **************************************************
 ;; BUFFERS
 ;; **************************************************
-(def COMMAND-BUFFERS [])
-(defn reset-command-buffers [] (alter-var-root #'COMMAND-BUFFERS empty))
 
-(def ^Buffer VERTEX-BUFFER (Buffer.))
+(def ^Buffer VERTEX-BUFFER nil)
 
-(def ^Buffer INDEX-BUFFER (Buffer.))
+(def ^Buffer INDEX-BUFFER nil)
 ;; **************************************************
 ;; UNIFORMS
 ;; **************************************************
-(def UNIFORM-BUFFERS [])
-
 (def DESCRIPTOR-POOL-POINTER VK13/VK_NULL_HANDLE)
 (defn reset-descriptor-pool-ptr [] (alter-var-root #'DESCRIPTOR-POOL-POINTER reset-to-vk-null))
 

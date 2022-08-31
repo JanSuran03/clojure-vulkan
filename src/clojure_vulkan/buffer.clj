@@ -1,17 +1,17 @@
 (ns clojure-vulkan.buffer
   (:require [clojure-vulkan.globals :refer [COMMAND-POOL-POINTER GRAPHICS-QUEUE]]
             [clojure-vulkan.util :as util])
-  (:import (org.lwjgl.system MemoryStack)
+  (:import (clojure_vulkan MemoryUtils UniformBufferObject)
+           (clojure_vulkan.Vulkan VulkanGlobals Buffer)
+           (java.nio LongBuffer ByteBuffer)
+           (org.lwjgl PointerBuffer)
+           (org.lwjgl.system MemoryStack)
            (org.lwjgl.vulkan VK13 VkBufferCopy VkBufferCreateInfo VkCommandBuffer VkCommandBufferAllocateInfo
                              VkCommandBufferBeginInfo VkMemoryAllocateInfo VkMemoryRequirements
-                             VkSubmitInfo)
-           (java.nio LongBuffer ByteBuffer)
-           (clojure_vulkan MemoryUtils UniformBufferObject)
-           (org.lwjgl PointerBuffer)
-           (clojure_vulkan.Vulkan VulkanGlobals)))
+                             VkSubmitInfo)))
 
-(defn create-buffer [^Integer byte-size ^Integer usage ^Integer property-flags
-                     ^LongBuffer buffer-ptr* ^LongBuffer buffer-memory-ptr* ^MemoryStack stack]
+(defn ^Buffer create-buffer [^Integer byte-size ^Integer usage ^Integer property-flags
+                             ^LongBuffer buffer-ptr* ^LongBuffer buffer-memory-ptr* ^MemoryStack stack]
   (let [buffer-create-info (doto (VkBufferCreateInfo/calloc stack)
                              (.sType VK13/VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO)
                              (.size byte-size)
@@ -40,7 +40,10 @@
                (util/log "Failed to bind buffer memory: deallocating memory.")
                (VK13/vkFreeMemory (VulkanGlobals/getLogicalDevice) buffer-memory-pointer nil)
                (throw t)))
-        [buffer-pointer buffer-memory-pointer buffer-create-info])
+        (doto (Buffer.)
+          (.bufferPointer buffer-pointer)
+          (.bufferMemoryPointer buffer-memory-pointer)
+          (.bufferCreateInfo buffer-create-info)))
       (catch Throwable t
         (util/log "Error in memory buffer allocation process: deleting assigned buffer.")
         (VK13/vkDestroyBuffer (VulkanGlobals/getLogicalDevice) buffer-pointer nil)

@@ -1,8 +1,9 @@
 (ns clojure-vulkan.physical-device
-  (:require [clojure-vulkan.globals :as globals :refer [PHYSICAL-DEVICE QUEUE-FAMILIES VULKAN-INSTANCE WINDOW-SURFACE-POINTER]]
+  (:require [clojure-vulkan.globals :refer [VULKAN-INSTANCE WINDOW-SURFACE-POINTER]]
             [clojure-vulkan.swap-chain :as swap-chain]
             [clojure-vulkan.util :as util])
-  (:import (java.nio IntBuffer)
+  (:import (clojure_vulkan.Vulkan VulkanGlobals)
+           (java.nio IntBuffer)
            (org.lwjgl PointerBuffer)
            (org.lwjgl.system MemoryStack)
            (org.lwjgl.vulkan KHRSurface KHRSwapchain VK13 VkExtensionProperties VkPhysicalDevice VkPhysicalDeviceFeatures
@@ -76,9 +77,9 @@
                 (vreset! graphics-family* graphics-family)
                 (vreset! present-family* present-family))
             (vreset! score nil))))
-      {:graphics-family* @graphics-family*
-       :present-family*  @present-family*
-       :physical-device* (->> @devices (remove (fn [[score _]]
+      {:graphics-family @graphics-family*
+       :present-family  @present-family*
+       :physical-device (->> @devices (remove (fn [[score _]]
                                                  (nil? score)))
                               (sort-by (fn [[score _]]
                                          score))
@@ -94,9 +95,10 @@
               (throw (RuntimeException. "No GPU with Vulkan support found.")))
           physical-devices-ptr (.mallocPointer stack device-count)
           _ (VK13/vkEnumeratePhysicalDevices VULKAN-INSTANCE device-count-ptr physical-devices-ptr)
-          {:keys [graphics-family* present-family* physical-device*]} (pick-suitable-device physical-devices-ptr device-count)]
-      (when-not physical-device*
+          {:keys [graphics-family present-family physical-device]} (pick-suitable-device physical-devices-ptr device-count)]
+      (when-not physical-device
         (throw (RuntimeException. "No suitable GPU found.")))
-      (globals/set-global! PHYSICAL-DEVICE physical-device*)
-      (alter-var-root #'QUEUE-FAMILIES conj {:graphics-family graphics-family*
-                                             :present-family  present-family*}))))
+      (.set VulkanGlobals/PHYSICAL_DEVICE physical-device)
+      (-> VulkanGlobals/QUEUE_FAMILIES
+          (.graphicsFamily graphics-family)
+          (.presentFamily present-family)))))

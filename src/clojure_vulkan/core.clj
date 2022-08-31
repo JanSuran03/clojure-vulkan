@@ -6,7 +6,6 @@
             [clojure-vulkan.globals :refer [*config* WINDOW-POINTER]]
             [clojure-vulkan.render :as render]
             [clojure-vulkan.util :as util]
-            [clojure-vulkan.validation-layers :as validation-layers]
             [clojure-vulkan.vulkan :as vulkan]
             [clojure-vulkan.window :as window])
   (:import (clojure_vulkan.Vulkan VulkanGlobals)
@@ -18,8 +17,9 @@
 (defn -main [& _]
   (let [config (edn/read-string (slurp "config.edn"))]
     (binding [*config* config
-              util/*current-debug-filename* (when (:file-debug config) (util/debug-filename))
-              validation-layers/*enable-validation-layers* (:enable-validation-layers config)]
+              util/*current-debug-filename* (when (:file-debug config) (util/debug-filename))]
+      (when (:enable-validation-layers config)
+        (VulkanGlobals/enableValidationLayers))
       (try
         ;; init
         (glfw/init)

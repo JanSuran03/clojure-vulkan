@@ -1,7 +1,7 @@
 (ns clojure-vulkan.swap-chain
   (:require [clojure-vulkan.command-buffers :as command-buffers]
             [clojure-vulkan.frame-buffers :as frame-buffers]
-            [clojure-vulkan.globals :as globals :refer [PHYSICAL-DEVICE QUEUE-FAMILIES SWAP-CHAIN-EXTENT SWAP-CHAIN-IMAGE-FORMAT
+            [clojure-vulkan.globals :as globals :refer [SWAP-CHAIN-IMAGE-FORMAT
                                                         SWAP-CHAIN-IMAGES SWAP-CHAIN-POINTER SWAP-CHAIN-SUPPORT-DETAILS WINDOW-POINTER WINDOW-SURFACE-POINTER]]
             [clojure-vulkan.graphics-pipeline :as graphics-pipeline]
             [clojure-vulkan.image-views :as image-views]
@@ -78,7 +78,7 @@
   (util/with-memory-stack-push ^MemoryStack stack
     (let [{:keys [formats-ptr present-modes-ptr present-modes-count ^VkSurfaceCapabilitiesKHR surface-capabilities]}
           (or                                               ;(not-empty SWAP-CHAIN-SUPPORT-DETAILS)
-            (query-swap-chain-support PHYSICAL-DEVICE))
+            (query-swap-chain-support (.get VulkanGlobals/PHYSICAL_DEVICE)))
           surface-format (choose-swap-surface-format formats-ptr)
           present-mode (choose-swap-presentation-mode present-modes-ptr present-modes-count)
           extent (choose-swap-extent surface-capabilities)
@@ -96,14 +96,14 @@
                                                              (.imageExtent extent)
                                                              (.imageArrayLayers 1)
                                                              (.imageUsage VK13/VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT))
-          _ (do (if (= (:graphics-family QUEUE-FAMILIES) (:present-family QUEUE-FAMILIES))
+          _ (do (if (= (.graphicsFamily VulkanGlobals/QUEUE_FAMILIES) (.presentFamily VulkanGlobals/QUEUE_FAMILIES))
                   (doto swap-chain-create-info
                     (.imageSharingMode VK13/VK_SHARING_MODE_EXCLUSIVE)
                     (.queueFamilyIndexCount 0))
                   (doto swap-chain-create-info
                     (.imageSharingMode VK13/VK_SHARING_MODE_CONCURRENT)
                     (.queueFamilyIndexCount 2)
-                    (.pQueueFamilyIndices (.ints stack (:graphics-family QUEUE-FAMILIES) (:present-family QUEUE-FAMILIES)))))
+                    (.pQueueFamilyIndices (.ints stack (.graphicsFamily VulkanGlobals/QUEUE_FAMILIES) (.presentFamily VulkanGlobals/QUEUE_FAMILIES)))))
                 (doto swap-chain-create-info
                   (.preTransform (.currentTransform surface-capabilities))
                   (.compositeAlpha KHRSurface/VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR)
@@ -120,11 +120,11 @@
       (globals/set-global! SWAP-CHAIN-IMAGES (mapv #(.get swapchain-images-ptr ^int %)
                                                    (range image-count)))
       (globals/set-global! SWAP-CHAIN-IMAGE-FORMAT (.format surface-format))
-      (globals/set-global! SWAP-CHAIN-EXTENT (doto (VkExtent2D/create)
-                                               (.set extent))))))
+      (.set VulkanGlobals/SWAP_CHAIN_EXTENT (doto (VkExtent2D/create)
+                                              (.set extent))))))
 
 (defn cleanup-swap-chain []
-  (command-buffers/destroy-command-buffers)
+  (.free VulkanGlobals/COMMAND_BUFFERS)
   (graphics-pipeline/destroy-graphics-pipeline)
   (graphics-pipeline/destroy-pipeline-layout)
   (render-pass/destroy-render-pass)

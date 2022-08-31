@@ -1,13 +1,13 @@
 (ns clojure-vulkan.graphics-pipeline
   (:require [clojure-vulkan.globals :as globals :refer [DESCRIPTOR-SET-LAYOUT-POINTER GRAPHICS-PIPELINE-POINTER
-                                                        PIPELINE-LAYOUT-POINTER RENDER-PASS-POINTER SWAP-CHAIN-EXTENT]]
+                                                        PIPELINE-LAYOUT-POINTER RENDER-PASS-POINTER]]
             [clojure-vulkan.shaders :as shaders]
             [clojure-vulkan.util :as util]
             [clojure-vulkan.math.vertex :as vertex])
   (:import (clojure_vulkan.shaders SpirVShader)
            (clojure_vulkan.Vulkan VulkanGlobals)
            (org.lwjgl.system MemoryStack)
-           (org.lwjgl.vulkan VK13 VkExtent2D VkGraphicsPipelineCreateInfo VkOffset2D VkPipelineColorBlendAttachmentState
+           (org.lwjgl.vulkan VK13 VkGraphicsPipelineCreateInfo VkOffset2D VkPipelineColorBlendAttachmentState
                              VkPipelineColorBlendStateCreateInfo VkPipelineDynamicStateCreateInfo VkPipelineInputAssemblyStateCreateInfo
                              VkPipelineLayoutCreateInfo VkPipelineMultisampleStateCreateInfo VkPipelineRasterizationStateCreateInfo
                              VkPipelineShaderStageCreateInfo VkPipelineVertexInputStateCreateInfo VkPipelineViewportStateCreateInfo
@@ -55,14 +55,14 @@
                                              (.primitiveRestartEnable false))
           viewports (doto (VkViewport/calloc 1 stack)
                       (.x (float 0))
-                      (.y (float (.height ^VkExtent2D SWAP-CHAIN-EXTENT))) ; ESSENTIAL FOR Y-AXIS VIEWPORT FLIPPING
-                      (.width (float (.width ^VkExtent2D SWAP-CHAIN-EXTENT)))
-                      (.height (float (- (.height ^VkExtent2D SWAP-CHAIN-EXTENT)))) ; ESSENTIAL FOR Y-AXIS VIEWPORT FLIPPING
+                      (.y (float (.height (.get VulkanGlobals/SWAP_CHAIN_EXTENT)))) ; ESSENTIAL FOR Y-AXIS VIEWPORT FLIPPING
+                      (.width (float (.width (.get VulkanGlobals/SWAP_CHAIN_EXTENT))))
+                      (.height (float (- (.height (.get VulkanGlobals/SWAP_CHAIN_EXTENT))))) ; ESSENTIAL FOR Y-AXIS VIEWPORT FLIPPING
                       (.minDepth (float 0))
                       (.maxDepth (float 1)))
           scissors (doto (VkRect2D/calloc 1 stack)
                      (.offset (.set (VkOffset2D/calloc stack) 0 0))
-                     (.extent SWAP-CHAIN-EXTENT))
+                     (.extent (.get VulkanGlobals/SWAP_CHAIN_EXTENT)))
           dynamic-state-create-info (doto (VkPipelineDynamicStateCreateInfo/calloc stack)
                                       (.sType VK13/VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO)
                                       (.pDynamicStates (util/integers-as-int-buffer stack dynamic-states-vec)))
