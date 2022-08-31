@@ -1,6 +1,5 @@
 (ns clojure-vulkan.graphics-pipeline
-  (:require [clojure-vulkan.globals :as globals :refer [DESCRIPTOR-SET-LAYOUT-POINTER GRAPHICS-PIPELINE-POINTER
-                                                        PIPELINE-LAYOUT-POINTER RENDER-PASS-POINTER]]
+  (:require [clojure-vulkan.globals :refer [DESCRIPTOR-SET-LAYOUT-POINTER]]
             [clojure-vulkan.shaders :as shaders]
             [clojure-vulkan.util :as util]
             [clojure-vulkan.math.vertex :as vertex])
@@ -120,7 +119,7 @@
           pipeline-layout-ptr (.longs stack VK13/VK_NULL_HANDLE)
           _ (if (= (VK13/vkCreatePipelineLayout (VulkanGlobals/getLogicalDevice) pipeline-layout-create-info nil pipeline-layout-ptr)
                    VK13/VK_SUCCESS)
-              (globals/set-global! PIPELINE-LAYOUT-POINTER (.get pipeline-layout-ptr 0))
+              (.set VulkanGlobals/PIPELINE_LAYOUT_POINTER (.get pipeline-layout-ptr 0))
               (throw (RuntimeException. "Couldn't create pipeline layout.")))
           pipeline-create-infos (doto (VkGraphicsPipelineCreateInfo/calloc 1 stack)
                                   ;; create info structs
@@ -135,25 +134,21 @@
                                   (.pColorBlendState color-blend-state-create-info)
                                   (.pDynamicState dynamic-state-create-info)
                                   ;; fixed function stage structs
-                                  (.layout PIPELINE-LAYOUT-POINTER)
-                                  (.renderPass RENDER-PASS-POINTER)
+                                  (.layout (.get VulkanGlobals/PIPELINE_LAYOUT_POINTER))
+                                  (.renderPass (.get VulkanGlobals/RENDER_PASS_POINTER))
                                   (.subpass 0)
                                   (.basePipelineHandle VK13/VK_NULL_HANDLE)
                                   (.basePipelineIndex -1))
           graphics-pipeline-ptr (.mallocLong stack 1)]
       (if (= (VK13/vkCreateGraphicsPipelines (VulkanGlobals/getLogicalDevice) VK13/VK_NULL_HANDLE pipeline-create-infos nil graphics-pipeline-ptr)
              VK13/VK_SUCCESS)
-        (globals/set-global! GRAPHICS-PIPELINE-POINTER (.get graphics-pipeline-ptr 0))
+        (.set VulkanGlobals/GRAPHICS_PIPELINE_POINTER (.get graphics-pipeline-ptr 0))
         (throw (RuntimeException. "Couldn't create graphics pipeline.")))
       (VK13/vkDestroyShaderModule (VulkanGlobals/getLogicalDevice) vertex-shader-module nil)
       (VK13/vkDestroyShaderModule (VulkanGlobals/getLogicalDevice) fragment-shader-module nil)
       (.free ^SpirVShader vertex-shader-in-spir-v-format)
       (.free ^SpirVShader fragment-shader-in-spir-v-format))))
 
-(defn destroy-pipeline-layout []
-  (VK13/vkDestroyPipelineLayout (VulkanGlobals/getLogicalDevice) PIPELINE-LAYOUT-POINTER nil)
-  (globals/reset-pipeline-layout-ptr))
-
 (defn destroy-graphics-pipeline []
-  (VK13/vkDestroyPipeline (VulkanGlobals/getLogicalDevice) GRAPHICS-PIPELINE-POINTER nil)
-  (globals/reset-graphics-pipeline-ptr))
+  (VK13/vkDestroyPipeline (VulkanGlobals/getLogicalDevice) (.get VulkanGlobals/GRAPHICS_PIPELINE_POINTER) nil)
+  (.free VulkanGlobals/GRAPHICS_PIPELINE_POINTER))

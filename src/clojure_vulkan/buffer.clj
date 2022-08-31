@@ -1,6 +1,5 @@
 (ns clojure-vulkan.buffer
-  (:require [clojure-vulkan.globals :refer [COMMAND-POOL-POINTER]]
-            [clojure-vulkan.util :as util])
+  (:require [clojure-vulkan.util :as util])
   (:import (clojure_vulkan MemoryUtils UniformBufferObject)
            (clojure_vulkan.Vulkan VulkanGlobals Buffer)
            (java.nio LongBuffer ByteBuffer)
@@ -53,7 +52,7 @@
   (let [command-buffer-allocate-info (doto (VkCommandBufferAllocateInfo/calloc stack)
                                        (.sType VK13/VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO)
                                        (.level VK13/VK_COMMAND_BUFFER_LEVEL_PRIMARY)
-                                       (.commandPool COMMAND-POOL-POINTER)
+                                       (.commandPool (.get VulkanGlobals/COMMAND_POOL))
                                        (.commandBufferCount 1))
         command-buffer-ptr (.mallocPointer stack 1)
         _ (VK13/vkAllocateCommandBuffers (VulkanGlobals/getLogicalDevice) command-buffer-allocate-info command-buffer-ptr)
@@ -75,7 +74,7 @@
                 VK13/VK_SUCCESS)
       (throw (RuntimeException. "Failed to submit copy command buffer.")))
     (VK13/vkDeviceWaitIdle (VulkanGlobals/getLogicalDevice))
-    (VK13/vkFreeCommandBuffers (VulkanGlobals/getLogicalDevice) COMMAND-POOL-POINTER command-buffer-ptr)))
+    (VK13/vkFreeCommandBuffers (VulkanGlobals/getLogicalDevice) (.get VulkanGlobals/COMMAND_POOL) command-buffer-ptr)))
 
 (defmulti ^:private do-buffer-memcpy (fn [mode & _]
                                        mode))

@@ -1,15 +1,10 @@
 package clojure_vulkan.Vulkan;
 
-import clojure.lang.IPersistentMap;
-import clojure.lang.Keyword;
-import clojure.lang.PersistentHashMap;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.vulkan.*;
 
 import static clojure_vulkan.Vulkan.VulkanGlobalsIntefaces.*;
 import static clojure_vulkan.Vulkan.VulkanGlobalsImpl.*;
-
-import java.util.Vector;
 
 public class VulkanGlobals {
     public static boolean VALIDATION_LAYERS_ENABLED = false;
@@ -29,7 +24,7 @@ public class VulkanGlobals {
         public void free() {
             if (VK13.vkGetInstanceProcAddr(VULKAN_INSTANCE.get(), "vkDestroyDebugUtilsMessengerEXT") != VK13.VK_NULL_HANDLE) {
                 EXTDebugUtils.vkDestroyDebugUtilsMessengerEXT(VULKAN_INSTANCE.get(), this.get(), null);
-                this.set(0L);
+                super.free();
             }
         }
     };
@@ -37,7 +32,7 @@ public class VulkanGlobals {
         @Override
         public void free() {
             KHRSurface.vkDestroySurfaceKHR(VULKAN_INSTANCE.get(), this.get(), null);
-            this.set(0L);
+            super.free();
         }
     };
 
@@ -48,7 +43,7 @@ public class VulkanGlobals {
         @Override
         public void free() {
             KHRSwapchain.vkDestroySwapchainKHR(LOGICAL_DEVICE.get(), this.get(), null);
-            this.set(0L);
+            super.free();
         }
     };
 
@@ -56,7 +51,57 @@ public class VulkanGlobals {
         @Override
         public void free() {
             GLFW.glfwDestroyWindow(this.get());
-            this.set(0L);
+            super.free();
+        }
+    };
+
+    public static VkPointerVector SWAP_CHAIN_IMAGE_VIEWS_POINTERS = new VkPointerVector() {
+        @Override
+        public void free() {
+            this.get().forEach(imageViewsPointer -> VK13.vkDestroyImageView(LOGICAL_DEVICE.get(), imageViewsPointer.get(), null));
+            super.free();
+        }
+    };
+
+    public static VkPointer PIPELINE_LAYOUT_POINTER = new VkPointer() {
+        @Override
+        public void free() {
+            VK13.vkDestroyPipelineLayout(LOGICAL_DEVICE.get(), this.get(), null);
+            super.free();
+        }
+    };
+
+    public static VkPointerVector SWAP_CHAIN_FRAME_BUFFER_POINTERS = new VkPointerVector() {
+        @Override
+        public void free() {
+            this.get().forEach(frameBufferPointer -> VK13.vkDestroyFramebuffer(LOGICAL_DEVICE.get(), frameBufferPointer.get(), null));
+            super.free();
+        }
+    };
+
+    public static VkPointer RENDER_PASS_POINTER = new VkPointer() {
+        @Override
+        public void free() {
+            VK13.vkDestroyRenderPass(LOGICAL_DEVICE.get(), this.get(), null);
+            super.free();
+        }
+    };
+
+    public static VkIntegerPointer SWAP_CHAIN_IMAGE_FORMAT = new VkIntegerPointer() {
+        @Override
+        public void free() {
+            super.free();
+        }
+    };
+    public static VkPointer GRAPHICS_PIPELINE_POINTER = new VkPointer() {
+    };
+
+    public static VkPointer COMMAND_POOL = new VkPointer() {
+        @Override
+        public void free() {
+            VK13.vkDestroyCommandPool(LOGICAL_DEVICE.get(), this.get(), null);
+            super.free();
+            COMMAND_BUFFERS.free();
         }
     };
 

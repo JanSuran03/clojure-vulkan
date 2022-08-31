@@ -1,7 +1,6 @@
 (ns clojure-vulkan.swap-chain
   (:require [clojure-vulkan.command-buffers :as command-buffers]
             [clojure-vulkan.frame-buffers :as frame-buffers]
-            [clojure-vulkan.globals :as globals :refer [SWAP-CHAIN-IMAGE-FORMAT SWAP-CHAIN-SUPPORT-DETAILS]]
             [clojure-vulkan.graphics-pipeline :as graphics-pipeline]
             [clojure-vulkan.image-views :as image-views]
             [clojure-vulkan.render-pass :as render-pass]
@@ -35,10 +34,10 @@
                                 (KHRSurface/vkGetPhysicalDeviceSurfacePresentModesKHR device (.get VulkanGlobals/WINDOW_SURFACE_POINTER) present-mode-count-ptr present-modes-ptr)
                                 present-modes-ptr))]
       (and formats present-modes-ptr
-           (globals/set-global! SWAP-CHAIN-SUPPORT-DETAILS {:formats-ptr          formats
-                                                            :present-modes-ptr    present-modes-ptr
-                                                            :present-modes-count  present-modes-count
-                                                            :surface-capabilities surface-capabilities})))))
+           {:formats-ptr          formats
+            :present-modes-ptr    present-modes-ptr
+            :present-modes-count  present-modes-count
+            :surface-capabilities surface-capabilities}))))
 
 (defn ^VkSurfaceFormatKHR choose-swap-surface-format [^VkSurfaceFormatKHR$Buffer formats-ptr]
   (or (->> (util/struct-buffer->seq formats-ptr)
@@ -77,8 +76,7 @@
 (defn create-swap-chain []
   (util/with-memory-stack-push ^MemoryStack stack
     (let [{:keys [formats-ptr present-modes-ptr present-modes-count ^VkSurfaceCapabilitiesKHR surface-capabilities]}
-          (or                                               ;(not-empty SWAP-CHAIN-SUPPORT-DETAILS)
-            (query-swap-chain-support (.get VulkanGlobals/PHYSICAL_DEVICE)))
+          (query-swap-chain-support (.get VulkanGlobals/PHYSICAL_DEVICE))
           surface-format (choose-swap-surface-format formats-ptr)
           present-mode (choose-swap-presentation-mode present-modes-ptr present-modes-count)
           extent (choose-swap-extent surface-capabilities)
@@ -121,17 +119,18 @@
             (VulkanGlobalsIntefaces$VkPointerVector/asVkPointerVector
               (Vector. ^Collection (mapv #(.get swapchain-images-ptr ^int %)
                                          (range image-count)))))
-      (globals/set-global! SWAP-CHAIN-IMAGE-FORMAT (.format surface-format))
+      (.set VulkanGlobals/SWAP_CHAIN_IMAGE_FORMAT (.format surface-format))
       (.set VulkanGlobals/SWAP_CHAIN_EXTENT (doto (VkExtent2D/create)
                                               (.set extent))))))
 
 (defn cleanup-swap-chain []
   (.free VulkanGlobals/COMMAND_BUFFERS)
   (graphics-pipeline/destroy-graphics-pipeline)
-  (graphics-pipeline/destroy-pipeline-layout)
-  (render-pass/destroy-render-pass)
-  (frame-buffers/destroy-frame-buffers)
-  (image-views/destroy-image-views)
+  (.free VulkanGlobals/SWAP_CHAIN_IMAGE_FORMAT)
+  (.free VulkanGlobals/PIPELINE_LAYOUT_POINTER)
+  (.free VulkanGlobals/RENDER_PASS_POINTER)
+  (.free VulkanGlobals/SWAP_CHAIN_FRAME_BUFFER_POINTERS)
+  (.free VulkanGlobals/SWAP_CHAIN_IMAGE_VIEWS_POINTERS)
   (.free VulkanGlobals/SWAP_CHAIN_POINTER)
   (.free VulkanGlobals/SWAP_CHAIN_IMAGE_POINTERS))
 

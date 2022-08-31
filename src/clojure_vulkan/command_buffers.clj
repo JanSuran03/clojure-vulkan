@@ -1,11 +1,8 @@
 (ns clojure-vulkan.command-buffers
-  (:require [clojure-vulkan.globals :as globals :refer [COMMAND-POOL-POINTER DESCRIPTOR-SET-POINTERS
-                                                        GRAPHICS-PIPELINE-POINTER INDEX-BUFFER
-                                                        PIPELINE-LAYOUT-POINTER RENDER-PASS-POINTER
-                                                        SWAP-CHAIN-FRAME-BUFFER-POINTERS VERTEX-BUFFER]]
+  (:require [clojure-vulkan.globals :as globals :refer [DESCRIPTOR-SET-POINTERS INDEX-BUFFER VERTEX-BUFFER]]
             [clojure-vulkan.util :as util]
             [clojure-vulkan.math.vertex :as vertex])
-  (:import (clojure_vulkan.Vulkan Buffer VulkanGlobals)
+  (:import (clojure_vulkan.Vulkan Buffer VulkanGlobals VulkanGlobalsIntefaces$VkPointer)
            (java.util Collection Vector)
            (org.lwjgl.system MemoryStack)
            (org.lwjgl.vulkan VK13 VkClearColorValue VkClearValue VkCommandBuffer
@@ -22,15 +19,8 @@
 
       (if (= (VK13/vkCreateCommandPool (VulkanGlobals/getLogicalDevice) command-pool-create-info nil command-pool-ptr)
              VK13/VK_SUCCESS)
-        (globals/set-global! COMMAND-POOL-POINTER (.get command-pool-ptr 0))
+        (.set VulkanGlobals/COMMAND_POOL (.get command-pool-ptr 0))
         (throw (RuntimeException. "Failed to create command pool."))))))
-
-(defn destroy-command-pool
-  "Destroys command buffers as well."
-  []
-  (VK13/vkDestroyCommandPool (VulkanGlobals/getLogicalDevice) COMMAND-POOL-POINTER nil)
-  (globals/reset-command-pool-ptr)
-  (.free VulkanGlobals/COMMAND_BUFFERS))
 
 (defn record-command-buffer [{:keys [^VkCommandBuffer command-buffer
                                      ^VkCommandBufferBeginInfo command-buffer-begin-info
@@ -45,7 +35,7 @@
     (throw (RuntimeException. "Failed to begin recording command buffer.")))
   (.framebuffer render-pass-begin-info swap-chain-frame-buffer-pointer)
   (VK13/vkCmdBeginRenderPass command-buffer render-pass-begin-info VK13/VK_SUBPASS_CONTENTS_INLINE)
-  (VK13/vkCmdBindPipeline command-buffer VK13/VK_PIPELINE_BIND_POINT_GRAPHICS GRAPHICS-PIPELINE-POINTER) ; graphics or compute pipeline?
+  (VK13/vkCmdBindPipeline command-buffer VK13/VK_PIPELINE_BIND_POINT_GRAPHICS (.get VulkanGlobals/GRAPHICS_PIPELINE_POINTER)) ; graphics or compute pipeline?
   (VK13/vkCmdSetViewport command-buffer 0 viewports-buffer)
   (VK13/vkCmdSetScissor command-buffer 0 scissor-buffers)
   (let [vertex-buffers (.longs stack (.bufferPointer VERTEX-BUFFER))
@@ -54,7 +44,7 @@
   (VK13/vkCmdBindIndexBuffer command-buffer (.bufferPointer ^Buffer INDEX-BUFFER) 0 VK13/VK_INDEX_TYPE_UINT16) ;; short
   (VK13/vkCmdBindDescriptorSets command-buffer
                                 VK13/VK_PIPELINE_BIND_POINT_GRAPHICS
-                                PIPELINE-LAYOUT-POINTER
+                                (.get VulkanGlobals/PIPELINE_LAYOUT_POINTER)
                                 0
                                 (.longs stack ^long (nth DESCRIPTOR-SET-POINTERS command-buffer-index))
                                 nil)
@@ -73,7 +63,7 @@
     (let [command-buffers-count 3
           command-buffer-allocate-info (doto (VkCommandBufferAllocateInfo/calloc stack)
                                          (.sType VK13/VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO)
-                                         (.commandPool COMMAND-POOL-POINTER)
+                                         (.commandPool (.get VulkanGlobals/COMMAND_POOL))
                                          (.level VK13/VK_COMMAND_BUFFER_LEVEL_PRIMARY)
                                          (.commandBufferCount command-buffers-count))
           command-buffers-ptr (.mallocPointer stack command-buffers-count)
@@ -102,7 +92,7 @@
                              (.maxDepth (float 1)))
           render-pass-begin-info (doto (VkRenderPassBeginInfo/calloc stack)
                                    (.sType VK13/VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO)
-                                   (.renderPass RENDER-PASS-POINTER)
+                                   (.renderPass (.get VulkanGlobals/RENDER_PASS_POINTER))
                                    (.renderArea render-area)
                                    (.clearValueCount 1)
                                    (.pClearValues clear-values))
@@ -114,7 +104,7 @@
                                 :command-buffer-begin-info       command-buffer-begin-info
                                 :render-pass-begin-info          render-pass-begin-info
                                 :scissor-buffers                 scissor-buffers
-                                :swap-chain-frame-buffer-pointer (nth SWAP-CHAIN-FRAME-BUFFER-POINTERS i)
+                                :swap-chain-frame-buffer-pointer (.get ^VulkanGlobalsIntefaces$VkPointer (.elementAt (.get VulkanGlobals/SWAP_CHAIN_FRAME_BUFFER_POINTERS) i))
                                 :viewports-buffer                viewports-buffer
                                 :stack                           stack
                                 :command-buffer-index            i})))))

@@ -1,10 +1,9 @@
 (ns clojure-vulkan.image-views
-  (:require [clojure-vulkan.globals :as globals :refer [SWAP-CHAIN-IMAGE-FORMAT
-                                                        SWAP-CHAIN-IMAGE-VIEWS-POINTERS]]
-            [clojure-vulkan.util :as util])
-  (:import (clojure_vulkan.Vulkan VulkanGlobals VulkanGlobalsIntefaces$VkPointer)
+  (:require [clojure-vulkan.util :as util])
+  (:import (clojure_vulkan.Vulkan VulkanGlobals VulkanGlobalsIntefaces$VkPointer VulkanGlobalsIntefaces$VkPointerVector)
            (org.lwjgl.system MemoryStack)
-           (org.lwjgl.vulkan VK13 VkImageViewCreateInfo)))
+           (org.lwjgl.vulkan VK13 VkImageViewCreateInfo)
+           (java.util Vector Collection)))
 
 (defn create-image-views []
   (util/with-memory-stack-push ^MemoryStack stack
@@ -12,7 +11,7 @@
           image-view-create-info (doto (VkImageViewCreateInfo/calloc stack)
                                    (.sType VK13/VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO)
                                    (.viewType VK13/VK_IMAGE_VIEW_TYPE_2D)
-                                   (.format SWAP-CHAIN-IMAGE-FORMAT))
+                                   (.format (.get VulkanGlobals/SWAP_CHAIN_IMAGE_FORMAT)))
           _ (do (doto (.components image-view-create-info)
                   (.r VK13/VK_COMPONENT_SWIZZLE_IDENTITY)
                   (.g VK13/VK_COMPONENT_SWIZZLE_IDENTITY)
@@ -31,9 +30,6 @@
                                 (.get image-view-ptr 0)
                                 (throw (RuntimeException. "Couldn't create image views."))))
                             (.get VulkanGlobals/SWAP_CHAIN_IMAGE_POINTERS))]
-      (globals/set-global! SWAP-CHAIN-IMAGE-VIEWS-POINTERS image-views))))
-
-(defn destroy-image-views []
-  (doseq [image-view-ptr SWAP-CHAIN-IMAGE-VIEWS-POINTERS]
-    (VK13/vkDestroyImageView (VulkanGlobals/getLogicalDevice) ^long image-view-ptr nil))
-  (globals/reset-swap-chain-image-views))
+      (.set VulkanGlobals/SWAP_CHAIN_IMAGE_VIEWS_POINTERS
+            (VulkanGlobalsIntefaces$VkPointerVector/asVkPointerVector
+              (Vector. ^Collection image-views))))))

@@ -5,12 +5,14 @@ import clojure.lang.Keyword;
 import clojure.lang.PersistentHashMap;
 import org.lwjgl.vulkan.*;
 
+import static clojure_vulkan.Vulkan.VulkanGlobalsIntefaces.VkResource;
+
 import java.util.Vector;
 
 import static clojure_vulkan.Vulkan.VulkanGlobals.VALIDATION_LAYERS_ENABLED;
 
 public class VulkanGlobalsImpl {
-    public static class LogicalDevice implements VulkanGlobalsIntefaces.VkResource<VkDevice> {
+    public static class LogicalDevice implements VkResource<VkDevice> {
 
         private VkDevice device;
 
@@ -30,7 +32,7 @@ public class VulkanGlobalsImpl {
         }
     }
 
-    public static class PhysicalDevice implements VulkanGlobalsIntefaces.VkResource<VkPhysicalDevice> {
+    public static class PhysicalDevice implements VkResource<VkPhysicalDevice> {
         private VkPhysicalDevice device;
 
         @Override
@@ -50,7 +52,7 @@ public class VulkanGlobalsImpl {
         }
     }
 
-    public static class QueueFamilies implements VulkanGlobalsIntefaces.VkResource<IPersistentMap> {
+    public static class QueueFamilies implements VkResource<IPersistentMap> {
         private IPersistentMap queueFamilies = PersistentHashMap.EMPTY;
         private static final Keyword
                 GRAPHICS_FAMILY_KEYWORD = Keyword.intern("graphics-family"),
@@ -109,7 +111,7 @@ public class VulkanGlobalsImpl {
         }
     }
 
-    public static class UniformBuffers implements VulkanGlobalsIntefaces.VkResource<Vector<Buffer>> {
+    public static class UniformBuffers implements VkResource<Vector<Buffer>> {
         private Vector<Buffer> uniformBuffers;
 
         @Override

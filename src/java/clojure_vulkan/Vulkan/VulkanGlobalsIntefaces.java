@@ -10,6 +10,7 @@ public class VulkanGlobalsIntefaces {
 
         public void free();
     }
+
     public static abstract class VkPointer implements VkResource<Long> {
         private Long pointer = 0L;
 
@@ -25,6 +26,26 @@ public class VulkanGlobalsIntefaces {
             pointer = 0L;
         }
     }
+
+    public static abstract class VkIntegerPointer implements VkResource<Integer> {
+        private Integer pointer = 0;
+
+        @Override
+        public Integer get() {
+            return pointer;
+        }
+
+        @Override
+        public void set(Integer pointer) {
+            this.pointer = pointer;
+        }
+
+        @Override
+        public void free() {
+            pointer = 0;
+        }
+    }
+
     public static abstract class VkPointerVector implements VkResource<Vector<VkPointer>> {
         public static Vector<VkPointer> asVkPointerVector(Vector<Long> pointerVector) {
             Vector<VkPointer> ret = new Vector<>();
