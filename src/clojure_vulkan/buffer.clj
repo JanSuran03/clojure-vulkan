@@ -1,5 +1,5 @@
 (ns clojure-vulkan.buffer
-  (:require [clojure-vulkan.globals :refer [COMMAND-POOL-POINTER GRAPHICS-QUEUE]]
+  (:require [clojure-vulkan.globals :refer [COMMAND-POOL-POINTER]]
             [clojure-vulkan.util :as util])
   (:import (clojure_vulkan MemoryUtils UniformBufferObject)
            (clojure_vulkan.Vulkan VulkanGlobals Buffer)
@@ -71,7 +71,7 @@
         submit-info (doto (VkSubmitInfo/calloc stack)
                       (.sType VK13/VK_STRUCTURE_TYPE_SUBMIT_INFO)
                       (.pCommandBuffers command-buffer-ptr))]
-    (when (not= (VK13/vkQueueSubmit GRAPHICS-QUEUE submit-info VK13/VK_NULL_HANDLE) ; fence
+    (when (not= (VK13/vkQueueSubmit (.get VulkanGlobals/GRAPHICS_QUEUE) submit-info VK13/VK_NULL_HANDLE) ; fence
                 VK13/VK_SUCCESS)
       (throw (RuntimeException. "Failed to submit copy command buffer.")))
     (VK13/vkDeviceWaitIdle (VulkanGlobals/getLogicalDevice))

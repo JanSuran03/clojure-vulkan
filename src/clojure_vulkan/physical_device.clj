@@ -1,6 +1,5 @@
 (ns clojure-vulkan.physical-device
-  (:require [clojure-vulkan.globals :refer [VULKAN-INSTANCE WINDOW-SURFACE-POINTER]]
-            [clojure-vulkan.swap-chain :as swap-chain]
+  (:require [clojure-vulkan.swap-chain :as swap-chain]
             [clojure-vulkan.util :as util])
   (:import (clojure_vulkan.Vulkan VulkanGlobals)
            (java.nio IntBuffer)
@@ -38,7 +37,7 @@
                       (let [^VkQueueFamilyProperties queue-family (.get queue-families-ptr i)
                             queue-flags (.queueFlags queue-family)
                             present-support (.ints stack VK13/VK_FALSE)]
-                        (KHRSurface/vkGetPhysicalDeviceSurfaceSupportKHR device i WINDOW-SURFACE-POINTER present-support)
+                        (KHRSurface/vkGetPhysicalDeviceSurfaceSupportKHR device i (.get VulkanGlobals/WINDOW_SURFACE_POINTER) present-support)
                         (cond-> family-map
                                 (bit-and queue-flags VK13/VK_QUEUE_GRAPHICS_BIT) (assoc :graphics-family i)
                                 (= (.get present-support 0) VK13/VK_TRUE) (assoc :present-family i)))))
@@ -52,7 +51,7 @@
         present-family* (volatile! nil)]
     (util/with-memory-stack-push ^MemoryStack stack
       (dotimes [i device-count]
-        (let [device (VkPhysicalDevice. (.get devices-ptr ^long i) VULKAN-INSTANCE)
+        (let [device (VkPhysicalDevice. (.get devices-ptr ^long i) (.get VulkanGlobals/VULKAN_INSTANCE))
               {:keys [graphics-family present-family]} (find-queue-families device)
               ^VkPhysicalDeviceProperties device-properties (VkPhysicalDeviceProperties/calloc stack)
               ^VkPhysicalDeviceFeatures device-features (VkPhysicalDeviceFeatures/calloc stack)
@@ -80,21 +79,21 @@
       {:graphics-family @graphics-family*
        :present-family  @present-family*
        :physical-device (->> @devices (remove (fn [[score _]]
-                                                 (nil? score)))
-                              (sort-by (fn [[score _]]
-                                         score))
-                              first
-                              second)})))
+                                                (nil? score)))
+                             (sort-by (fn [[score _]]
+                                        score))
+                             first
+                             second)})))
 
 (defn pick-physical-device []
   (util/with-memory-stack-push ^MemoryStack stack
     (let [device-count-ptr (.ints stack 0)
-          _ (VK13/vkEnumeratePhysicalDevices VULKAN-INSTANCE device-count-ptr nil)
+          _ (VK13/vkEnumeratePhysicalDevices (.get VulkanGlobals/VULKAN_INSTANCE) device-count-ptr nil)
           device-count (.get device-count-ptr 0)
           _ (when (zero? device-count)
               (throw (RuntimeException. "No GPU with Vulkan support found.")))
           physical-devices-ptr (.mallocPointer stack device-count)
-          _ (VK13/vkEnumeratePhysicalDevices VULKAN-INSTANCE device-count-ptr physical-devices-ptr)
+          _ (VK13/vkEnumeratePhysicalDevices (.get VulkanGlobals/VULKAN_INSTANCE) device-count-ptr physical-devices-ptr)
           {:keys [graphics-family present-family physical-device]} (pick-suitable-device physical-devices-ptr device-count)]
       (when-not physical-device
         (throw (RuntimeException. "No suitable GPU found.")))

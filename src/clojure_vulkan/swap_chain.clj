@@ -1,38 +1,38 @@
 (ns clojure-vulkan.swap-chain
   (:require [clojure-vulkan.command-buffers :as command-buffers]
             [clojure-vulkan.frame-buffers :as frame-buffers]
-            [clojure-vulkan.globals :as globals :refer [SWAP-CHAIN-IMAGE-FORMAT
-                                                        SWAP-CHAIN-IMAGES SWAP-CHAIN-POINTER SWAP-CHAIN-SUPPORT-DETAILS WINDOW-POINTER WINDOW-SURFACE-POINTER]]
+            [clojure-vulkan.globals :as globals :refer [SWAP-CHAIN-IMAGE-FORMAT SWAP-CHAIN-SUPPORT-DETAILS WINDOW-POINTER]]
             [clojure-vulkan.graphics-pipeline :as graphics-pipeline]
             [clojure-vulkan.image-views :as image-views]
             [clojure-vulkan.render-pass :as render-pass]
             [clojure-vulkan.util :as util])
-  (:import (clojure_vulkan.Vulkan VulkanGlobals)
+  (:import (clojure_vulkan.Vulkan VulkanGlobals VulkanGlobals$VkPointerVector)
            (java.nio IntBuffer)
            (org.lwjgl.glfw GLFW)
            (org.lwjgl.system MemoryStack)
            (org.lwjgl.vulkan KHRSurface KHRSwapchain VK13 VkExtent2D VkPhysicalDevice VkSurfaceCapabilitiesKHR VkSurfaceFormatKHR
-                             VkSurfaceFormatKHR$Buffer VkSwapchainCreateInfoKHR)))
+                             VkSurfaceFormatKHR$Buffer VkSwapchainCreateInfoKHR)
+           (java.util Vector Collection)))
 
 (defonce UINT32-MAX 0xffffffff)
 
 (defn query-swap-chain-support [^VkPhysicalDevice device]
   (util/with-memory-stack-push ^MemoryStack stack
     (let [^VkSurfaceCapabilitiesKHR surface-capabilities (VkSurfaceCapabilitiesKHR/malloc)
-          _ (KHRSurface/vkGetPhysicalDeviceSurfaceCapabilitiesKHR device WINDOW-SURFACE-POINTER surface-capabilities)
+          _ (KHRSurface/vkGetPhysicalDeviceSurfaceCapabilitiesKHR device (.get VulkanGlobals/WINDOW_SURFACE_POINTER) surface-capabilities)
           formats-count-ptr (.ints stack 0)
-          _ (KHRSurface/vkGetPhysicalDeviceSurfaceFormatsKHR device WINDOW-SURFACE-POINTER formats-count-ptr nil)
+          _ (KHRSurface/vkGetPhysicalDeviceSurfaceFormatsKHR device (.get VulkanGlobals/WINDOW_SURFACE_POINTER) formats-count-ptr nil)
           formats-count (.get formats-count-ptr 0)
           formats (when-not (zero? formats-count)
                     (let [formats-ptr (VkSurfaceFormatKHR/malloc formats-count)]
-                      (KHRSurface/vkGetPhysicalDeviceSurfaceFormatsKHR device WINDOW-SURFACE-POINTER formats-count-ptr formats-ptr)
+                      (KHRSurface/vkGetPhysicalDeviceSurfaceFormatsKHR device (.get VulkanGlobals/WINDOW_SURFACE_POINTER) formats-count-ptr formats-ptr)
                       formats-ptr))
           present-mode-count-ptr (.ints stack 0)
-          _ (KHRSurface/vkGetPhysicalDeviceSurfacePresentModesKHR device WINDOW-SURFACE-POINTER present-mode-count-ptr nil)
+          _ (KHRSurface/vkGetPhysicalDeviceSurfacePresentModesKHR device (.get VulkanGlobals/WINDOW_SURFACE_POINTER) present-mode-count-ptr nil)
           present-modes-count (.get present-mode-count-ptr 0)
           present-modes-ptr (when-not (zero? present-modes-count)
                               (let [present-modes-ptr (.mallocInt stack present-modes-count)]
-                                (KHRSurface/vkGetPhysicalDeviceSurfacePresentModesKHR device WINDOW-SURFACE-POINTER present-mode-count-ptr present-modes-ptr)
+                                (KHRSurface/vkGetPhysicalDeviceSurfacePresentModesKHR device (.get VulkanGlobals/WINDOW_SURFACE_POINTER) present-mode-count-ptr present-modes-ptr)
                                 present-modes-ptr))]
       (and formats present-modes-ptr
            (globals/set-global! SWAP-CHAIN-SUPPORT-DETAILS {:formats-ptr          formats
@@ -89,7 +89,7 @@
                             (.ints stack ^Integer (inc (.minImageCount surface-capabilities))))
           ^VkSwapchainCreateInfoKHR swap-chain-create-info (doto (VkSwapchainCreateInfoKHR/calloc stack)
                                                              (.sType KHRSwapchain/VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR)
-                                                             (.surface WINDOW-SURFACE-POINTER)
+                                                             (.surface (.get VulkanGlobals/WINDOW_SURFACE_POINTER))
                                                              (.minImageCount image-count)
                                                              (.imageFormat (.format surface-format))
                                                              (.imageColorSpace (.colorSpace surface-format))
@@ -113,12 +113,14 @@
           _ (do (when (not= (KHRSwapchain/vkCreateSwapchainKHR (VulkanGlobals/getLogicalDevice) swap-chain-create-info nil swap-chain-ptr*)
                             VK13/VK_SUCCESS)
                   (throw (RuntimeException. "Failed to create swapchain.")))
-                (globals/set-global! SWAP-CHAIN-POINTER (.get swap-chain-ptr* 0))
-                (KHRSwapchain/vkGetSwapchainImagesKHR (VulkanGlobals/getLogicalDevice) SWAP-CHAIN-POINTER image-count-ptr nil))
+                (.set VulkanGlobals/SWAP_CHAIN_POINTER (.get swap-chain-ptr* 0))
+                (KHRSwapchain/vkGetSwapchainImagesKHR (VulkanGlobals/getLogicalDevice) (.get VulkanGlobals/SWAP_CHAIN_POINTER) image-count-ptr nil))
           swapchain-images-ptr (.mallocLong stack (.get image-count-ptr 0))]
-      (KHRSwapchain/vkGetSwapchainImagesKHR (VulkanGlobals/getLogicalDevice) SWAP-CHAIN-POINTER image-count-ptr swapchain-images-ptr)
-      (globals/set-global! SWAP-CHAIN-IMAGES (mapv #(.get swapchain-images-ptr ^int %)
-                                                   (range image-count)))
+      (KHRSwapchain/vkGetSwapchainImagesKHR (VulkanGlobals/getLogicalDevice) (.get VulkanGlobals/SWAP_CHAIN_POINTER) image-count-ptr swapchain-images-ptr)
+      (.set VulkanGlobals/SWAP_CHAIN_IMAGE_POINTERS
+            (VulkanGlobals$VkPointerVector/asVkPointerVector
+              (Vector. ^Collection (mapv #(.get swapchain-images-ptr ^int %)
+                                         (range image-count)))))
       (globals/set-global! SWAP-CHAIN-IMAGE-FORMAT (.format surface-format))
       (.set VulkanGlobals/SWAP_CHAIN_EXTENT (doto (VkExtent2D/create)
                                               (.set extent))))))
@@ -130,7 +132,8 @@
   (render-pass/destroy-render-pass)
   (frame-buffers/destroy-frame-buffers)
   (image-views/destroy-image-views)
-  (KHRSwapchain/vkDestroySwapchainKHR (VulkanGlobals/getLogicalDevice) SWAP-CHAIN-POINTER nil))
+  (.free VulkanGlobals/SWAP_CHAIN_POINTER)
+  (.free VulkanGlobals/SWAP_CHAIN_IMAGE_POINTERS))
 
 (defn recreate-swap-chain []
   (let [stack (MemoryStack/stackGet)

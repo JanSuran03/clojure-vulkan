@@ -1,6 +1,6 @@
 (ns clojure-vulkan.render
   (:require [clojure-vulkan.frame :as frame :refer [FRAMES MAX-FRAMES-IN-FLIGHT]]
-            [clojure-vulkan.globals :as globals :refer [GRAPHICS-QUEUE PRESENT-QUEUE SWAP-CHAIN-POINTER]]
+            [clojure-vulkan.globals :as globals]
             [clojure-vulkan.swap-chain :as swap-chain]
             [clojure-vulkan.util :as util]
             [clojure-vulkan.uniform :as uniform])
@@ -49,7 +49,7 @@
     (let [this-frame (frame/current-frame)
           image-index-ptr (.mallocInt stack 1)
           _ (VK13/vkWaitForFences (VulkanGlobals/getLogicalDevice) (frame/get-in-flight-fence-ptr this-frame) true infinite-timeout)
-          acquire-result (KHRSwapchain/vkAcquireNextImageKHR (VulkanGlobals/getLogicalDevice) SWAP-CHAIN-POINTER infinite-timeout
+          acquire-result (KHRSwapchain/vkAcquireNextImageKHR (VulkanGlobals/getLogicalDevice) (.get VulkanGlobals/SWAP_CHAIN_POINTER) infinite-timeout
                                                              (frame/get-image-available-semaphore-ptr this-frame)
                                                              VK13/VK_NULL_HANDLE image-index-ptr)]
       (cond (= KHRSwapchain/VK_ERROR_OUT_OF_DATE_KHR acquire-result)
@@ -68,17 +68,17 @@
                                 (.pCommandBuffers (.pointers stack ^Pointer (.elementAt (.get VulkanGlobals/COMMAND_BUFFERS) (.get image-index-ptr 0))))
                                 (.pSignalSemaphores signal-semaphores))
                   _ (VK13/vkResetFences (VulkanGlobals/getLogicalDevice) (frame/alloc-in-flight-fence-ptr this-frame stack))
-                  _ (when (not= (VK13/vkQueueSubmit GRAPHICS-QUEUE submit-info (frame/get-in-flight-fence-ptr this-frame))
+                  _ (when (not= (VK13/vkQueueSubmit (.get VulkanGlobals/GRAPHICS_QUEUE) submit-info (frame/get-in-flight-fence-ptr this-frame))
                                 VK13/VK_SUCCESS)
                       (throw (RuntimeException. "Failed to submit draw command buffer.")))
                   present-info (doto (VkPresentInfoKHR/calloc stack)
                                  (.sType KHRSwapchain/VK_STRUCTURE_TYPE_PRESENT_INFO_KHR)
                                  (.pWaitSemaphores signal-semaphores)
                                  (.swapchainCount 1)
-                                 (.pSwapchains (.longs stack SWAP-CHAIN-POINTER))
+                                 (.pSwapchains (.longs stack (.get VulkanGlobals/SWAP_CHAIN_POINTER)))
                                  (.pImageIndices image-index-ptr)
                                  (.pResults nil))
-                  present-result (KHRSwapchain/vkQueuePresentKHR PRESENT-QUEUE present-info)]
+                  present-result (KHRSwapchain/vkQueuePresentKHR (.get VulkanGlobals/PRESENT_QUEUE) present-info)]
               (cond
                 (or (#{KHRSwapchain/VK_ERROR_OUT_OF_DATE_KHR KHRSwapchain/VK_SUBOPTIMAL_KHR} present-result)
                     @frame/FRAME-BUFFER-RESIZED?)

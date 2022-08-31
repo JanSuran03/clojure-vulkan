@@ -1,8 +1,8 @@
 (ns clojure-vulkan.image-views
   (:require [clojure-vulkan.globals :as globals :refer [SWAP-CHAIN-IMAGE-FORMAT
-                                                        SWAP-CHAIN-IMAGE-VIEWS-POINTERS SWAP-CHAIN-IMAGES]]
+                                                        SWAP-CHAIN-IMAGE-VIEWS-POINTERS]]
             [clojure-vulkan.util :as util])
-  (:import (clojure_vulkan.Vulkan VulkanGlobals)
+  (:import (clojure_vulkan.Vulkan VulkanGlobals VulkanGlobals$VkPointer)
            (org.lwjgl.system MemoryStack)
            (org.lwjgl.vulkan VK13 VkImageViewCreateInfo)))
 
@@ -24,13 +24,13 @@
                   (.levelCount 1)
                   (.baseArrayLayer 0)
                   (.layerCount 1)))
-          image-views (mapv (fn [swap-chain-image]
-                              (.image image-view-create-info swap-chain-image)
+          image-views (mapv (fn [^VulkanGlobals$VkPointer swap-chain-image]
+                              (.image image-view-create-info (.get swap-chain-image))
                               (if (= (VK13/vkCreateImageView (VulkanGlobals/getLogicalDevice) image-view-create-info nil image-view-ptr)
                                      VK13/VK_SUCCESS)
                                 (.get image-view-ptr 0)
                                 (throw (RuntimeException. "Couldn't create image views."))))
-                            SWAP-CHAIN-IMAGES)]
+                            (.get VulkanGlobals/SWAP_CHAIN_IMAGE_POINTERS))]
       (globals/set-global! SWAP-CHAIN-IMAGE-VIEWS-POINTERS image-views))))
 
 (defn destroy-image-views []

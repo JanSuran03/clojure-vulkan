@@ -17,7 +17,7 @@
             [clojure-vulkan.uniform :as uniform]
             [clojure-vulkan.util :as util]
             [clojure-vulkan.window-surface :as window-surface])
-  (:import (clojure_vulkan.Vulkan VulkanGlobals)
+  (:import (clojure_vulkan.Vulkan VulkanGlobals VulkanGlobals$VkPointer)
            (org.lwjgl.glfw GLFW)
            (org.lwjgl.vulkan VK13)))
 
@@ -46,12 +46,13 @@
 
 (defn terminate []
   (util/try-all
-    #(util/log "Vulkan cleanup error occured: " (.getMessage ^Throwable %))
+    #(util/log "Vulkan cleanup error occured: " (.getMessage ^Throwable %)
+               \newline
+               (.printStackTrace ^Throwable %))
     (swap-chain/cleanup-swap-chain)
     (uniform/destroy-descriptor-pool)
     (.free VulkanGlobals/UNIFORM_BUFFERS)
     (uniform/destroy-descriptor-set-layout)
-    (globals/set-global! globals/SWAP-CHAIN-POINTER VK13/VK_NULL_HANDLE)
     (.free globals/INDEX-BUFFER)
     (.free globals/VERTEX-BUFFER)
     (texture/destroy-texture)
@@ -61,13 +62,13 @@
     (graphics-pipeline/destroy-graphics-pipeline)
     (graphics-pipeline/destroy-pipeline-layout)
     (render-pass/destroy-render-pass)
-    (window-surface/destroy-surface)
+    (.free VulkanGlobals/WINDOW_SURFACE_POINTER)
     (.free VulkanGlobals/LOGICAL_DEVICE)
     (.free VulkanGlobals/PHYSICAL_DEVICE)
     (when VulkanGlobals/VALIDATION_LAYERS_ENABLED
       (VulkanGlobals/disableValidationLayers)
-      (debug/destroy-debug-messenger nil))
-    (instance/destroy-instance)
+      (.free VulkanGlobals/DEBUG_MESSENGER_POINTER))
+    (.free VulkanGlobals/VULKAN_INSTANCE)
     (.free VulkanGlobals/QUEUE_FAMILIES)
     (globals/reset-swap-chain-support-details)))
 

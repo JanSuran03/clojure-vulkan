@@ -1,32 +1,16 @@
 (ns clojure-vulkan.globals
   (:import (clojure_vulkan.Vulkan Buffer)
-           (org.lwjgl.vulkan VK13  VkInstance VkQueue)))
+           (org.lwjgl.vulkan VK13)))
 
 (defmacro set-global! [global-var new-value]
   `(alter-var-root (var ~global-var) (constantly ~new-value)))
 
-(defn- reset-to-nil [_] nil)
 (defn- reset-to-vk-null [_] VK13/VK_NULL_HANDLE)
 
 (def ^:dynamic *config* {})
 ;; **************************************************
 ;; GLOBALS
 ;; **************************************************
-(def ^Long DEBUG-MESSENGER-POINTER VK13/VK_NULL_HANDLE)
-(defn reset-debug-messenger [] (alter-var-root #'DEBUG-MESSENGER-POINTER reset-to-vk-null))
-
-(def ^VkInstance VULKAN-INSTANCE nil)
-(defn reset-vulkan-instance [] (alter-var-root #'VULKAN-INSTANCE reset-to-nil))
-
-(def ^VkQueue GRAPHICS-QUEUE nil)
-(defn reset-graphics-queue [] (alter-var-root #'GRAPHICS-QUEUE reset-to-nil))
-
-(def ^VkQueue PRESENT-QUEUE nil)
-(defn reset-present-queue [] (alter-var-root #'PRESENT-QUEUE reset-to-nil))
-
-(def ^Long WINDOW-SURFACE-POINTER VK13/VK_NULL_HANDLE)
-(defn reset-window-surface [] (alter-var-root #'WINDOW-SURFACE-POINTER reset-to-vk-null))
-
 (def ^Long WINDOW-POINTER VK13/VK_NULL_HANDLE)
 (defn reset-window-ptr [] (alter-var-root #'WINDOW-POINTER reset-to-vk-null))
 ;; **************************************************
@@ -35,14 +19,7 @@
 (def SWAP-CHAIN-SUPPORT-DETAILS {})
 (defn reset-swap-chain-support-details [] (alter-var-root #'SWAP-CHAIN-SUPPORT-DETAILS empty))
 
-(def ^Long SWAP-CHAIN-POINTER VK13/VK_NULL_HANDLE)
-(defn reset-swap-chain-ptr [] (alter-var-root #'SWAP-CHAIN-POINTER reset-to-vk-null))
-
-(def SWAP-CHAIN-IMAGES [])
-(defn reset-swap-chain-images [] (alter-var-root #'SWAP-CHAIN-IMAGES empty))
-
 (def ^Integer SWAP-CHAIN-IMAGE-FORMAT VK13/VK_NULL_HANDLE)
-(defn reset-swap-chain-image-format [] (alter-var-root #'SWAP-CHAIN-IMAGE-FORMAT reset-to-vk-null))
 
 (def SWAP-CHAIN-IMAGE-VIEWS-POINTERS [])
 (defn reset-swap-chain-image-views [] (alter-var-root #'SWAP-CHAIN-IMAGE-VIEWS-POINTERS empty))
@@ -78,7 +55,6 @@
 (defn reset-descriptor-set-layout-ptr [] (alter-var-root #'DESCRIPTOR-SET-LAYOUT-POINTER reset-to-vk-null))
 
 (def DESCRIPTOR-SET-POINTERS [])
-(defn reset-descriptor-sets-ptrs [] (alter-var-root #'DESCRIPTOR-SET-POINTERS empty))
 
 (def old-time (atom 0))
 (def delta-time (atom 0))

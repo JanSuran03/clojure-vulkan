@@ -1,7 +1,6 @@
 (ns clojure-vulkan.uniform
   (:require [clojure-vulkan.buffer :as buffer]
-            [clojure-vulkan.globals :as globals :refer [DESCRIPTOR-POOL-POINTER DESCRIPTOR-SET-LAYOUT-POINTER DESCRIPTOR-SET-POINTERS
-                                                        SWAP-CHAIN-IMAGES]]
+            [clojure-vulkan.globals :as globals :refer [DESCRIPTOR-POOL-POINTER DESCRIPTOR-SET-LAYOUT-POINTER DESCRIPTOR-SET-POINTERS]]
             [clojure-vulkan.math.vertex :as vertex]
             [clojure-vulkan.util :as util])
   (:import (clojure_vulkan UniformBufferObject)
@@ -40,7 +39,7 @@
     (let [buffer-ptr* (.mallocLong stack 1)
           buffer-memory-ptr* (.mallocLong stack 1)
           uniform-buffers
-          (repeatedly (count SWAP-CHAIN-IMAGES)
+          (repeatedly (.size (.get VulkanGlobals/SWAP_CHAIN_IMAGE_POINTERS))
                       (fn []
                         (buffer/create-buffer buffer-size VK13/VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT (util/bit-ors VK13/VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
                                                                                                                 VK13/VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
@@ -70,11 +69,11 @@
   (util/with-memory-stack-push ^MemoryStack stack
     (let [descriptor-pool-size (doto (VkDescriptorPoolSize/calloc 1 stack)
                                  (.type VK13/VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
-                                 (.descriptorCount (count SWAP-CHAIN-IMAGES)))
+                                 (.descriptorCount (.size (.get VulkanGlobals/SWAP_CHAIN_IMAGE_POINTERS))))
           descriptor-pool-create-info (doto (VkDescriptorPoolCreateInfo/calloc stack)
                                         (.sType VK13/VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO)
                                         (.pPoolSizes descriptor-pool-size)
-                                        (.maxSets (count SWAP-CHAIN-IMAGES)))
+                                        (.maxSets (.size (.get VulkanGlobals/SWAP_CHAIN_IMAGE_POINTERS))))
           descriptor-pool-ptr (.mallocLong stack 1)]
       (if (= (VK13/vkCreateDescriptorPool (VulkanGlobals/getLogicalDevice) descriptor-pool-create-info nil descriptor-pool-ptr)
              VK13/VK_SUCCESS)
@@ -87,14 +86,14 @@
 
 (defn create-descriptor-sets []
   (util/with-memory-stack-push ^MemoryStack stack
-    (let [descriptor-set-layouts-ptr (.mallocLong stack (count SWAP-CHAIN-IMAGES))
+    (let [descriptor-set-layouts-ptr (.mallocLong stack (.size (.get VulkanGlobals/SWAP_CHAIN_IMAGE_POINTERS)))
           _ (dotimes [i (.capacity descriptor-set-layouts-ptr)]
               (.put descriptor-set-layouts-ptr i DESCRIPTOR-SET-LAYOUT-POINTER))
           descriptor-set-allocate-info (doto (VkDescriptorSetAllocateInfo/calloc stack)
                                          (.sType VK13/VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO)
                                          (.descriptorPool DESCRIPTOR-POOL-POINTER)
                                          (.pSetLayouts descriptor-set-layouts-ptr))
-          descriptor-sets-ptr (.mallocLong stack (count SWAP-CHAIN-IMAGES))
+          descriptor-sets-ptr (.mallocLong stack (.size (.get VulkanGlobals/SWAP_CHAIN_IMAGE_POINTERS)))
           _ (if (= (VK13/vkAllocateDescriptorSets (VulkanGlobals/getLogicalDevice) descriptor-set-allocate-info descriptor-sets-ptr)
                    VK13/VK_SUCCESS)
               (globals/set-global! DESCRIPTOR-SET-POINTERS [])
@@ -116,5 +115,5 @@
                                       (.dstSet write-descriptor-set (.get descriptor-sets-ptr ^int i))
                                       (VK13/vkUpdateDescriptorSets (VulkanGlobals/getLogicalDevice) write-descriptor-set nil)
                                       (.get descriptor-sets-ptr))
-                                    (range (count SWAP-CHAIN-IMAGES)))]
+                                    (range (.size (.get VulkanGlobals/SWAP_CHAIN_IMAGE_POINTERS))))]
       (globals/set-global! DESCRIPTOR-SET-POINTERS descriptor-set-ptrs))))

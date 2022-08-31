@@ -16,6 +16,37 @@ public class VulkanGlobals {
     public static UniformBuffers UNIFORM_BUFFERS = new UniformBuffers();
 
     public static CommandBuffers COMMAND_BUFFERS = new CommandBuffers();
+    public static Queue GRAPHICS_QUEUE = new Queue();
+    public static Queue PRESENT_QUEUE = new Queue();
+    public static VulkanInstance VULKAN_INSTANCE = new VulkanInstance();
+
+    public static VkPointer DEBUG_MESSENGER_POINTER = new VkPointer() {
+        @Override
+        public void free() {
+            if (VK13.vkGetInstanceProcAddr(VULKAN_INSTANCE.get(), "vkDestroyDebugUtilsMessengerEXT") != VK13.VK_NULL_HANDLE) {
+                EXTDebugUtils.vkDestroyDebugUtilsMessengerEXT(VULKAN_INSTANCE.get(), this.get(), null);
+                this.set(0L);
+            }
+        }
+    };
+    public static VkPointer WINDOW_SURFACE_POINTER = new VkPointer() {
+        @Override
+        public void free() {
+            KHRSurface.vkDestroySurfaceKHR(VULKAN_INSTANCE.get(), this.get(), null);
+            this.set(0L);
+        }
+    };
+
+    public static VkPointerVector SWAP_CHAIN_IMAGE_POINTERS = new VkPointerVector() {
+    };
+
+    public static VkPointer SWAP_CHAIN_POINTER = new VkPointer() {
+        @Override
+        public void free() {
+            KHRSwapchain.vkDestroySwapchainKHR(LOGICAL_DEVICE.get(), this.get(), null);
+            this.set(0L);
+        }
+    };
 
     public static VkDevice getLogicalDevice() {
         return LOGICAL_DEVICE.get();
@@ -168,11 +199,96 @@ public class VulkanGlobals {
         }
     }
 
+    public static class Queue implements VkResource<VkQueue> {
+        private VkQueue queue;
+
+        @Override
+        public VkQueue get() {
+            return queue;
+        }
+
+        @Override
+        public void set(VkQueue queue) {
+            this.queue = queue;
+        }
+
+        @Override
+        public void free() {
+            queue = null;
+        }
+    }
+
+    public static class VulkanInstance implements VkResource<VkInstance> {
+        private VkInstance instance;
+
+        @Override
+        public VkInstance get() {
+            return instance;
+        }
+
+        @Override
+        public void set(VkInstance instance) {
+            this.instance = instance;
+        }
+
+        @Override
+        public void free() {
+            VK13.vkDestroyInstance(instance, null);
+            instance = null;
+        }
+    }
+
     private interface VkResource<T> {
         public T get();
 
         public void set(T val);
 
         public void free();
+    }
+
+    public static abstract class VkPointer implements VkResource<Long> {
+        private Long pointer = 0L;
+
+        public Long get() {
+            return pointer;
+        }
+
+        public void set(Long pointer) {
+            this.pointer = pointer;
+        }
+
+        public void free() {
+            pointer = 0L;
+        }
+    }
+
+    public static abstract class VkPointerVector implements VkResource<Vector<VkPointer>> {
+        public static Vector<VkPointer> asVkPointerVector(Vector<Long> pointerVector) {
+            Vector<VkPointer> ret = new Vector<>();
+            for (Long pointer : pointerVector) {
+                VkPointer ptr = new VkPointer() {
+                };
+                ptr.set(pointer);
+                ret.add(ptr);
+            }
+            return ret;
+        }
+
+        private Vector<VkPointer> pointerVector;
+
+        @Override
+        public Vector<VkPointer> get() {
+            return pointerVector;
+        }
+
+        @Override
+        public void set(Vector<VkPointer> pointerVector) {
+            this.pointerVector = pointerVector;
+        }
+
+        @Override
+        public void free() {
+            pointerVector.forEach(VkPointer::free);
+        }
     }
 }
