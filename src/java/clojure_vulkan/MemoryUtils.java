@@ -36,6 +36,12 @@ public class MemoryUtils {
         ubo.copyInfoByteBuffer(buf);
     }
 
+    public static void memCpyByteBuffer(ByteBuffer dest, ByteBuffer source, long size) {
+        source.limit((int) size);
+        dest.put(source);
+        source.limit(source.capacity()).rewind();
+    }
+
     private static final HashMap<Class<?>, Integer> SIZEOF_CACHE = new HashMap<>(Map.of(
             Matrix4f.class, 16 * Float.BYTES
     ));

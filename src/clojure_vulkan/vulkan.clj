@@ -13,11 +13,13 @@
             [clojure-vulkan.render :as render]
             [clojure-vulkan.render-pass :as render-pass]
             [clojure-vulkan.swap-chain :as swap-chain]
+            [clojure-vulkan.texture :as texture]
             [clojure-vulkan.uniform :as uniform]
             [clojure-vulkan.util :as util]
             [clojure-vulkan.validation-layers :as validation-layers]
             [clojure-vulkan.window-surface :as window-surface])
-  (:import (org.lwjgl.glfw GLFW)
+  (:import (clojure_vulkan.Vulkan VulkanGlobals)
+           (org.lwjgl.glfw GLFW)
            (org.lwjgl.vulkan VK13)))
 
 (defn init []
@@ -33,6 +35,7 @@
   (graphics-pipeline/create-graphics-pipeline)
   (frame-buffers/create-frame-buffers)
   (command-buffers/create-command-pool)
+  (texture/create-texture-image "pavian.jpg")
   (vertex/create-vertex-buffer)
   (vertex/create-index-buffer)
   (uniform/create-uniform-buffers)
@@ -50,17 +53,17 @@
     (uniform/destroy-uniform-buffers)
     (uniform/destroy-descriptor-set-layout)
     (globals/set-global! globals/SWAP-CHAIN-POINTER VK13/VK_NULL_HANDLE)
-    (vertex/destroy-index-buffer)
-    (vertex/free-index-buffer-memory)
-    (vertex/destroy-vertex-buffer)
-    (vertex/free-vertex-buffer-memory)
+    (.free globals/INDEX-BUFFER)
+    (.free globals/VERTEX-BUFFER)
+    (texture/destroy-texture)
+    (texture/free-texture-memory)
     (frame/destroy-semaphores-and-fences)
     (command-buffers/destroy-command-pool)
     (graphics-pipeline/destroy-graphics-pipeline)
     (graphics-pipeline/destroy-pipeline-layout)
     (render-pass/destroy-render-pass)
     (window-surface/destroy-surface)
-    (logical-device-and-queue/destroy-logical-device)
+    (.free VulkanGlobals/LOGICAL_DEVICE)
     (when validation-layers/*enable-validation-layers*
       (debug/destroy-debug-messenger nil))
     (instance/destroy-instance)

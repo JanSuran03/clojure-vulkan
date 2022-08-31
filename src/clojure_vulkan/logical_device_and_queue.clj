@@ -1,9 +1,10 @@
 (ns clojure-vulkan.logical-device-and-queue
-  (:require [clojure-vulkan.globals :as globals :refer [GRAPHICS-QUEUE LOGICAL-DEVICE PHYSICAL-DEVICE PRESENT-QUEUE QUEUE-FAMILIES]]
+  (:require [clojure-vulkan.globals :as globals :refer [GRAPHICS-QUEUE PHYSICAL-DEVICE PRESENT-QUEUE QUEUE-FAMILIES]]
             [clojure-vulkan.physical-device :as physical-device]
             [clojure-vulkan.util :as util]
             [clojure-vulkan.validation-layers :as validation-layers])
-  (:import (org.lwjgl.system MemoryStack)
+  (:import (clojure_vulkan.Vulkan VulkanGlobals)
+           (org.lwjgl.system MemoryStack)
            (org.lwjgl.vulkan VK13 VkDevice VkDeviceCreateInfo VkDeviceQueueCreateInfo VkDeviceQueueCreateInfo$Buffer
                              VkPhysicalDeviceFeatures VkQueue)))
 
@@ -35,10 +36,6 @@
           present-queue-ptr (.pointers stack VK13/VK_NULL_HANDLE)]
       (VK13/vkGetDeviceQueue device graphics-family 0 graphics-queue-ptr)
       (VK13/vkGetDeviceQueue device present-family 0 present-queue-ptr)
-      (globals/set-global! LOGICAL-DEVICE device)
-      (globals/set-global! GRAPHICS-QUEUE (VkQueue. (.get graphics-queue-ptr 0) LOGICAL-DEVICE))
-      (globals/set-global! PRESENT-QUEUE (VkQueue. (.get present-queue-ptr 0) LOGICAL-DEVICE)))))
-
-(defn destroy-logical-device []
-  (VK13/vkDestroyDevice LOGICAL-DEVICE nil)
-  (globals/reset-logical-device))
+      (.set VulkanGlobals/LOGICAL_DEVICE device)
+      (globals/set-global! GRAPHICS-QUEUE (VkQueue. (.get graphics-queue-ptr 0) (VulkanGlobals/getLogicalDevice)))
+      (globals/set-global! PRESENT-QUEUE (VkQueue. (.get present-queue-ptr 0) (VulkanGlobals/getLogicalDevice))))))

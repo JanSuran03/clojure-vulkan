@@ -1,11 +1,12 @@
 (ns clojure-vulkan.util
   (:refer-clojure :exclude [case])
   (:require [clojure.string :as str]
+            [clojure-vulkan.globals :refer [PHYSICAL-DEVICE]]
             [me.raynes.fs :as fs])
   (:import (java.io File)
            (java.util Date)
            (org.lwjgl.system MemoryStack StructBuffer)
-           (org.lwjgl.vulkan VK13)))
+           (org.lwjgl.vulkan VK13 VkPhysicalDeviceMemoryProperties)))
 
 (defmacro with-memory-stack-push [stack & body]
   `(with-open [^MemoryStack ~stack (MemoryStack/stackPush)]
@@ -174,3 +175,18 @@
   [[a1 b1 c1] [a2 b2 c2] [a3 b3 c3] [a4 b4 c4]] => [a1 a2 a3 a4] [b1 b2 b3 b4] [c1 c2 c3 c4])"
   [& colls]
   (apply (partial map vector) colls))
+
+(defn find-memory-type [^Integer type-filter ^Integer memory-property-flags ^MemoryStack stack kind]
+  (let [memory-properties (VkPhysicalDeviceMemoryProperties/malloc stack)]
+    (VK13/vkGetPhysicalDeviceMemoryProperties PHYSICAL-DEVICE memory-properties)
+    (or (some (fn [^Integer i]
+                (when (and (not= 0 (bit-and type-filter (bit-shift-left 1 i)))
+                           (= (bit-and (.propertyFlags (.memoryTypes memory-properties i))
+                                       memory-property-flags)
+                              memory-property-flags))
+                  i))
+              (range (.memoryTypeCount memory-properties)))
+        (throw (RuntimeException. "Failed to find suitable memory type for"
+                                  (#{:memory-kind/vertex-buffer " the vertex buffer "
+                                     :memory-kind/image " an image "}
+                                   kind " <unknown> "))))))

@@ -1,10 +1,11 @@
 (ns clojure-vulkan.render
   (:require [clojure-vulkan.frame :as frame :refer [FRAMES MAX-FRAMES-IN-FLIGHT]]
-            [clojure-vulkan.globals :as globals :refer [COMMAND-BUFFERS GRAPHICS-QUEUE LOGICAL-DEVICE PRESENT-QUEUE SWAP-CHAIN-POINTER]]
+            [clojure-vulkan.globals :as globals :refer [COMMAND-BUFFERS GRAPHICS-QUEUE PRESENT-QUEUE SWAP-CHAIN-POINTER]]
             [clojure-vulkan.swap-chain :as swap-chain]
             [clojure-vulkan.util :as util]
             [clojure-vulkan.uniform :as uniform])
   (:import (clojure_vulkan.frame Frame)
+           (clojure_vulkan.Vulkan VulkanGlobals)
            (org.lwjgl.system MemoryStack Pointer)
            (org.lwjgl.vulkan KHRSwapchain VK13 VkFenceCreateInfo VkPresentInfoKHR VkSemaphoreCreateInfo VkSubmitInfo)))
 
@@ -26,11 +27,11 @@
           in-flight-fence-ptr (.mallocLong stack MAX-FRAMES-IN-FLIGHT)]
       (globals/set-global! FRAMES
         (mapv (fn [^Integer i]
-                (when (or (not= (VK13/vkCreateSemaphore LOGICAL-DEVICE semaphore-create-info nil image-available-semaphore-ptr)
+                (when (or (not= (VK13/vkCreateSemaphore (VulkanGlobals/getLogicalDevice) semaphore-create-info nil image-available-semaphore-ptr)
                                 VK13/VK_SUCCESS)
-                          (not= (VK13/vkCreateSemaphore LOGICAL-DEVICE semaphore-create-info nil render-finished-semaphore-ptr)
+                          (not= (VK13/vkCreateSemaphore (VulkanGlobals/getLogicalDevice) semaphore-create-info nil render-finished-semaphore-ptr)
                                 VK13/VK_SUCCESS)
-                          (not= (VK13/vkCreateFence LOGICAL-DEVICE fence-create-info nil in-flight-fence-ptr)
+                          (not= (VK13/vkCreateFence (VulkanGlobals/getLogicalDevice) fence-create-info nil in-flight-fence-ptr)
                                 VK13/VK_SUCCESS))
                   (throw (str (RuntimeException. (str "Failed to create synchronization objects for frame: " i ".")))))
                 (Frame. (.get image-available-semaphore-ptr 0)
@@ -47,8 +48,8 @@
   (util/with-memory-stack-push ^MemoryStack stack
     (let [this-frame (frame/current-frame)
           image-index-ptr (.mallocInt stack 1)
-          _ (VK13/vkWaitForFences LOGICAL-DEVICE (frame/get-in-flight-fence-ptr this-frame) true infinite-timeout)
-          acquire-result (KHRSwapchain/vkAcquireNextImageKHR LOGICAL-DEVICE SWAP-CHAIN-POINTER infinite-timeout
+          _ (VK13/vkWaitForFences (VulkanGlobals/getLogicalDevice) (frame/get-in-flight-fence-ptr this-frame) true infinite-timeout)
+          acquire-result (KHRSwapchain/vkAcquireNextImageKHR (VulkanGlobals/getLogicalDevice) SWAP-CHAIN-POINTER infinite-timeout
                                                              (frame/get-image-available-semaphore-ptr this-frame)
                                                              VK13/VK_NULL_HANDLE image-index-ptr)]
       (cond (= KHRSwapchain/VK_ERROR_OUT_OF_DATE_KHR acquire-result)
@@ -66,7 +67,7 @@
                                 (.pWaitDstStageMask wait-stages)
                                 (.pCommandBuffers (.pointers stack ^Pointer (nth COMMAND-BUFFERS (.get image-index-ptr 0))))
                                 (.pSignalSemaphores signal-semaphores))
-                  _ (VK13/vkResetFences LOGICAL-DEVICE (frame/alloc-in-flight-fence-ptr this-frame stack))
+                  _ (VK13/vkResetFences (VulkanGlobals/getLogicalDevice) (frame/alloc-in-flight-fence-ptr this-frame stack))
                   _ (when (not= (VK13/vkQueueSubmit GRAPHICS-QUEUE submit-info (frame/get-in-flight-fence-ptr this-frame))
                                 VK13/VK_SUCCESS)
                       (throw (RuntimeException. "Failed to submit draw command buffer.")))

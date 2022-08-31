@@ -1,13 +1,14 @@
 (ns clojure-vulkan.swap-chain
   (:require [clojure-vulkan.command-buffers :as command-buffers]
             [clojure-vulkan.frame-buffers :as frame-buffers]
-            [clojure-vulkan.globals :as globals :refer [LOGICAL-DEVICE PHYSICAL-DEVICE QUEUE-FAMILIES SWAP-CHAIN-EXTENT SWAP-CHAIN-IMAGE-FORMAT
+            [clojure-vulkan.globals :as globals :refer [PHYSICAL-DEVICE QUEUE-FAMILIES SWAP-CHAIN-EXTENT SWAP-CHAIN-IMAGE-FORMAT
                                                         SWAP-CHAIN-IMAGES SWAP-CHAIN-POINTER SWAP-CHAIN-SUPPORT-DETAILS WINDOW-POINTER WINDOW-SURFACE-POINTER]]
             [clojure-vulkan.graphics-pipeline :as graphics-pipeline]
             [clojure-vulkan.image-views :as image-views]
             [clojure-vulkan.render-pass :as render-pass]
             [clojure-vulkan.util :as util])
-  (:import (java.nio IntBuffer)
+  (:import (clojure_vulkan.Vulkan VulkanGlobals)
+           (java.nio IntBuffer)
            (org.lwjgl.glfw GLFW)
            (org.lwjgl.system MemoryStack)
            (org.lwjgl.vulkan KHRSurface KHRSwapchain VK13 VkExtent2D VkPhysicalDevice VkSurfaceCapabilitiesKHR VkSurfaceFormatKHR
@@ -109,13 +110,13 @@
                   (.presentMode present-mode)
                   (.clipped true)))
           swap-chain-ptr* (.longs stack VK13/VK_NULL_HANDLE)
-          _ (do (when (not= (KHRSwapchain/vkCreateSwapchainKHR LOGICAL-DEVICE swap-chain-create-info nil swap-chain-ptr*)
+          _ (do (when (not= (KHRSwapchain/vkCreateSwapchainKHR (VulkanGlobals/getLogicalDevice) swap-chain-create-info nil swap-chain-ptr*)
                             VK13/VK_SUCCESS)
                   (throw (RuntimeException. "Failed to create swapchain.")))
                 (globals/set-global! SWAP-CHAIN-POINTER (.get swap-chain-ptr* 0))
-                (KHRSwapchain/vkGetSwapchainImagesKHR LOGICAL-DEVICE SWAP-CHAIN-POINTER image-count-ptr nil))
+                (KHRSwapchain/vkGetSwapchainImagesKHR (VulkanGlobals/getLogicalDevice) SWAP-CHAIN-POINTER image-count-ptr nil))
           swapchain-images-ptr (.mallocLong stack (.get image-count-ptr 0))]
-      (KHRSwapchain/vkGetSwapchainImagesKHR LOGICAL-DEVICE SWAP-CHAIN-POINTER image-count-ptr swapchain-images-ptr)
+      (KHRSwapchain/vkGetSwapchainImagesKHR (VulkanGlobals/getLogicalDevice) SWAP-CHAIN-POINTER image-count-ptr swapchain-images-ptr)
       (globals/set-global! SWAP-CHAIN-IMAGES (mapv #(.get swapchain-images-ptr ^int %)
                                                    (range image-count)))
       (globals/set-global! SWAP-CHAIN-IMAGE-FORMAT (.format surface-format))
@@ -129,7 +130,7 @@
   (render-pass/destroy-render-pass)
   (frame-buffers/destroy-frame-buffers)
   (image-views/destroy-image-views)
-  (KHRSwapchain/vkDestroySwapchainKHR LOGICAL-DEVICE SWAP-CHAIN-POINTER nil))
+  (KHRSwapchain/vkDestroySwapchainKHR (VulkanGlobals/getLogicalDevice) SWAP-CHAIN-POINTER nil))
 
 (defn recreate-swap-chain []
   (let [stack (MemoryStack/stackGet)
@@ -140,7 +141,7 @@
                (zero? (.get height-buffer 0)))
       (GLFW/glfwGetFramebufferSize WINDOW-POINTER width-buffer height-buffer)
       (GLFW/glfwWaitEvents))
-    (VK13/vkDeviceWaitIdle LOGICAL-DEVICE)
+    (VK13/vkDeviceWaitIdle (VulkanGlobals/getLogicalDevice))
     (cleanup-swap-chain)
 
     (create-swap-chain)

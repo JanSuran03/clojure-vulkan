@@ -1,8 +1,9 @@
 (ns clojure-vulkan.render-pass
-  (:require [clojure-vulkan.globals :as globals :refer [LOGICAL-DEVICE RENDER-PASS-POINTER SWAP-CHAIN-IMAGE-FORMAT]]
+  (:require [clojure-vulkan.globals :as globals :refer [RENDER-PASS-POINTER SWAP-CHAIN-IMAGE-FORMAT]]
             [clojure-vulkan.util :as util])
-  (:import (org.lwjgl.system MemoryStack)
-           (org.lwjgl.vulkan KHRSwapchain VkAttachmentDescription VK13  VkAttachmentReference VkRenderPassCreateInfo
+  (:import (clojure_vulkan.Vulkan VulkanGlobals)
+           (org.lwjgl.system MemoryStack)
+           (org.lwjgl.vulkan KHRSwapchain VkAttachmentDescription VK13 VkAttachmentReference VkRenderPassCreateInfo
                              VkSubpassDependency VkSubpassDescription)))
 
 (defn create-render-pass []
@@ -37,11 +38,11 @@
                                     (.pSubpasses subpass-descriptions)
                                     (.pDependencies subpass-dependencies))
           render-pass-ptr (.longs stack VK13/VK_NULL_HANDLE)]
-      (if (= (VK13/vkCreateRenderPass LOGICAL-DEVICE render-pass-create-info nil render-pass-ptr)
+      (if (= (VK13/vkCreateRenderPass (VulkanGlobals/getLogicalDevice) render-pass-create-info nil render-pass-ptr)
              VK13/VK_SUCCESS)
         (globals/set-global! RENDER-PASS-POINTER (.get render-pass-ptr 0))
         (throw (RuntimeException. "Failed to create render pass."))))))
 
 (defn destroy-render-pass []
-  (VK13/vkDestroyRenderPass LOGICAL-DEVICE RENDER-PASS-POINTER nil)
+  (VK13/vkDestroyRenderPass (VulkanGlobals/getLogicalDevice) RENDER-PASS-POINTER nil)
   (globals/reset-render-pass-ptr))

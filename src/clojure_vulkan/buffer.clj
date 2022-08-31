@@ -1,23 +1,14 @@
 (ns clojure-vulkan.buffer
-  (:require [clojure-vulkan.globals :refer [COMMAND-POOL-POINTER GRAPHICS-QUEUE LOGICAL-DEVICE PHYSICAL-DEVICE]]
+  (:require [clojure-vulkan.globals :refer [COMMAND-POOL-POINTER GRAPHICS-QUEUE]]
             [clojure-vulkan.util :as util])
   (:import (org.lwjgl.system MemoryStack)
            (org.lwjgl.vulkan VK13 VkBufferCopy VkBufferCreateInfo VkCommandBuffer VkCommandBufferAllocateInfo
                              VkCommandBufferBeginInfo VkMemoryAllocateInfo VkMemoryRequirements
-                             VkPhysicalDeviceMemoryProperties VkSubmitInfo)
-           (java.nio LongBuffer)))
-
-(defn- find-memory-type [^Integer type-filter ^Integer memory-property-flags ^MemoryStack stack]
-  (let [memory-properties (VkPhysicalDeviceMemoryProperties/malloc stack)]
-    (VK13/vkGetPhysicalDeviceMemoryProperties PHYSICAL-DEVICE memory-properties)
-    (or (some (fn [^Integer i]
-                (when (and (not= 0 (bit-and type-filter (bit-shift-left 1 i)))
-                           (= (bit-and (.propertyFlags (.memoryTypes memory-properties i))
-                                       memory-property-flags)
-                              memory-property-flags))
-                  i))
-              (range (.memoryTypeCount memory-properties)))
-        (throw (RuntimeException. "Failed to find suitable memory type for the vertex buffer.")))))
+                             VkSubmitInfo)
+           (java.nio LongBuffer ByteBuffer)
+           (clojure_vulkan MemoryUtils UniformBufferObject)
+           (org.lwjgl PointerBuffer)
+           (clojure_vulkan.Vulkan VulkanGlobals)))
 
 (defn create-buffer [^Integer byte-size ^Integer usage ^Integer property-flags
                      ^LongBuffer buffer-ptr* ^LongBuffer buffer-memory-ptr* ^MemoryStack stack]
@@ -26,32 +17,33 @@
                              (.size byte-size)
                              (.usage usage)
                              (.sharingMode VK13/VK_SHARING_MODE_EXCLUSIVE))
-        ^long buffer-pointer (if (= (VK13/vkCreateBuffer LOGICAL-DEVICE buffer-create-info nil buffer-ptr*)
+        ^long buffer-pointer (if (= (VK13/vkCreateBuffer (VulkanGlobals/getLogicalDevice) buffer-create-info nil buffer-ptr*)
                                     VK13/VK_SUCCESS)
                                (.get buffer-ptr* 0)
                                (throw (RuntimeException. "Failed to create buffer.")))]
     (try
       (let [memory-requirements (VkMemoryRequirements/calloc stack)
-            _ (VK13/vkGetBufferMemoryRequirements LOGICAL-DEVICE buffer-pointer memory-requirements)
+            _ (VK13/vkGetBufferMemoryRequirements (VulkanGlobals/getLogicalDevice) buffer-pointer memory-requirements)
             vk-memory-allocate-info (doto (VkMemoryAllocateInfo/calloc stack)
                                       (.sType VK13/VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO)
                                       (.allocationSize (.size memory-requirements))
-                                      (.memoryTypeIndex (find-memory-type (.memoryTypeBits memory-requirements)
-                                                                          property-flags
-                                                                          stack)))
-            ^long buffer-memory-pointer (if (= (VK13/vkAllocateMemory LOGICAL-DEVICE vk-memory-allocate-info nil buffer-memory-ptr*)
+                                      (.memoryTypeIndex (util/find-memory-type (.memoryTypeBits memory-requirements)
+                                                                               property-flags
+                                                                               stack
+                                                                               :memory-kind/vertex-buffer)))
+            ^long buffer-memory-pointer (if (= (VK13/vkAllocateMemory (VulkanGlobals/getLogicalDevice) vk-memory-allocate-info nil buffer-memory-ptr*)
                                                VK13/VK_SUCCESS)
                                           (.get buffer-memory-ptr* 0)
                                           (throw (RuntimeException. "Failed to allocate buffer memory.")))]
-        (try (VK13/vkBindBufferMemory LOGICAL-DEVICE buffer-pointer buffer-memory-pointer 0)
+        (try (VK13/vkBindBufferMemory (VulkanGlobals/getLogicalDevice) buffer-pointer buffer-memory-pointer 0)
              (catch Throwable t
                (util/log "Failed to bind buffer memory: deallocating memory.")
-               (VK13/vkFreeMemory LOGICAL-DEVICE buffer-memory-pointer nil)
+               (VK13/vkFreeMemory (VulkanGlobals/getLogicalDevice) buffer-memory-pointer nil)
                (throw t)))
         [buffer-pointer buffer-memory-pointer buffer-create-info])
       (catch Throwable t
         (util/log "Error in memory buffer allocation process: deleting assigned buffer.")
-        (VK13/vkDestroyBuffer LOGICAL-DEVICE buffer-pointer nil)
+        (VK13/vkDestroyBuffer (VulkanGlobals/getLogicalDevice) buffer-pointer nil)
         (throw t)))))
 
 (defn copy-buffer [src-buffer-ptr dest-buffer-ptr buffer-size ^MemoryStack stack]
@@ -61,8 +53,8 @@
                                        (.commandPool COMMAND-POOL-POINTER)
                                        (.commandBufferCount 1))
         command-buffer-ptr (.mallocPointer stack 1)
-        _ (VK13/vkAllocateCommandBuffers LOGICAL-DEVICE command-buffer-allocate-info command-buffer-ptr)
-        command-buffer (VkCommandBuffer. (.get command-buffer-ptr 0) LOGICAL-DEVICE)
+        _ (VK13/vkAllocateCommandBuffers (VulkanGlobals/getLogicalDevice) command-buffer-allocate-info command-buffer-ptr)
+        command-buffer (VkCommandBuffer. (.get command-buffer-ptr 0) (VulkanGlobals/getLogicalDevice))
         command-buffer-begin-info (doto (VkCommandBufferBeginInfo/calloc stack)
                                     (.sType VK13/VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO)
                                     (.flags VK13/VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT))
@@ -79,5 +71,33 @@
     (when (not= (VK13/vkQueueSubmit GRAPHICS-QUEUE submit-info VK13/VK_NULL_HANDLE) ; fence
                 VK13/VK_SUCCESS)
       (throw (RuntimeException. "Failed to submit copy command buffer.")))
-    (VK13/vkDeviceWaitIdle LOGICAL-DEVICE)
-    (VK13/vkFreeCommandBuffers LOGICAL-DEVICE COMMAND-POOL-POINTER command-buffer-ptr)))
+    (VK13/vkDeviceWaitIdle (VulkanGlobals/getLogicalDevice))
+    (VK13/vkFreeCommandBuffers (VulkanGlobals/getLogicalDevice) COMMAND-POOL-POINTER command-buffer-ptr)))
+
+(defmulti ^:private do-buffer-memcpy (fn [mode & _]
+                                       mode))
+
+(defmethod do-buffer-memcpy :buffer-copy/floats
+  [_mode data-ptr* ^"[F" data byte-size]
+  (MemoryUtils/memcpyFloats (.getByteBuffer ^PointerBuffer data-ptr* 0 byte-size) data))
+
+(defmethod do-buffer-memcpy :buffer-copy/byte-buffer
+  [_mode data-ptr* ^ByteBuffer data byte-size]
+  (MemoryUtils/memCpyByteBuffer (.getByteBuffer ^PointerBuffer data-ptr* 0 byte-size) data byte-size))
+
+(defmethod do-buffer-memcpy :buffer-copy/shorts
+  [_mode data-ptr* ^"[S" data byte-size]
+  (MemoryUtils/memcpyShorts (.getByteBuffer ^PointerBuffer data-ptr* 0 byte-size) data))
+
+(defmethod do-buffer-memcpy :buffer-copy/integers
+  [_mode data-ptr* ^"[I" data byte-size]
+  (MemoryUtils/memcpyIntegers (.getByteBuffer ^PointerBuffer data-ptr* 0 byte-size) data))
+
+(defmethod do-buffer-memcpy :buffer-copy/uniform-buffer-object
+  [_mode data-ptr* ^UniformBufferObject data byte-size]
+  (MemoryUtils/memcpyUBO (.getByteBuffer ^PointerBuffer data-ptr* 0 byte-size) data))
+
+(defn staging-buffer-memcpy [staging-buffer-memory-ptr byte-size data-ptr* the-data mode]
+  (VK13/vkMapMemory (VulkanGlobals/getLogicalDevice) staging-buffer-memory-ptr 0 byte-size 0 data-ptr*)
+  (do-buffer-memcpy mode data-ptr* the-data byte-size)
+  (VK13/vkUnmapMemory (VulkanGlobals/getLogicalDevice) staging-buffer-memory-ptr))

@@ -1,11 +1,12 @@
 (ns clojure-vulkan.command-buffers
   (:require [clojure-vulkan.globals :as globals :refer [COMMAND-BUFFERS COMMAND-POOL-POINTER DESCRIPTOR-SET-POINTERS
-                                                        GRAPHICS-PIPELINE-POINTER INDEX-BUFFER-POINTER LOGICAL-DEVICE
+                                                        GRAPHICS-PIPELINE-POINTER INDEX-BUFFER
                                                         PIPELINE-LAYOUT-POINTER QUEUE-FAMILIES RENDER-PASS-POINTER
-                                                        SWAP-CHAIN-EXTENT SWAP-CHAIN-FRAME-BUFFER-POINTERS VERTEX-BUFFER-POINTER]]
+                                                        SWAP-CHAIN-EXTENT SWAP-CHAIN-FRAME-BUFFER-POINTERS VERTEX-BUFFER]]
             [clojure-vulkan.util :as util]
             [clojure-vulkan.math.vertex :as vertex])
-  (:import (org.lwjgl.system MemoryStack)
+  (:import (clojure_vulkan.Vulkan Buffer VulkanGlobals)
+           (org.lwjgl.system MemoryStack)
            (org.lwjgl.vulkan VK13 VkClearColorValue VkClearValue VkCommandBuffer
                              VkCommandBufferAllocateInfo VkCommandBufferBeginInfo VkCommandPoolCreateInfo VkOffset2D
                              VkRect2D VkRect2D$Buffer VkRenderPassBeginInfo VkViewport VkViewport$Buffer)))
@@ -18,7 +19,7 @@
                                      (.queueFamilyIndex (:graphics-family QUEUE-FAMILIES)))
           command-pool-ptr (.mallocLong stack 1)]
 
-      (if (= (VK13/vkCreateCommandPool LOGICAL-DEVICE command-pool-create-info nil command-pool-ptr)
+      (if (= (VK13/vkCreateCommandPool (VulkanGlobals/getLogicalDevice) command-pool-create-info nil command-pool-ptr)
              VK13/VK_SUCCESS)
         (globals/set-global! COMMAND-POOL-POINTER (.get command-pool-ptr 0))
         (throw (RuntimeException. "Failed to create command pool."))))))
@@ -31,7 +32,7 @@
 (defn destroy-command-pool
   "Destroys command buffers as well."
   []
-  (VK13/vkDestroyCommandPool LOGICAL-DEVICE COMMAND-POOL-POINTER nil)
+  (VK13/vkDestroyCommandPool (VulkanGlobals/getLogicalDevice) COMMAND-POOL-POINTER nil)
   (globals/reset-command-pool-ptr)
   (destroy-command-buffers))
 
@@ -51,11 +52,10 @@
   (VK13/vkCmdBindPipeline command-buffer VK13/VK_PIPELINE_BIND_POINT_GRAPHICS GRAPHICS-PIPELINE-POINTER) ; graphics or compute pipeline?
   (VK13/vkCmdSetViewport command-buffer 0 viewports-buffer)
   (VK13/vkCmdSetScissor command-buffer 0 scissor-buffers)
-  (let [vertex-buffers (.longs stack VERTEX-BUFFER-POINTER)
+  (let [vertex-buffers (.longs stack (.bufferPointer VERTEX-BUFFER))
         offsets (.longs stack 0)]
     (VK13/vkCmdBindVertexBuffers command-buffer 0 vertex-buffers offsets))
-  (VK13/vkCmdBindIndexBuffer command-buffer INDEX-BUFFER-POINTER 0 VK13/VK_INDEX_TYPE_UINT16) ;; short
-  #_(VK13/vkCmdDraw command-buffer (:components-per-vertex vertex/current-triangle-vbo-characterictics) 1 0 0)
+  (VK13/vkCmdBindIndexBuffer command-buffer (.bufferPointer ^Buffer INDEX-BUFFER) 0 VK13/VK_INDEX_TYPE_UINT16) ;; short
   (VK13/vkCmdBindDescriptorSets command-buffer
                                 VK13/VK_PIPELINE_BIND_POINT_GRAPHICS
                                 PIPELINE-LAYOUT-POINTER
@@ -84,9 +84,9 @@
           render-area (doto (VkRect2D/calloc stack)
                         (.offset (.set (VkOffset2D/calloc stack) 0 0))
                         (.extent SWAP-CHAIN-EXTENT))
-          _ (if (= (VK13/vkAllocateCommandBuffers LOGICAL-DEVICE command-buffer-allocate-info command-buffers-ptr)
+          _ (if (= (VK13/vkAllocateCommandBuffers (VulkanGlobals/getLogicalDevice) command-buffer-allocate-info command-buffers-ptr)
                    VK13/VK_SUCCESS)
-              (globals/set-global! COMMAND-BUFFERS (mapv #(VkCommandBuffer. (.get command-buffers-ptr ^int %) LOGICAL-DEVICE)
+              (globals/set-global! COMMAND-BUFFERS (mapv #(VkCommandBuffer. (.get command-buffers-ptr ^int %) (VulkanGlobals/getLogicalDevice))
                                                          (range command-buffers-count)))
               (throw (RuntimeException. "Failed to allocate command buffers.")))
           command-buffer-begin-info (doto (VkCommandBufferBeginInfo/calloc stack)

@@ -1,7 +1,6 @@
 package clojure_vulkan;
 
-import clojure.lang.Keyword;
-import clojure.lang.PersistentHashMap;
+import clojure.lang.*;
 
 import java.util.*;
 
@@ -73,7 +72,7 @@ public class ShaderAnalyzer {
         return "";
     }
 
-    public static Vector<ShaderLayout> analyze(String s) {
+    public static IPersistentList analyze(String s) {
         String src = s;
         Vector<ShaderLayout> analyzedLocations = new Vector<>();
         int locationIndexOf;
@@ -142,6 +141,9 @@ public class ShaderAnalyzer {
                 analyzedLocations.add(currentLayout);
             }
         }
-        return analyzedLocations;
+        IPersistentList ret = PersistentList.EMPTY;
+        for (ShaderLayout shaderLayout : analyzedLocations)
+            ret = (IPersistentList) ret.cons(shaderLayout.hashMap());
+        return ret;
     }
 }

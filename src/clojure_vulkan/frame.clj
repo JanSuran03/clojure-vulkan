@@ -1,7 +1,7 @@
 (ns clojure-vulkan.frame
-  (:require [clojure-vulkan.globals :refer [LOGICAL-DEVICE]]
-            [clojure-vulkan.globals :as globals])
-  (:import (java.nio LongBuffer)
+  (:require [clojure-vulkan.globals :as globals])
+  (:import (clojure_vulkan.Vulkan VulkanGlobals)
+           (java.nio LongBuffer)
            (org.lwjgl.system MemoryStack)
            (org.lwjgl.vulkan VK13)
            (org.lwjgl.glfw GLFW)))
@@ -49,8 +49,8 @@
 (defn destroy-semaphores-and-fences []
   (dotimes [i MAX-FRAMES-IN-FLIGHT]
     (let [frame (nth FRAMES i)]
-      (VK13/vkDestroySemaphore LOGICAL-DEVICE (get-image-available-semaphore-ptr frame) nil)
-      (VK13/vkDestroySemaphore LOGICAL-DEVICE (get-render-finished-semaphore-ptr frame) nil)
-      (VK13/vkDestroyFence LOGICAL-DEVICE ^Long (get-in-flight-fence-ptr frame) nil)))
+      (VK13/vkDestroySemaphore (VulkanGlobals/getLogicalDevice) (get-image-available-semaphore-ptr frame) nil)
+      (VK13/vkDestroySemaphore (VulkanGlobals/getLogicalDevice) (get-render-finished-semaphore-ptr frame) nil)
+      (VK13/vkDestroyFence (VulkanGlobals/getLogicalDevice) ^Long (get-in-flight-fence-ptr frame) nil)))
   (alter-var-root #'FRAMES empty)
   (reset! current-frame-counter* 0))

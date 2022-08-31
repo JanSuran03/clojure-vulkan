@@ -1,5 +1,6 @@
 (ns clojure-vulkan.globals
-  (:import (org.lwjgl.vulkan VK13 VkDevice VkExtent2D VkInstance VkPhysicalDevice VkQueue)))
+  (:import (clojure_vulkan.Vulkan Buffer)
+           (org.lwjgl.vulkan VK13 VkDevice VkExtent2D VkInstance VkPhysicalDevice VkQueue)))
 
 (defmacro set-global! [global-var new-value]
   `(alter-var-root (var ~global-var) (constantly ~new-value)))
@@ -19,9 +20,6 @@
 
 (def ^VkPhysicalDevice PHYSICAL-DEVICE nil)
 (defn reset-physical-device [] (alter-var-root #'PHYSICAL-DEVICE reset-to-nil))
-
-(def ^VkDevice LOGICAL-DEVICE nil)
-(defn reset-logical-device [] (alter-var-root #'LOGICAL-DEVICE reset-to-nil))
 
 (def QUEUE-FAMILIES {})
 (defn reset-queue-families [] (alter-var-root #'QUEUE-FAMILIES empty))
@@ -78,25 +76,13 @@
 (def COMMAND-BUFFERS [])
 (defn reset-command-buffers [] (alter-var-root #'COMMAND-BUFFERS empty))
 
-(def ^Long VERTEX-BUFFER-POINTER VK13/VK_NULL_HANDLE)
-(defn reset-vertex-buffer-ptr [] (alter-var-root #'VERTEX-BUFFER-POINTER reset-to-vk-null))
+(def ^Buffer VERTEX-BUFFER (Buffer.))
 
-(def ^Long VERTEX-BUFFER-MEMORY-POINTER VK13/VK_NULL_HANDLE)
-(defn reset-vertex-buffer-memory-ptr [] (alter-var-root #'VERTEX-BUFFER-MEMORY-POINTER reset-to-vk-null))
-
-(def ^Long INDEX-BUFFER-POINTER VK13/VK_NULL_HANDLE)
-(defn reset-index-buffer-ptr [] (alter-var-root #'INDEX-BUFFER-POINTER reset-to-vk-null))
-
-(def ^Long INDEX-BUFFER-MEMORY-POINTER VK13/VK_NULL_HANDLE)
-(defn reset-index-buffer-memory-ptr [] (alter-var-root #'INDEX-BUFFER-MEMORY-POINTER reset-to-vk-null))
+(def ^Buffer INDEX-BUFFER (Buffer.))
 ;; **************************************************
 ;; UNIFORMS
 ;; **************************************************
-(def UNIFORM-BUFFER-POINTERS [])
-(defn reset-uniform-buffer-ptrs [] (alter-var-root #'UNIFORM-BUFFER-POINTERS empty))
-
-(def UNIFORM-BUFFER-MEMORY-POINTERS [])
-(defn reset-uniform-buffer-memory-ptrs [] (alter-var-root #'UNIFORM-BUFFER-MEMORY-POINTERS empty))
+(def UNIFORM-BUFFERS [])
 
 (def DESCRIPTOR-POOL-POINTER VK13/VK_NULL_HANDLE)
 (defn reset-descriptor-pool-ptr [] (alter-var-root #'DESCRIPTOR-POOL-POINTER reset-to-vk-null))
@@ -109,3 +95,9 @@
 
 (def old-time (atom 0))
 (def delta-time (atom 0))
+
+(def IMAGE-POINTER VK13/VK_NULL_HANDLE)
+(defn reset-image-ptr [] (alter-var-root #'IMAGE-POINTER reset-to-vk-null))
+
+(def IMAGE-MEMORY-POINTER VK13/VK_NULL_HANDLE)
+(defn reset-image-memory-ptr [] (alter-var-root #'IMAGE-MEMORY-POINTER reset-to-vk-null))

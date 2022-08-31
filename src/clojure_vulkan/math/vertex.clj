@@ -1,42 +1,32 @@
 (ns clojure-vulkan.math.vertex
   (:require [clojure-vulkan.buffer :as buffer]
-            [clojure-vulkan.globals :as globals :refer [INDEX-BUFFER-POINTER INDEX-BUFFER-MEMORY-POINTER LOGICAL-DEVICE
-                                                        PHYSICAL-DEVICE VERTEX-BUFFER-MEMORY-POINTER VERTEX-BUFFER-POINTER]]
+            [clojure-vulkan.globals :as globals :refer [INDEX-BUFFER VERTEX-BUFFER]]
             [clojure-vulkan.math.glsl :as glsl]
             [clojure-vulkan.math.vector-2f]
             [clojure-vulkan.math.vector-3f]
             [clojure-vulkan.shaders :as shaders]
             [clojure-vulkan.util :as util])
-  (:import (clojure_vulkan ShaderAnalyzer ShaderAnalyzer$ShaderLayout MemoryUtils)
+  (:import (clojure_vulkan ShaderAnalyzer)
+           (clojure_vulkan.Vulkan Buffer VulkanGlobals)
            (clojure_vulkan.math.vector_2f Vector2f)
            (clojure_vulkan.math.vector_3f Vector3f)
            (org.lwjgl PointerBuffer)
            (org.lwjgl.system MemoryStack)
-           (org.lwjgl.vulkan VK13 VkBufferCreateInfo VkPhysicalDeviceMemoryProperties VkVertexInputAttributeDescription VkVertexInputBindingDescription)))
+           (org.lwjgl.vulkan VK13 VkBufferCreateInfo VkVertexInputAttributeDescription VkVertexInputBindingDescription)))
 
 (deftype Vertex [^Vector2f pos ^Vector3f color])
 
-(defn vertex [x y z r g b]
-  #_(Vertex. (Vector2f. x y)
-             (Vector3f. r g b))
-  (list x y z r g b))
+(def ^"[F" vertices (into-array Float/TYPE
+                                (concat (list -0.5 -0.5 -0.5 1 1 0)
+                                        (list +0.5 -0.5 -0.5 1 0 1)
+                                        (list +0.5 -0.5 +0.5 0 1 1)
+                                        (list -0.5 -0.5 +0.5 1 0 0)
+                                        (list -0.5 +0.5 -0.5 0 1 0)
+                                        (list +0.5 +0.5 -0.5 0 0 1)
+                                        (list +0.5 +0.5 +0.5 1 1 1)
+                                        (list -0.5 +0.5 +0.5 0 0 0))))
 
-
-(def ^"[F" vertices (into-array Float/TYPE #_(concat (vertex -0.5 -0.5 1 0 0) ; red
-                                                     (vertex +0.5 -0.5 0 1 0) ; green
-                                                     (vertex +0.5 +0.5 0 0 1) ; blue
-                                                     (vertex -0.5 +0.5 0.5 0 0.5) ; violet
-                                                     )
-                                (concat (list -0.5 -0.5 0 1 1 0)
-                                        (list +0.5 -0.5 0 1 0 1)
-                                        (list +0.5 -0.5 1 0 1 1)
-                                        (list -0.5 -0.5 1 1 0 0)
-                                        (list -0.5 +0.5 0 0 1 0)
-                                        (list +0.5 +0.5 0 0 0 1)
-                                        (list +0.5 +0.5 1 1 1 1)
-                                        (list -0.5 +0.5 1 0 0 0))))
-
-(def ^"[S" indices (into-array Short/TYPE #_[0 1 2 2 3 0]
+(def ^"[S" indices (into-array Short/TYPE
                                [0 1 4, 1 5 4
                                 1 2 5, 2 6 5
                                 2 3 6, 3 7 6
@@ -45,8 +35,7 @@
                                 4 5 7, 5 6 7]))
 
 (defn analyze-shader-attribute-descriptions [shader-source]
-  (map (memfn ^ShaderAnalyzer$ShaderLayout hashMap)
-       (ShaderAnalyzer/analyze (slurp (str shaders/shader-sources-root shader-source)))))
+  (ShaderAnalyzer/analyze (slurp (str shaders/shader-sources-root shader-source))))
 
 (defn analyze-shader-characteristics [shader-source]
   (let [attribute-descriptions (analyze-shader-attribute-descriptions shader-source)]
@@ -86,18 +75,6 @@
             (sort-by :location < in))
     attribute-descriptions))
 
-(defn- find-memory-type [^Integer type-filter ^Integer memory-property-flags ^MemoryStack stack]
-  (let [memory-properties (VkPhysicalDeviceMemoryProperties/malloc stack)]
-    (VK13/vkGetPhysicalDeviceMemoryProperties PHYSICAL-DEVICE memory-properties)
-    (or (some (fn [^Integer i]
-                (when (and (not= 0 (bit-and type-filter (bit-shift-left 1 i)))
-                           (= (bit-and (.propertyFlags (.memoryTypes memory-properties i))
-                                       memory-property-flags)
-                              memory-property-flags))
-                  i))
-              (range (.memoryTypeCount memory-properties)))
-        (throw (RuntimeException. "Failed to find suitable memory type for the vertex buffer.")))))
-
 (defn create-vertex-buffer []
   (util/with-memory-stack-push ^MemoryStack stack
     (let [buffer-size (* ^int (:in-stride current-triangle-vbo-characterictics) ; bytes per vertex
@@ -116,11 +93,8 @@
                                 buffer-ptr*
                                 buffer-memory-ptr*
                                 stack)
-          ^PointerBuffer data-ptr (.mallocPointer stack 1)
-          _ (do (VK13/vkMapMemory LOGICAL-DEVICE staging-buffer-memory-ptr #_offset 0 buffer-size #_flags 0 data-ptr)
-                (MemoryUtils/memcpyFloats (.getByteBuffer data-ptr 0 (int (.size staging-buffer-create-info)))
-                                          vertices)
-                (VK13/vkUnmapMemory LOGICAL-DEVICE staging-buffer-memory-ptr))
+          ^PointerBuffer data-ptr* (.mallocPointer stack 1)
+          _ (buffer/staging-buffer-memcpy staging-buffer-memory-ptr buffer-size data-ptr* vertices :buffer-copy/floats)
           [vertex-buffer-ptr
            vertex-buffer-memory-ptr]
           (buffer/create-buffer buffer-size                 ;; create vertex buffer
@@ -132,10 +106,10 @@
                                 buffer-memory-ptr*
                                 stack)]
       (buffer/copy-buffer staging-buffer-ptr vertex-buffer-ptr buffer-size stack)
-      (VK13/vkDestroyBuffer LOGICAL-DEVICE staging-buffer-ptr nil)
-      (VK13/vkFreeMemory LOGICAL-DEVICE staging-buffer-memory-ptr nil)
-      (do (globals/set-global! VERTEX-BUFFER-POINTER vertex-buffer-ptr)
-          (globals/set-global! VERTEX-BUFFER-MEMORY-POINTER vertex-buffer-memory-ptr)))))
+      (VK13/vkDestroyBuffer (VulkanGlobals/getLogicalDevice) staging-buffer-ptr nil)
+      (VK13/vkFreeMemory (VulkanGlobals/getLogicalDevice) staging-buffer-memory-ptr nil)
+      (.bufferPointer VERTEX-BUFFER vertex-buffer-ptr)
+      (.bufferMemoryPointer VERTEX-BUFFER vertex-buffer-memory-ptr))))
 
 (defn create-index-buffer []
   (util/with-memory-stack-push ^MemoryStack stack
@@ -151,10 +125,8 @@
                                 buffer-ptr*
                                 buffer-memory-ptr*
                                 stack)
-          data (.mallocPointer stack 1)
-          _ (VK13/vkMapMemory LOGICAL-DEVICE staging-buffer-memory-ptr #_offset 0 buffer-size #_flags 0 data)
-          _ (MemoryUtils/memcpyShorts (.getByteBuffer data (int buffer-size)) indices)
-          _ (VK13/vkUnmapMemory LOGICAL-DEVICE staging-buffer-memory-ptr)
+          data-ptr* (.mallocPointer stack 1)
+          _ (buffer/staging-buffer-memcpy staging-buffer-memory-ptr buffer-size data-ptr* indices :buffer-copy/shorts)
           [index-buffer-ptr
            index-buffer-memory-ptr]
           (buffer/create-buffer buffer-size
@@ -165,23 +137,7 @@
                                 buffer-memory-ptr*
                                 stack)]
       (buffer/copy-buffer staging-buffer-ptr index-buffer-ptr buffer-size stack)
-      (VK13/vkDestroyBuffer LOGICAL-DEVICE staging-buffer-ptr nil)
-      (VK13/vkFreeMemory LOGICAL-DEVICE staging-buffer-memory-ptr nil)
-      (globals/set-global! INDEX-BUFFER-POINTER index-buffer-ptr)
-      (globals/set-global! INDEX-BUFFER-MEMORY-POINTER index-buffer-memory-ptr))))
-
-(defn destroy-vertex-buffer []
-  (VK13/vkDestroyBuffer LOGICAL-DEVICE VERTEX-BUFFER-POINTER nil)
-  (globals/reset-vertex-buffer-ptr))
-
-(defn free-vertex-buffer-memory []
-  (VK13/vkFreeMemory LOGICAL-DEVICE VERTEX-BUFFER-MEMORY-POINTER nil)
-  (globals/reset-vertex-buffer-memory-ptr))
-
-(defn destroy-index-buffer []
-  (VK13/vkDestroyBuffer LOGICAL-DEVICE INDEX-BUFFER-POINTER nil)
-  (globals/reset-index-buffer-ptr))
-
-(defn free-index-buffer-memory []
-  (VK13/vkFreeMemory LOGICAL-DEVICE INDEX-BUFFER-MEMORY-POINTER nil)
-  (globals/reset-index-buffer-memory-ptr))
+      (VK13/vkDestroyBuffer (VulkanGlobals/getLogicalDevice) staging-buffer-ptr nil)
+      (VK13/vkFreeMemory (VulkanGlobals/getLogicalDevice) staging-buffer-memory-ptr nil)
+      (.bufferPointer ^Buffer INDEX-BUFFER index-buffer-ptr)
+      (.bufferMemoryPointer ^Buffer INDEX-BUFFER index-buffer-memory-ptr))))
