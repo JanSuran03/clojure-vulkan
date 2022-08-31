@@ -49,32 +49,13 @@
         (throw t)))))
 
 (defn copy-buffer [src-buffer-ptr dest-buffer-ptr buffer-size ^MemoryStack stack]
-  (let [command-buffer-allocate-info (doto (VkCommandBufferAllocateInfo/calloc stack)
-                                       (.sType VK13/VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO)
-                                       (.level VK13/VK_COMMAND_BUFFER_LEVEL_PRIMARY)
-                                       (.commandPool (.get VulkanGlobals/COMMAND_POOL))
-                                       (.commandBufferCount 1))
-        command-buffer-ptr (.mallocPointer stack 1)
-        _ (VK13/vkAllocateCommandBuffers (VulkanGlobals/getLogicalDevice) command-buffer-allocate-info command-buffer-ptr)
-        command-buffer (VkCommandBuffer. (.get command-buffer-ptr 0) (VulkanGlobals/getLogicalDevice))
-        command-buffer-begin-info (doto (VkCommandBufferBeginInfo/calloc stack)
-                                    (.sType VK13/VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO)
-                                    (.flags VK13/VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT))
-        _ (VK13/vkBeginCommandBuffer command-buffer command-buffer-begin-info)
+  (let [command-buffer (util/begin-single-time-commands)
         buffer-copy-region (doto (VkBufferCopy/calloc 1 stack)
                              (.srcOffset 0)
                              (.dstOffset 0)
-                             (.size buffer-size))
-        _ (VK13/vkCmdCopyBuffer command-buffer src-buffer-ptr dest-buffer-ptr buffer-copy-region)
-        _ (VK13/vkEndCommandBuffer command-buffer)
-        submit-info (doto (VkSubmitInfo/calloc stack)
-                      (.sType VK13/VK_STRUCTURE_TYPE_SUBMIT_INFO)
-                      (.pCommandBuffers command-buffer-ptr))]
-    (when (not= (VK13/vkQueueSubmit (.get VulkanGlobals/GRAPHICS_QUEUE) submit-info VK13/VK_NULL_HANDLE) ; fence
-                VK13/VK_SUCCESS)
-      (throw (RuntimeException. "Failed to submit copy command buffer.")))
-    (VK13/vkDeviceWaitIdle (VulkanGlobals/getLogicalDevice))
-    (VK13/vkFreeCommandBuffers (VulkanGlobals/getLogicalDevice) (.get VulkanGlobals/COMMAND_POOL) command-buffer-ptr)))
+                             (.size buffer-size))]
+    (VK13/vkCmdCopyBuffer command-buffer src-buffer-ptr dest-buffer-ptr buffer-copy-region)
+    (util/end-single-time-commands command-buffer)))
 
 (defmulti ^:private do-buffer-memcpy (fn [mode & _]
                                        mode))

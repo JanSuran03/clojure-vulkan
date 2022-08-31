@@ -7,7 +7,7 @@
            (org.lwjgl.system MemoryStack)
            (org.lwjgl.vulkan VK13 VkClearColorValue VkClearValue VkCommandBuffer
                              VkCommandBufferAllocateInfo VkCommandBufferBeginInfo VkCommandPoolCreateInfo VkOffset2D
-                             VkRect2D VkRect2D$Buffer VkRenderPassBeginInfo VkViewport VkViewport$Buffer)))
+                             VkRect2D VkRect2D$Buffer VkRenderPassBeginInfo VkViewport VkViewport$Buffer VkSubmitInfo)))
 
 (defn create-command-pool []
   (util/with-memory-stack-push ^MemoryStack stack

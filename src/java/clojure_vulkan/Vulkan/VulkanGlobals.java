@@ -42,7 +42,7 @@ public class VulkanGlobals {
     public static VkPointer SWAP_CHAIN_POINTER = new VkPointer() {
         @Override
         public void free() {
-            KHRSwapchain.vkDestroySwapchainKHR(LOGICAL_DEVICE.get(), this.get(), null);
+            KHRSwapchain.vkDestroySwapchainKHR(getLogicalDevice(), this.get(), null);
             super.free();
         }
     };
@@ -58,7 +58,7 @@ public class VulkanGlobals {
     public static VkPointerVector SWAP_CHAIN_IMAGE_VIEWS_POINTERS = new VkPointerVector() {
         @Override
         public void free() {
-            this.get().forEach(imageViewsPointer -> VK13.vkDestroyImageView(LOGICAL_DEVICE.get(), imageViewsPointer.get(), null));
+            this.get().forEach(imageViewsPointer -> VK13.vkDestroyImageView(getLogicalDevice(), imageViewsPointer.get(), null));
             super.free();
         }
     };
@@ -66,7 +66,7 @@ public class VulkanGlobals {
     public static VkPointer PIPELINE_LAYOUT_POINTER = new VkPointer() {
         @Override
         public void free() {
-            VK13.vkDestroyPipelineLayout(LOGICAL_DEVICE.get(), this.get(), null);
+            VK13.vkDestroyPipelineLayout(getLogicalDevice(), this.get(), null);
             super.free();
         }
     };
@@ -74,7 +74,7 @@ public class VulkanGlobals {
     public static VkPointerVector SWAP_CHAIN_FRAME_BUFFER_POINTERS = new VkPointerVector() {
         @Override
         public void free() {
-            this.get().forEach(frameBufferPointer -> VK13.vkDestroyFramebuffer(LOGICAL_DEVICE.get(), frameBufferPointer.get(), null));
+            this.get().forEach(frameBufferPointer -> VK13.vkDestroyFramebuffer(getLogicalDevice(), frameBufferPointer.get(), null));
             super.free();
         }
     };
@@ -82,7 +82,7 @@ public class VulkanGlobals {
     public static VkPointer RENDER_PASS_POINTER = new VkPointer() {
         @Override
         public void free() {
-            VK13.vkDestroyRenderPass(LOGICAL_DEVICE.get(), this.get(), null);
+            VK13.vkDestroyRenderPass(getLogicalDevice(), this.get(), null);
             super.free();
         }
     };
@@ -99,7 +99,7 @@ public class VulkanGlobals {
     public static VkPointer COMMAND_POOL = new VkPointer() {
         @Override
         public void free() {
-            VK13.vkDestroyCommandPool(LOGICAL_DEVICE.get(), this.get(), null);
+            VK13.vkDestroyCommandPool(getLogicalDevice(), this.get(), null);
             super.free();
             COMMAND_BUFFERS.free();
         }
