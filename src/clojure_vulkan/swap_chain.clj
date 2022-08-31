@@ -1,12 +1,12 @@
 (ns clojure-vulkan.swap-chain
   (:require [clojure-vulkan.command-buffers :as command-buffers]
             [clojure-vulkan.frame-buffers :as frame-buffers]
-            [clojure-vulkan.globals :as globals :refer [SWAP-CHAIN-IMAGE-FORMAT SWAP-CHAIN-SUPPORT-DETAILS WINDOW-POINTER]]
+            [clojure-vulkan.globals :as globals :refer [SWAP-CHAIN-IMAGE-FORMAT SWAP-CHAIN-SUPPORT-DETAILS]]
             [clojure-vulkan.graphics-pipeline :as graphics-pipeline]
             [clojure-vulkan.image-views :as image-views]
             [clojure-vulkan.render-pass :as render-pass]
             [clojure-vulkan.util :as util])
-  (:import (clojure_vulkan.Vulkan VulkanGlobals VulkanGlobals$VkPointerVector)
+  (:import (clojure_vulkan.Vulkan VulkanGlobals VulkanGlobalsIntefaces$VkPointerVector)
            (java.nio IntBuffer)
            (org.lwjgl.glfw GLFW)
            (org.lwjgl.system MemoryStack)
@@ -66,7 +66,7 @@
     (util/with-memory-stack-push ^MemoryStack stack
       (let [width-ptr (.mallocInt stack 1)
             height-ptr (.mallocInt stack 1)
-            _ (GLFW/glfwGetFramebufferSize WINDOW-POINTER width-ptr height-ptr)
+            _ (GLFW/glfwGetFramebufferSize (.get VulkanGlobals/WINDOW_POINTER) width-ptr height-ptr)
             min-extent (.minImageExtent surface-capabilities)
             max-extent (.maxImageExtent surface-capabilities)]
         (doto (VkExtent2D/malloc stack)
@@ -118,7 +118,7 @@
           swapchain-images-ptr (.mallocLong stack (.get image-count-ptr 0))]
       (KHRSwapchain/vkGetSwapchainImagesKHR (VulkanGlobals/getLogicalDevice) (.get VulkanGlobals/SWAP_CHAIN_POINTER) image-count-ptr swapchain-images-ptr)
       (.set VulkanGlobals/SWAP_CHAIN_IMAGE_POINTERS
-            (VulkanGlobals$VkPointerVector/asVkPointerVector
+            (VulkanGlobalsIntefaces$VkPointerVector/asVkPointerVector
               (Vector. ^Collection (mapv #(.get swapchain-images-ptr ^int %)
                                          (range image-count)))))
       (globals/set-global! SWAP-CHAIN-IMAGE-FORMAT (.format surface-format))
@@ -139,10 +139,10 @@
   (let [stack (MemoryStack/stackGet)
         width-buffer (.ints stack 0)
         height-buffer (.ints stack 0)]
-    (GLFW/glfwGetFramebufferSize WINDOW-POINTER width-buffer height-buffer)
+    (GLFW/glfwGetFramebufferSize (.get VulkanGlobals/WINDOW_POINTER) width-buffer height-buffer)
     (while (or (zero? (.get width-buffer 0))
                (zero? (.get height-buffer 0)))
-      (GLFW/glfwGetFramebufferSize WINDOW-POINTER width-buffer height-buffer)
+      (GLFW/glfwGetFramebufferSize (.get VulkanGlobals/WINDOW_POINTER) width-buffer height-buffer)
       (GLFW/glfwWaitEvents))
     (VK13/vkDeviceWaitIdle (VulkanGlobals/getLogicalDevice))
     (cleanup-swap-chain)

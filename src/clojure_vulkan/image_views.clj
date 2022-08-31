@@ -2,7 +2,7 @@
   (:require [clojure-vulkan.globals :as globals :refer [SWAP-CHAIN-IMAGE-FORMAT
                                                         SWAP-CHAIN-IMAGE-VIEWS-POINTERS]]
             [clojure-vulkan.util :as util])
-  (:import (clojure_vulkan.Vulkan VulkanGlobals VulkanGlobals$VkPointer)
+  (:import (clojure_vulkan.Vulkan VulkanGlobals VulkanGlobalsIntefaces$VkPointer)
            (org.lwjgl.system MemoryStack)
            (org.lwjgl.vulkan VK13 VkImageViewCreateInfo)))
 
@@ -24,7 +24,7 @@
                   (.levelCount 1)
                   (.baseArrayLayer 0)
                   (.layerCount 1)))
-          image-views (mapv (fn [^VulkanGlobals$VkPointer swap-chain-image]
+          image-views (mapv (fn [^VulkanGlobalsIntefaces$VkPointer swap-chain-image]
                               (.image image-view-create-info (.get swap-chain-image))
                               (if (= (VK13/vkCreateImageView (VulkanGlobals/getLogicalDevice) image-view-create-info nil image-view-ptr)
                                      VK13/VK_SUCCESS)

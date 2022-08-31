@@ -17,9 +17,8 @@
             [clojure-vulkan.uniform :as uniform]
             [clojure-vulkan.util :as util]
             [clojure-vulkan.window-surface :as window-surface])
-  (:import (clojure_vulkan.Vulkan VulkanGlobals VulkanGlobals$VkPointer)
-           (org.lwjgl.glfw GLFW)
-           (org.lwjgl.vulkan VK13)))
+  (:import (clojure_vulkan.Vulkan VulkanGlobals)
+           (org.lwjgl.glfw GLFW)))
 
 (defn init []
   (instance/create)

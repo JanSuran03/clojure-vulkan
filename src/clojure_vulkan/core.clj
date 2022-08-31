@@ -3,7 +3,7 @@
 (ns clojure-vulkan.core
   (:require [clojure.edn :as edn]
             [clojure-vulkan.glfw :as glfw]
-            [clojure-vulkan.globals :refer [*config* WINDOW-POINTER]]
+            [clojure-vulkan.globals :refer [*config*]]
             [clojure-vulkan.render :as render]
             [clojure-vulkan.util :as util]
             [clojure-vulkan.vulkan :as vulkan]
@@ -25,7 +25,7 @@
         (glfw/init)
         (window/create-window)
         (vulkan/init)
-        (GLFW/glfwShowWindow WINDOW-POINTER)
+        (GLFW/glfwShowWindow (.get VulkanGlobals/WINDOW_POINTER))
 
         ;; application loop
         (while (not (window/should-window-close?))
@@ -43,6 +43,6 @@
         ;; termination
         (finally
           (util/try-all #(util/log "An error occurred in one of the major cleanup sections: " (.printStackTrace ^Throwable %))
-            (window/destroy-window)
+            (.free VulkanGlobals/WINDOW_POINTER)
             (glfw/terminate)
             (vulkan/terminate)))))))

@@ -8,14 +8,7 @@
 (defn- reset-to-vk-null [_] VK13/VK_NULL_HANDLE)
 
 (def ^:dynamic *config* {})
-;; **************************************************
-;; GLOBALS
-;; **************************************************
-(def ^Long WINDOW-POINTER VK13/VK_NULL_HANDLE)
-(defn reset-window-ptr [] (alter-var-root #'WINDOW-POINTER reset-to-vk-null))
-;; **************************************************
-;; SWAP CHAIN
-;; **************************************************
+
 (def SWAP-CHAIN-SUPPORT-DETAILS {})
 (defn reset-swap-chain-support-details [] (alter-var-root #'SWAP-CHAIN-SUPPORT-DETAILS empty))
 
