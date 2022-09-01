@@ -1,12 +1,12 @@
 (ns clojure-vulkan.texture
   (:require [clojure-vulkan.buffer :as buffer]
-            [clojure-vulkan.globals :as globals :refer [IMAGE-MEMORY-POINTER IMAGE-POINTER]]
+            [clojure-vulkan.globals :as globals :refer [IMAGE-MEMORY-POINTER IMAGE-POINTER TEXTURE-IMAGE-VIEW TEXTURE-SAMPLER-POINTER]]
             [clojure-vulkan.util :as util])
   (:import (clojure_vulkan.Vulkan VulkanGlobals Buffer)
            (java.nio IntBuffer ByteBuffer LongBuffer)
            (org.lwjgl.stb STBImage)
            (org.lwjgl.system MemoryStack)
-           (org.lwjgl.vulkan VK13 VkImageCreateInfo VkMemoryAllocateInfo VkMemoryRequirements VkImageMemoryBarrier VkBufferImageCopy VkExtent3D VkOffset3D)))
+           (org.lwjgl.vulkan VK13 VkImageCreateInfo VkMemoryAllocateInfo VkMemoryRequirements VkImageMemoryBarrier VkBufferImageCopy VkExtent3D VkOffset3D VkImageViewCreateInfo VkSamplerCreateInfo VkPhysicalDeviceProperties)))
 
 (def textures-root "resources/textures/")
 
@@ -129,3 +129,41 @@
       (copy-buffer-to-image (.bufferPointer staging-buffer) IMAGE-POINTER (.get texture-width* 0) (.get texture-height* 0))
       (transition-image-layout IMAGE-POINTER VK13/VK_FORMAT_R8G8B8A8_SRGB VK13/VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL VK13/VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
       (.free ^Buffer staging-buffer))))
+
+(defn create-texture-image-view []
+  (globals/set-global! TEXTURE-IMAGE-VIEW (util/create-image-view IMAGE-POINTER VK13/VK_FORMAT_R8G8B8A8_SRGB)))
+
+(defn destroy-texture-image-view []
+  (VK13/vkDestroyImageView (VulkanGlobals/getLogicalDevice) TEXTURE-IMAGE-VIEW nil)
+  (globals/set-global! TEXTURE-IMAGE-VIEW VK13/VK_NULL_HANDLE))
+
+(defn create-texture-sampler []
+  (util/with-memory-stack-push ^MemoryStack stack
+    (let [physical-device-properties (VkPhysicalDeviceProperties/malloc stack)
+          _ (VK13/vkGetPhysicalDeviceProperties (.get VulkanGlobals/PHYSICAL_DEVICE) physical-device-properties)
+          sampler-create-info (doto (VkSamplerCreateInfo/calloc stack)
+                                (.sType VK13/VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO)
+                                (.magFilter VK13/VK_FILTER_LINEAR) ; VK13/VK_FILTER_NEAREST is the 2nd option
+                                (.minFilter VK13/VK_FILTER_LINEAR)
+                                (.addressModeU VK13/VK_SAMPLER_ADDRESS_MODE_REPEAT)
+                                (.addressModeV VK13/VK_SAMPLER_ADDRESS_MODE_REPEAT)
+                                (.addressModeW VK13/VK_SAMPLER_ADDRESS_MODE_REPEAT)
+                                (.anisotropyEnable false)   ; ANISOTROPHY DISABLED
+                                (.maxAnisotropy (.maxSamplerAnisotropy (.limits physical-device-properties)))
+                                (.borderColor VK13/VK_BORDER_COLOR_INT_OPAQUE_BLACK)
+                                (.unnormalizedCoordinates false) ; [0; 1], otherwise [0; width] or [0; height]
+                                (.compareEnable false)
+                                (.compareOp VK13/VK_COMPARE_OP_ALWAYS)
+                                (.mipmapMode VK13/VK_SAMPLER_MIPMAP_MODE_LINEAR) ; MIPMAPPING: irrelevant for now
+                                (.mipLodBias 0)
+                                (.minLod 0)
+                                (.maxLod 0))
+          texture-sampler-ptr* (.mallocLong stack 1)]
+      (if (= (VK13/vkCreateSampler (VulkanGlobals/getLogicalDevice) sampler-create-info nil texture-sampler-ptr*)
+             VK13/VK_SUCCESS)
+        (globals/set-global! TEXTURE-SAMPLER-POINTER (.get texture-sampler-ptr* 0))
+        (throw (RuntimeException. "Failed to create texture sampler."))))))
+
+(defn destroy-texture-sampler []
+  (VK13/vkDestroySampler (VulkanGlobals/getLogicalDevice) TEXTURE-SAMPLER-POINTER nil)
+  (globals/set-global! TEXTURE-SAMPLER-POINTER VK13/VK_NULL_HANDLE))

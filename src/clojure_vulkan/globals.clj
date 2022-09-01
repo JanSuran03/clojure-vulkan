@@ -28,3 +28,7 @@
 
 (def IMAGE-MEMORY-POINTER VK13/VK_NULL_HANDLE)
 (defn reset-image-memory-ptr [] (alter-var-root #'IMAGE-MEMORY-POINTER reset-to-vk-null))
+
+(def TEXTURE-IMAGE-VIEW VK13/VK_NULL_HANDLE)
+
+(def TEXTURE-SAMPLER-POINTER VK13/VK_NULL_HANDLE)

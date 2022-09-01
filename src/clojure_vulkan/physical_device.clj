@@ -72,6 +72,8 @@
                   (vswap! score + 1000))
                 (when-not (.geometryShader device-features)
                   (vreset! score 0))
+                (when-not (.samplerAnisotropy device-features)
+                  (vreset! score nil))
                 (vswap! devices conj (list @score device))
                 (vreset! graphics-family* graphics-family)
                 (vreset! present-family* present-family))

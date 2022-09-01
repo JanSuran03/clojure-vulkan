@@ -7,7 +7,7 @@
            (java.util Date)
            (org.lwjgl.system MemoryStack StructBuffer)
            (org.lwjgl.vulkan VK13 VkCommandBuffer VkCommandBufferAllocateInfo VkCommandBufferBeginInfo
-                             VkPhysicalDeviceMemoryProperties VkSubmitInfo)))
+                             VkPhysicalDeviceMemoryProperties VkSubmitInfo VkImageViewCreateInfo)))
 
 (defmacro with-memory-stack-push [stack & body]
   `(with-open [^MemoryStack ~stack (MemoryStack/stackPush)]
@@ -194,27 +194,45 @@
 
 (defn ^VkCommandBuffer begin-single-time-commands []
   (with-memory-stack-push ^MemoryStack stack
-                               (let [command-buffer-allocate-info (doto (VkCommandBufferAllocateInfo/calloc stack)
-                                                                    (.sType VK13/VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO)
-                                                                    (.level VK13/VK_COMMAND_BUFFER_LEVEL_PRIMARY)
-                                                                    (.commandPool (.get VulkanGlobals/COMMAND_POOL))
-                                                                    (.commandBufferCount 1))
-                                     command-buffers-ptr (.mallocPointer stack 1)
-                                     _ (VK13/vkAllocateCommandBuffers (VulkanGlobals/getLogicalDevice) command-buffer-allocate-info command-buffers-ptr)
-                                     command-buffer-begin-info (doto (VkCommandBufferBeginInfo/calloc stack)
-                                                                 (.sType VK13/VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO)
-                                                                 (.flags VK13/VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT))
-                                     command-buffer (VkCommandBuffer. (.get command-buffers-ptr 0) (VulkanGlobals/getLogicalDevice))]
-                                 (doto command-buffer (VK13/vkBeginCommandBuffer command-buffer-begin-info)))))
+    (let [command-buffer-allocate-info (doto (VkCommandBufferAllocateInfo/calloc stack)
+                                         (.sType VK13/VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO)
+                                         (.level VK13/VK_COMMAND_BUFFER_LEVEL_PRIMARY)
+                                         (.commandPool (.get VulkanGlobals/COMMAND_POOL))
+                                         (.commandBufferCount 1))
+          command-buffers-ptr (.mallocPointer stack 1)
+          _ (VK13/vkAllocateCommandBuffers (VulkanGlobals/getLogicalDevice) command-buffer-allocate-info command-buffers-ptr)
+          command-buffer-begin-info (doto (VkCommandBufferBeginInfo/calloc stack)
+                                      (.sType VK13/VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO)
+                                      (.flags VK13/VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT))
+          command-buffer (VkCommandBuffer. (.get command-buffers-ptr 0) (VulkanGlobals/getLogicalDevice))]
+      (doto command-buffer (VK13/vkBeginCommandBuffer command-buffer-begin-info)))))
 
 (defn end-single-time-commands [^VkCommandBuffer command-buffer]
   (with-memory-stack-push ^MemoryStack stack
-                               (VK13/vkEndCommandBuffer command-buffer)
-                               (let [command-buffer-submit-info (doto (VkSubmitInfo/calloc stack)
-                                                                  (.sType VK13/VK_STRUCTURE_TYPE_SUBMIT_INFO)
-                                                                  (.pCommandBuffers (.pointers stack command-buffer)))]
-                                 (when (not= (VK13/vkQueueSubmit (.get VulkanGlobals/GRAPHICS_QUEUE) command-buffer-submit-info VK13/VK_NULL_HANDLE)
-                                             VK13/VK_SUCCESS)
-                                   (throw (RuntimeException. "Failed to submit command buffer.")))
-                                 (VK13/vkQueueWaitIdle (.get VulkanGlobals/GRAPHICS_QUEUE))
-                                 (VK13/vkFreeCommandBuffers (VulkanGlobals/getLogicalDevice) (.get VulkanGlobals/COMMAND_POOL) command-buffer))))
+    (VK13/vkEndCommandBuffer command-buffer)
+    (let [command-buffer-submit-info (doto (VkSubmitInfo/calloc stack)
+                                       (.sType VK13/VK_STRUCTURE_TYPE_SUBMIT_INFO)
+                                       (.pCommandBuffers (.pointers stack command-buffer)))]
+      (when (not= (VK13/vkQueueSubmit (.get VulkanGlobals/GRAPHICS_QUEUE) command-buffer-submit-info VK13/VK_NULL_HANDLE)
+                  VK13/VK_SUCCESS)
+        (throw (RuntimeException. "Failed to submit command buffer.")))
+      (VK13/vkQueueWaitIdle (.get VulkanGlobals/GRAPHICS_QUEUE))
+      (VK13/vkFreeCommandBuffers (VulkanGlobals/getLogicalDevice) (.get VulkanGlobals/COMMAND_POOL) command-buffer))))
+
+(defn create-image-view [image-pointer format]
+  (with-memory-stack-push ^MemoryStack stack
+    (let [image-view-create-info (doto (VkImageViewCreateInfo/calloc stack)
+                                   (.sType VK13/VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO)
+                                   (.image image-pointer)
+                                   (.viewType VK13/VK_IMAGE_VIEW_TYPE_2D)
+                                   (.format format)
+                                   (.. subresourceRange (aspectMask VK13/VK_IMAGE_ASPECT_COLOR_BIT))
+                                   (.. subresourceRange (baseMipLevel 0))
+                                   (.. subresourceRange (levelCount 1))
+                                   (.. subresourceRange (baseArrayLayer 0))
+                                   (.. subresourceRange (layerCount 1)))
+          texture-image-view-ptr* (.mallocLong stack 1)]
+      (if (= (VK13/vkCreateImageView (VulkanGlobals/getLogicalDevice) image-view-create-info nil texture-image-view-ptr*)
+             VK13/VK_SUCCESS)
+        (.get texture-image-view-ptr* 0)
+        (throw (RuntimeException. "Failed to create image view."))))))
