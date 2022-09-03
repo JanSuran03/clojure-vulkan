@@ -11,22 +11,27 @@
            (clojure_vulkan.math GLSL GLSL$GLSLType)))
 
 (def ^"[F" vertices (into-array Float/TYPE
-                                (concat (list -0.5 -0.5 -0.5 1 1 0)
-                                        (list +0.5 -0.5 -0.5 1 0 1)
-                                        (list +0.5 -0.5 +0.5 0 1 1)
-                                        (list -0.5 -0.5 +0.5 1 0 0)
-                                        (list -0.5 +0.5 -0.5 0 1 0)
-                                        (list +0.5 +0.5 -0.5 0 0 1)
-                                        (list +0.5 +0.5 +0.5 1 1 1)
-                                        (list -0.5 +0.5 +0.5 0 0 0))))
+                                (second [(concat (list -0.5 -0.5 -0.5,, 1 1 0,, 0 0)
+                                                 (list +0.5 -0.5 -0.5,, 1 0 1,, 1 0)
+                                                 (list +0.5 -0.5 +0.5,, 0 1 1,, 0 0)
+                                                 (list -0.5 -0.5 +0.5,, 1 0 0,, 0 0)
+                                                 (list -0.5 +0.5 -0.5,, 0 1 0,, 0 1)
+                                                 (list +0.5 +0.5 -0.5,, 0 0 1,, 1 1)
+                                                 (list +0.5 +0.5 +0.5,, 1 1 1,, 0 0)
+                                                 (list -0.5 +0.5 +0.5,, 0 0 0,, 0 0))
+                                         (concat (list -0.5 -0.5 0.5,, 1 0 0,, 0 0)
+                                                 (list +0.5 -0.5 0.5,, 0 1 0,, 1 0)
+                                                 (list +0.5 +0.5 0.5,, 0 0 1,, 1 1)
+                                                 (list -0.5 +0.5 0.5,, 0 1 1,, 0 1))])))
 
 (def ^"[S" indices (into-array Short/TYPE
-                               [0 1 4, 1 5 4
-                                1 2 5, 2 6 5
-                                2 3 6, 3 7 6
-                                3 0 7, 0 4 7
-                                3 2 0, 2 1 0
-                                4 5 7, 5 6 7]))
+                               (first [[0 1 2, 2 3 0]
+                                       [0 1 4, 1 5 4
+                                        1 2 5, 2 6 5
+                                        2 3 6, 3 7 6
+                                        3 0 7, 0 4 7
+                                        3 2 0, 2 1 0
+                                        4 5 7, 5 6 7]])))
 
 (defn analyze-shader-attribute-descriptions [shader-source]
   (ShaderAnalyzer/analyze (slurp (str shaders/shader-sources-root shader-source))))
@@ -48,15 +53,13 @@
 (def current-triangle-vbo-characterictics (analyze-shader-characteristics "shader.vert"))
 
 (defn get-binding-descriptions [^MemoryStack stack]
-  (let [input-binding-descriptions (VkVertexInputBindingDescription/calloc 1 stack)]
-    (doto ^VkVertexInputBindingDescription (.get input-binding-descriptions 0)
-      (.binding 0)                                          ;; binding id of the description
-      (.stride (int (:in-stride current-triangle-vbo-characterictics)))
-      (.inputRate VK13/VK_VERTEX_INPUT_RATE_VERTEX))
-    input-binding-descriptions))
+  (doto (VkVertexInputBindingDescription/calloc 1 stack)
+    (.binding 0)                                            ;; binding id of the description
+    (.stride (int (:in-stride current-triangle-vbo-characterictics)))
+    (.inputRate VK13/VK_VERTEX_INPUT_RATE_VERTEX)))
 
 (defn get-attribute-descriptions [^MemoryStack stack]
-  (let [{:keys [^int in]} current-triangle-vbo-characterictics
+  (let [{:keys [in]} current-triangle-vbo-characterictics
         attribute-descriptions (VkVertexInputAttributeDescription/calloc ^int (count in) stack)]
     (reduce (fn [^Integer byte-offset {:keys [^int format ^int location ^int sizeof]}]
               (doto ^VkVertexInputAttributeDescription (.get attribute-descriptions location)
@@ -71,9 +74,10 @@
 
 (defn create-vertex-buffer []
   (util/with-memory-stack-push ^MemoryStack stack
-    (let [buffer-size (* ^int (:in-stride current-triangle-vbo-characterictics) ; bytes per vertex
+    (let [buffer-size (* (:in-stride current-triangle-vbo-characterictics) ; bytes per vertex
                          (/ (count vertices)                ; vertices
                             (:components-per-vertex current-triangle-vbo-characterictics)))
+          _ (dotimes [_ 20] (println "BUFFER SIZE: " buffer-size))
           buffer-ptr* (.mallocLong stack 1)
           buffer-memory-ptr* (.mallocLong stack 1)
 

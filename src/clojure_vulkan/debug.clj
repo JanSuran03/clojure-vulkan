@@ -32,7 +32,9 @@
                                 \newline \newline)))
           "WARNING" (binding [*out* *err*]
                       (util/log "Validation layer warning!\n"
-                                "***********************************"))
+                                "***********************************\n"
+                                (.pMessageString callback-data)
+                                "\n***********************************\n\n"))
           nil))
       VK13/VK_FALSE)))
 

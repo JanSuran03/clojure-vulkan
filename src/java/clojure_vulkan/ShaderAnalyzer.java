@@ -72,9 +72,9 @@ public class ShaderAnalyzer {
         return "";
     }
 
-    public static IPersistentList analyze(String s) {
+    public static Vector<PersistentHashMap> analyze(String s) {
         String src = s;
-        Vector<ShaderLayout> analyzedLocations = new Vector<>();
+        Vector<PersistentHashMap> analyzedLocations = new Vector<>();
         int locationIndexOf;
         int bindingIndexOf;
         char ch;
@@ -138,12 +138,9 @@ public class ShaderAnalyzer {
                         src = src.substring(1);
                     }
                 }
-                analyzedLocations.add(currentLayout);
+                analyzedLocations.add(currentLayout.hashMap());
             }
         }
-        IPersistentList ret = PersistentList.EMPTY;
-        for (ShaderLayout shaderLayout : analyzedLocations)
-            ret = (IPersistentList) ret.cons(shaderLayout.hashMap());
-        return ret;
+        return analyzedLocations;
     }
 }
