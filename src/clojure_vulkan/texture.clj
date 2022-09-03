@@ -136,7 +136,7 @@
                                 (.addressModeU VK13/VK_SAMPLER_ADDRESS_MODE_REPEAT)
                                 (.addressModeV VK13/VK_SAMPLER_ADDRESS_MODE_REPEAT)
                                 (.addressModeW VK13/VK_SAMPLER_ADDRESS_MODE_REPEAT)
-                                (.anisotropyEnable false)   ; ANISOTROPHY DISABLED
+                                (.anisotropyEnable false)   ; ANISOTROPH DISABLED
                                 (.maxAnisotropy (.maxSamplerAnisotropy (.limits physical-device-properties)))
                                 (.borderColor VK13/VK_BORDER_COLOR_INT_OPAQUE_BLACK)
                                 (.unnormalizedCoordinates false) ; [0; 1], otherwise [0; width] or [0; height]

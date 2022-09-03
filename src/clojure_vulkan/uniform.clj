@@ -1,10 +1,9 @@
 (ns clojure-vulkan.uniform
   (:require [clojure-vulkan.buffer :as buffer]
-            [clojure-vulkan.globals :as globals]
-            [clojure-vulkan.math.vertex :as vertex]
+            [clojure-vulkan.vertex :as vertex]
             [clojure-vulkan.util :as util])
   (:import (clojure_vulkan UniformBufferObject)
-           (clojure_vulkan.Vulkan Buffer VulkanGlobals VulkanGlobalsInterfaces VulkanGlobalsInterfaces$VkPointerVector)
+           (clojure_vulkan.Vulkan Buffer VulkanGlobals VulkanGlobalsInterfaces$VkPointerVector)
            (java.util Collection Vector)
            (org.joml Matrix4f)
            (org.lwjgl.glfw GLFW)

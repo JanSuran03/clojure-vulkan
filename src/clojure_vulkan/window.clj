@@ -21,11 +21,13 @@
   (GLFW/glfwWindowHint GLFW/GLFW_CLIENT_API GLFW/GLFW_NO_API)
   (GLFW/glfwWindowHint GLFW/GLFW_VISIBLE (glfw-boolean false))
   (-create-window)
-  (GLFW/glfwSetFramebufferSizeCallback (.get VulkanGlobals/WINDOW_POINTER) (proxy [GLFWFramebufferSizeCallback] []
-                                                                             (invoke [window-ptr width height]
-                                                          (Frame/setFrameBufferResized true))))
-  (GLFW/glfwSetKeyCallback (.get VulkanGlobals/WINDOW_POINTER) (proxy [GLFWKeyCallback] []
-                                            (invoke [window-ptr key scancode action mods]
-                                              (GLFWKeyEvents/processKeyEvent key scancode action mods)))))
+  (GLFW/glfwSetFramebufferSizeCallback (.get VulkanGlobals/WINDOW_POINTER)
+                                       (proxy [GLFWFramebufferSizeCallback] []
+                                         (invoke [window-ptr width height]
+                                           (Frame/setFrameBufferResized true))))
+  (GLFW/glfwSetKeyCallback (.get VulkanGlobals/WINDOW_POINTER)
+                           (proxy [GLFWKeyCallback] []
+                             (invoke [window-ptr key scancode action mods]
+                               (GLFWKeyEvents/processKeyEvent key scancode action mods)))))
 
 (defn should-window-close? [] (GLFW/glfwWindowShouldClose (.get VulkanGlobals/WINDOW_POINTER)))

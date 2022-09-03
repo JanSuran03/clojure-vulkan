@@ -14,6 +14,7 @@ public class Buffer implements NativeResource {
 
     @Override
     public void free() {
+        bufferCreateInfo = null;
         VK13.vkDestroyBuffer(VulkanGlobals.getLogicalDevice(), bufferPtr, null);
         VK13.vkFreeMemory(VulkanGlobals.getLogicalDevice(), bufferMemoryPtr, null);
     }

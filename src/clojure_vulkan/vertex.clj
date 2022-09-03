@@ -1,20 +1,14 @@
-(ns clojure-vulkan.math.vertex
+(ns clojure-vulkan.vertex
   (:require [clojure-vulkan.buffer :as buffer]
             [clojure-vulkan.globals :as globals :refer [INDEX-BUFFER VERTEX-BUFFER]]
-            [clojure-vulkan.math.glsl :as glsl]
-            [clojure-vulkan.math.vector-2f]
-            [clojure-vulkan.math.vector-3f]
             [clojure-vulkan.shaders :as shaders]
             [clojure-vulkan.util :as util])
   (:import (clojure_vulkan ShaderAnalyzer)
-           (clojure_vulkan.Vulkan Buffer VulkanGlobals)
-           (clojure_vulkan.math.vector_2f Vector2f)
-           (clojure_vulkan.math.vector_3f Vector3f)
+           (clojure_vulkan.Vulkan VulkanGlobals)
            (org.lwjgl PointerBuffer)
            (org.lwjgl.system MemoryStack)
-           (org.lwjgl.vulkan VK13 VkBufferCreateInfo VkVertexInputAttributeDescription VkVertexInputBindingDescription)))
-
-(deftype Vertex [^Vector2f pos ^Vector3f color])
+           (org.lwjgl.vulkan VK13 VkVertexInputAttributeDescription VkVertexInputBindingDescription)
+           (clojure_vulkan.math GLSL GLSL$GLSLType)))
 
 (def ^"[F" vertices (into-array Float/TYPE
                                 (concat (list -0.5 -0.5 -0.5 1 1 0)
@@ -40,11 +34,11 @@
 (defn analyze-shader-characteristics [shader-source]
   (let [attribute-descriptions (analyze-shader-attribute-descriptions shader-source)]
     (as-> attribute-descriptions m
-          (map #(if-let [type (glsl/kw->type (:type %))]
-                  (assoc % :component-sizeof (glsl/component-sizeof type)
-                           :components (glsl/components type)
-                           :format (glsl/format type)
-                           :sizeof (glsl/sizeof type))
+          (map #(if-let [^GLSL$GLSLType type (.get GLSL/keywordToType (:type %))]
+                  (assoc % :component-sizeof (.componentSizeof type)
+                           :components (.componentsCount type)
+                           :format (.format type)
+                           :sizeof (.sizeof type))
                   %)
                m)
           (group-by :mode m)

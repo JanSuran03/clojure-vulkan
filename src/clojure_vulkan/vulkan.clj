@@ -7,7 +7,7 @@
             [clojure-vulkan.image-views :as image-views]
             [clojure-vulkan.instance :as instance]
             [clojure-vulkan.logical-device-and-queue :as logical-device-and-queue]
-            [clojure-vulkan.math.vertex :as vertex]
+            [clojure-vulkan.vertex :as vertex]
             [clojure-vulkan.physical-device :as physical-device]
             [clojure-vulkan.render :as render]
             [clojure-vulkan.render-pass :as render-pass]

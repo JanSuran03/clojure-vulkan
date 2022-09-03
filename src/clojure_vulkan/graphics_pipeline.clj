@@ -1,7 +1,7 @@
 (ns clojure-vulkan.graphics-pipeline
   (:require [clojure-vulkan.shaders :as shaders]
             [clojure-vulkan.util :as util]
-            [clojure-vulkan.math.vertex :as vertex])
+            [clojure-vulkan.vertex :as vertex])
   (:import (clojure_vulkan.shaders SpirVShader)
            (clojure_vulkan.Vulkan VulkanGlobals)
            (org.lwjgl.system MemoryStack)

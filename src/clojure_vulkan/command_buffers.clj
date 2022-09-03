@@ -1,8 +1,8 @@
 (ns clojure-vulkan.command-buffers
   (:require [clojure-vulkan.globals :refer [INDEX-BUFFER VERTEX-BUFFER]]
             [clojure-vulkan.util :as util]
-            [clojure-vulkan.math.vertex :as vertex])
-  (:import (clojure_vulkan.Vulkan Buffer VulkanGlobals VulkanGlobalsInterfaces$VkPointer)
+            [clojure-vulkan.vertex :as vertex])
+  (:import (clojure_vulkan.Vulkan Buffer VulkanGlobals)
            (java.util Collection Vector)
            (org.lwjgl.system MemoryStack)
            (org.lwjgl.vulkan VK13 VkClearColorValue VkClearValue VkCommandBuffer
