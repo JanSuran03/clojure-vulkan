@@ -1,14 +1,20 @@
 package clojure_vulkan.Vulkan;
 
+import org.lwjgl.system.NativeResource;
+
 import java.util.Vector;
 
-public class VulkanGlobalsIntefaces {
-    public interface VkResource<T> {
-        public T get();
+public class VulkanGlobalsInterfaces {
+    public interface VkResource<T> extends NativeResource {
+        T get();
 
-        public void set(T val);
+        void set(T val);
+    }
 
-        public void free();
+    public interface VkStructVector<T> extends VkResource<Vector<T>> {
+        default T get(int index) {
+            return this.get().elementAt(index);
+        }
     }
 
     public static abstract class VkPointer implements VkResource<Long> {
@@ -63,6 +69,10 @@ public class VulkanGlobalsIntefaces {
         @Override
         public Vector<VkPointer> get() {
             return pointerVector;
+        }
+
+        public Long get(int index) {
+            return this.get().elementAt(index).get();
         }
 
         @Override

@@ -5,7 +5,7 @@
             [clojure-vulkan.image-views :as image-views]
             [clojure-vulkan.render-pass :as render-pass]
             [clojure-vulkan.util :as util])
-  (:import (clojure_vulkan.Vulkan VulkanGlobals VulkanGlobalsIntefaces$VkPointerVector)
+  (:import (clojure_vulkan.Vulkan VulkanGlobals VulkanGlobalsInterfaces$VkPointerVector)
            (java.nio IntBuffer)
            (org.lwjgl.glfw GLFW)
            (org.lwjgl.system MemoryStack)
@@ -116,7 +116,7 @@
           swapchain-images-ptr (.mallocLong stack (.get image-count-ptr 0))]
       (KHRSwapchain/vkGetSwapchainImagesKHR (VulkanGlobals/getLogicalDevice) (.get VulkanGlobals/SWAP_CHAIN_POINTER) image-count-ptr swapchain-images-ptr)
       (.set VulkanGlobals/SWAP_CHAIN_IMAGE_POINTERS
-            (VulkanGlobalsIntefaces$VkPointerVector/asVkPointerVector
+            (VulkanGlobalsInterfaces$VkPointerVector/asVkPointerVector
               (Vector. ^Collection (mapv #(.get swapchain-images-ptr ^int %)
                                          (range image-count)))))
       (.set VulkanGlobals/SWAP_CHAIN_IMAGE_FORMAT (.format surface-format))

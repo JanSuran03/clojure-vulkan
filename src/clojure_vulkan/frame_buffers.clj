@@ -1,6 +1,6 @@
 (ns clojure-vulkan.frame-buffers
   (:require [clojure-vulkan.util :as util])
-  (:import (clojure_vulkan.Vulkan VulkanGlobals VulkanGlobalsIntefaces$VkPointer VulkanGlobalsIntefaces$VkPointerVector)
+  (:import (clojure_vulkan.Vulkan VulkanGlobals VulkanGlobalsInterfaces$VkPointer VulkanGlobalsInterfaces$VkPointerVector)
            (java.util Collection Vector)
            (org.lwjgl.system MemoryStack)
            (org.lwjgl.vulkan VK13 VkFramebufferCreateInfo)))
@@ -17,9 +17,9 @@
                                      (.height (.height (.get VulkanGlobals/SWAP_CHAIN_EXTENT)))
                                      (.layers 1))]
       (.set VulkanGlobals/SWAP_CHAIN_FRAME_BUFFER_POINTERS
-            (VulkanGlobalsIntefaces$VkPointerVector/asVkPointerVector
+            (VulkanGlobalsInterfaces$VkPointerVector/asVkPointerVector
               (Vector. ^Collection
-                       (mapv (fn [^VulkanGlobalsIntefaces$VkPointer image-view-ptr]
+                       (mapv (fn [^VulkanGlobalsInterfaces$VkPointer image-view-ptr]
                                (.put attachments-buffer 0 (.get image-view-ptr))
                                (.pAttachments frame-buffer-create-info attachments-buffer)
                                (if (= (VK13/vkCreateFramebuffer (VulkanGlobals/getLogicalDevice) frame-buffer-create-info nil frame-buffer-ptr)

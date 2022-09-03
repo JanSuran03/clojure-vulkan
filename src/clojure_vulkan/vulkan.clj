@@ -50,9 +50,9 @@
                \newline
                (.printStackTrace ^Throwable %))
     (swap-chain/cleanup-swap-chain)
-    (uniform/destroy-descriptor-pool)
+    (.free VulkanGlobals/DESCRIPTOR_POOL_POINTER)
     (.free VulkanGlobals/UNIFORM_BUFFERS)
-    (uniform/destroy-descriptor-set-layout)
+    (.free VulkanGlobals/DESCRIPTOR_SET_LAYOUT_POINTER)
     (.free globals/INDEX-BUFFER)
     (.free globals/VERTEX-BUFFER)
     (.free globals/TEXTURE)

@@ -5,7 +5,8 @@ import clojure.lang.Keyword;
 import clojure.lang.PersistentHashMap;
 import org.lwjgl.vulkan.*;
 
-import static clojure_vulkan.Vulkan.VulkanGlobalsIntefaces.VkResource;
+import static clojure_vulkan.Vulkan.VulkanGlobalsInterfaces.VkResource;
+import static clojure_vulkan.Vulkan.VulkanGlobalsInterfaces.VkStructVector;
 
 import java.util.Vector;
 
@@ -92,7 +93,7 @@ public class VulkanGlobalsImpl {
         }
     }
 
-    public static class SwapChainExtent implements VulkanGlobalsIntefaces.VkResource<VkExtent2D> {
+    public static class SwapChainExtent implements VulkanGlobalsInterfaces.VkResource<VkExtent2D> {
         private VkExtent2D extent;
 
         @Override
@@ -111,7 +112,7 @@ public class VulkanGlobalsImpl {
         }
     }
 
-    public static class UniformBuffers implements VkResource<Vector<Buffer>> {
+    public static class UniformBuffers implements VkStructVector<Buffer> {
         private Vector<Buffer> uniformBuffers;
 
         @Override
@@ -132,7 +133,7 @@ public class VulkanGlobalsImpl {
         }
     }
 
-    public static class CommandBuffers implements VulkanGlobalsIntefaces.VkResource<Vector<VkCommandBuffer>> {
+    public static class CommandBuffers implements VkStructVector<VkCommandBuffer> {
         private Vector<VkCommandBuffer> commandBuffers;
 
         @Override
@@ -151,7 +152,7 @@ public class VulkanGlobalsImpl {
         }
     }
 
-    public static class Queue implements VulkanGlobalsIntefaces.VkResource<VkQueue> {
+    public static class Queue implements VkResource<VkQueue> {
         private VkQueue queue;
 
         @Override
@@ -170,7 +171,7 @@ public class VulkanGlobalsImpl {
         }
     }
 
-    public static class VulkanInstance implements VulkanGlobalsIntefaces.VkResource<VkInstance> {
+    public static class VulkanInstance implements VkResource<VkInstance> {
         private VkInstance instance;
 
         @Override

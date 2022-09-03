@@ -1,8 +1,8 @@
 (ns clojure-vulkan.command-buffers
-  (:require [clojure-vulkan.globals :refer [DESCRIPTOR-SET-POINTERS INDEX-BUFFER VERTEX-BUFFER]]
+  (:require [clojure-vulkan.globals :refer [INDEX-BUFFER VERTEX-BUFFER]]
             [clojure-vulkan.util :as util]
             [clojure-vulkan.math.vertex :as vertex])
-  (:import (clojure_vulkan.Vulkan Buffer VulkanGlobals VulkanGlobalsIntefaces$VkPointer)
+  (:import (clojure_vulkan.Vulkan Buffer VulkanGlobals VulkanGlobalsInterfaces$VkPointer)
            (java.util Collection Vector)
            (org.lwjgl.system MemoryStack)
            (org.lwjgl.vulkan VK13 VkClearColorValue VkClearValue VkCommandBuffer
@@ -46,7 +46,7 @@
                                 VK13/VK_PIPELINE_BIND_POINT_GRAPHICS
                                 (.get VulkanGlobals/PIPELINE_LAYOUT_POINTER)
                                 0
-                                (.longs stack ^long (nth DESCRIPTOR-SET-POINTERS command-buffer-index))
+                                (.longs stack ^long (.get (VulkanGlobals/DESCRIPTOR_SET_POINTERS) command-buffer-index))
                                 nil)
   (VK13/vkCmdDrawIndexed command-buffer (count vertex/indices)
                          #_instance-count 1
@@ -100,11 +100,11 @@
                             (.offset (.set (VkOffset2D/calloc stack) 0 0))
                             (.extent (.get VulkanGlobals/SWAP_CHAIN_EXTENT)))]
       (dotimes [i command-buffers-count]
-        (record-command-buffer {:command-buffer                  (.elementAt (.get VulkanGlobals/COMMAND_BUFFERS) i)
+        (record-command-buffer {:command-buffer                  (.get VulkanGlobals/COMMAND_BUFFERS i)
                                 :command-buffer-begin-info       command-buffer-begin-info
                                 :render-pass-begin-info          render-pass-begin-info
                                 :scissor-buffers                 scissor-buffers
-                                :swap-chain-frame-buffer-pointer (.get ^VulkanGlobalsIntefaces$VkPointer (.elementAt (.get VulkanGlobals/SWAP_CHAIN_FRAME_BUFFER_POINTERS) i))
+                                :swap-chain-frame-buffer-pointer (.get VulkanGlobals/SWAP_CHAIN_FRAME_BUFFER_POINTERS i)
                                 :viewports-buffer                viewports-buffer
                                 :stack                           stack
                                 :command-buffer-index            i})))))

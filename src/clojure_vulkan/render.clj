@@ -58,7 +58,7 @@
                                 (.waitSemaphoreCount 1)
                                 (.pWaitSemaphores wait-semaphores)
                                 (.pWaitDstStageMask wait-stages)
-                                (.pCommandBuffers (.pointers stack ^Pointer (.elementAt (.get VulkanGlobals/COMMAND_BUFFERS) (.get image-index-ptr 0))))
+                                (.pCommandBuffers (.pointers stack ^Pointer (.get VulkanGlobals/COMMAND_BUFFERS (.get image-index-ptr 0))))
                                 (.pSignalSemaphores signal-semaphores))
                   _ (VK13/vkResetFences (VulkanGlobals/getLogicalDevice) (.longs stack (.inFlightFencePointer this-frame)))
                   _ (when (not= (VK13/vkQueueSubmit (.get VulkanGlobals/GRAPHICS_QUEUE) submit-info (.inFlightFencePointer this-frame))

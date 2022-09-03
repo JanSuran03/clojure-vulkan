@@ -3,7 +3,7 @@ package clojure_vulkan.Vulkan;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.vulkan.*;
 
-import static clojure_vulkan.Vulkan.VulkanGlobalsIntefaces.*;
+import static clojure_vulkan.Vulkan.VulkanGlobalsInterfaces.*;
 import static clojure_vulkan.Vulkan.VulkanGlobalsImpl.*;
 
 public class VulkanGlobals {
@@ -104,6 +104,27 @@ public class VulkanGlobals {
             VK13.vkDestroyCommandPool(getLogicalDevice(), this.get(), null);
             super.free();
             COMMAND_BUFFERS.free();
+        }
+    };
+
+    public static VkPointer DESCRIPTOR_POOL_POINTER = new VkPointer() {
+        @Override
+        public void free() {
+            VK13.vkDestroyDescriptorPool(getLogicalDevice(), this.get(), null);
+            super.free();
+        }
+    };
+    public static VkPointer DESCRIPTOR_SET_LAYOUT_POINTER = new VkPointer() {
+        @Override
+        public void free() {
+            VK13.vkDestroyDescriptorSetLayout(getLogicalDevice(), this.get(), null);
+            super.free();
+        }
+    };
+    public static VkPointerVector DESCRIPTOR_SET_POINTERS = new VkPointerVector() {
+        @Override
+        public void free() {
+            super.free();
         }
     };
 

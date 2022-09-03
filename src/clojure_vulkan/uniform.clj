@@ -1,10 +1,10 @@
 (ns clojure-vulkan.uniform
   (:require [clojure-vulkan.buffer :as buffer]
-            [clojure-vulkan.globals :as globals :refer [DESCRIPTOR-POOL-POINTER DESCRIPTOR-SET-LAYOUT-POINTER DESCRIPTOR-SET-POINTERS]]
+            [clojure-vulkan.globals :as globals]
             [clojure-vulkan.math.vertex :as vertex]
             [clojure-vulkan.util :as util])
   (:import (clojure_vulkan UniformBufferObject)
-           (clojure_vulkan.Vulkan Buffer VulkanGlobals)
+           (clojure_vulkan.Vulkan Buffer VulkanGlobals VulkanGlobalsInterfaces VulkanGlobalsInterfaces$VkPointerVector)
            (java.util Collection Vector)
            (org.joml Matrix4f)
            (org.lwjgl.glfw GLFW)
@@ -25,12 +25,8 @@
           descriptor-set-layout-ptr (.mallocLong stack 1)]
       (if (= (VK13/vkCreateDescriptorSetLayout (VulkanGlobals/getLogicalDevice) descriptor-set-layout-create-info nil descriptor-set-layout-ptr)
              VK13/VK_SUCCESS)
-        (globals/set-global! DESCRIPTOR-SET-LAYOUT-POINTER (.get descriptor-set-layout-ptr 0))
+        (.set VulkanGlobals/DESCRIPTOR_SET_LAYOUT_POINTER (.get descriptor-set-layout-ptr 0))
         (throw (RuntimeException. "Failed to create descriptor set layout."))))))
-
-(defn destroy-descriptor-set-layout []
-  (VK13/vkDestroyDescriptorSetLayout (VulkanGlobals/getLogicalDevice) DESCRIPTOR-SET-LAYOUT-POINTER nil)
-  (globals/reset-descriptor-set-layout-ptr))
 
 (def buffer-size (* #_number-of-matrix4f-fields 3 #_floats-per-matrix 16 Float/BYTES))
 
@@ -62,7 +58,7 @@
                            true)
         ubo (UniformBufferObject. model view proj)
         data-ptr* (.mallocPointer stack 1)]
-    (buffer/staging-buffer-memcpy (.bufferMemoryPointer ^Buffer (.elementAt (.get VulkanGlobals/UNIFORM_BUFFERS) current-frame-index))
+    (buffer/staging-buffer-memcpy (.bufferMemoryPointer ^Buffer (.get VulkanGlobals/UNIFORM_BUFFERS current-frame-index))
                                   buffer-size data-ptr* ubo :buffer-copy/uniform-buffer-object)))
 
 (defn create-descriptor-pool []
@@ -74,29 +70,24 @@
                                         (.sType VK13/VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO)
                                         (.pPoolSizes descriptor-pool-size)
                                         (.maxSets (.size (.get VulkanGlobals/SWAP_CHAIN_IMAGE_POINTERS))))
-          descriptor-pool-ptr (.mallocLong stack 1)]
-      (if (= (VK13/vkCreateDescriptorPool (VulkanGlobals/getLogicalDevice) descriptor-pool-create-info nil descriptor-pool-ptr)
+          descriptor-pool-ptr* (.mallocLong stack 1)]
+      (if (= (VK13/vkCreateDescriptorPool (VulkanGlobals/getLogicalDevice) descriptor-pool-create-info nil descriptor-pool-ptr*)
              VK13/VK_SUCCESS)
-        (globals/set-global! DESCRIPTOR-POOL-POINTER (.get descriptor-pool-ptr 0))
+        (.set VulkanGlobals/DESCRIPTOR_POOL_POINTER (.get descriptor-pool-ptr* 0))
         (throw (RuntimeException. "Failed to create descriptor pool."))))))
-
-(defn destroy-descriptor-pool []
-  (VK13/vkDestroyDescriptorPool (VulkanGlobals/getLogicalDevice) DESCRIPTOR-POOL-POINTER nil)
-  (globals/reset-descriptor-pool-ptr))
 
 (defn create-descriptor-sets []
   (util/with-memory-stack-push ^MemoryStack stack
     (let [descriptor-set-layouts-ptr (.mallocLong stack (.size (.get VulkanGlobals/SWAP_CHAIN_IMAGE_POINTERS)))
           _ (dotimes [i (.capacity descriptor-set-layouts-ptr)]
-              (.put descriptor-set-layouts-ptr i DESCRIPTOR-SET-LAYOUT-POINTER))
+              (.put descriptor-set-layouts-ptr i (.get VulkanGlobals/DESCRIPTOR_SET_LAYOUT_POINTER)))
           descriptor-set-allocate-info (doto (VkDescriptorSetAllocateInfo/calloc stack)
                                          (.sType VK13/VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO)
-                                         (.descriptorPool DESCRIPTOR-POOL-POINTER)
+                                         (.descriptorPool (.get VulkanGlobals/DESCRIPTOR_POOL_POINTER))
                                          (.pSetLayouts descriptor-set-layouts-ptr))
           descriptor-sets-ptr (.mallocLong stack (.size (.get VulkanGlobals/SWAP_CHAIN_IMAGE_POINTERS)))
-          _ (if (= (VK13/vkAllocateDescriptorSets (VulkanGlobals/getLogicalDevice) descriptor-set-allocate-info descriptor-sets-ptr)
-                   VK13/VK_SUCCESS)
-              (globals/set-global! DESCRIPTOR-SET-POINTERS [])
+          _ (when (not= (VK13/vkAllocateDescriptorSets (VulkanGlobals/getLogicalDevice) descriptor-set-allocate-info descriptor-sets-ptr)
+                        VK13/VK_SUCCESS)
               (throw (RuntimeException. "Failed to allocate descriptor sets.")))
           descriptor-buffer-info (doto (VkDescriptorBufferInfo/calloc 1 stack)
                                    (.offset 0)
@@ -111,9 +102,9 @@
                                  (.pImageInfo nil)
                                  (.pTexelBufferView nil))
           descriptor-set-ptrs (mapv (fn [i]
-                                      (.buffer descriptor-buffer-info (.bufferPointer ^Buffer (.elementAt (.get VulkanGlobals/UNIFORM_BUFFERS) i)))
+                                      (.buffer descriptor-buffer-info (.bufferPointer ^Buffer (.get VulkanGlobals/UNIFORM_BUFFERS i)))
                                       (.dstSet write-descriptor-set (.get descriptor-sets-ptr ^int i))
                                       (VK13/vkUpdateDescriptorSets (VulkanGlobals/getLogicalDevice) write-descriptor-set nil)
                                       (.get descriptor-sets-ptr))
                                     (range (.size (.get VulkanGlobals/SWAP_CHAIN_IMAGE_POINTERS))))]
-      (globals/set-global! DESCRIPTOR-SET-POINTERS descriptor-set-ptrs))))
+      (.set VulkanGlobals/DESCRIPTOR_SET_POINTERS (VulkanGlobalsInterfaces$VkPointerVector/asVkPointerVector (Vector. ^Collection descriptor-set-ptrs))))))
