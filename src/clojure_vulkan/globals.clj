@@ -1,5 +1,5 @@
 (ns clojure-vulkan.globals
-  (:import (clojure_vulkan.Vulkan Buffer)
+  (:import (clojure_vulkan.Vulkan Buffer Texture)
            (org.lwjgl.vulkan VK13)))
 
 (defmacro set-global! [global-var new-value]
@@ -20,15 +20,4 @@
 
 (def DESCRIPTOR-SET-POINTERS [])
 
-(def old-time (atom 0))
-(def delta-time (atom 0))
-
-(def IMAGE-POINTER VK13/VK_NULL_HANDLE)
-(defn reset-image-ptr [] (alter-var-root #'IMAGE-POINTER reset-to-vk-null))
-
-(def IMAGE-MEMORY-POINTER VK13/VK_NULL_HANDLE)
-(defn reset-image-memory-ptr [] (alter-var-root #'IMAGE-MEMORY-POINTER reset-to-vk-null))
-
-(def TEXTURE-IMAGE-VIEW VK13/VK_NULL_HANDLE)
-
-(def TEXTURE-SAMPLER-POINTER VK13/VK_NULL_HANDLE)
+(def ^Texture TEXTURE (Texture.))

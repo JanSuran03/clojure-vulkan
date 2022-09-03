@@ -1,6 +1,6 @@
 (ns clojure-vulkan.texture
   (:require [clojure-vulkan.buffer :as buffer]
-            [clojure-vulkan.globals :as globals :refer [IMAGE-MEMORY-POINTER IMAGE-POINTER TEXTURE-IMAGE-VIEW TEXTURE-SAMPLER-POINTER]]
+            [clojure-vulkan.globals :refer [TEXTURE]]
             [clojure-vulkan.util :as util])
   (:import (clojure_vulkan.Vulkan VulkanGlobals Buffer)
            (java.nio IntBuffer ByteBuffer LongBuffer)
@@ -9,14 +9,6 @@
            (org.lwjgl.vulkan VK13 VkImageCreateInfo VkMemoryAllocateInfo VkMemoryRequirements VkImageMemoryBarrier VkBufferImageCopy VkExtent3D VkOffset3D VkImageViewCreateInfo VkSamplerCreateInfo VkPhysicalDeviceProperties)))
 
 (def textures-root "resources/textures/")
-
-(defn destroy-texture []
-  (VK13/vkDestroyImage (VulkanGlobals/getLogicalDevice) IMAGE-POINTER nil)
-  (globals/reset-image-ptr))
-
-(defn free-texture-memory []
-  (VK13/vkFreeMemory (VulkanGlobals/getLogicalDevice) IMAGE-MEMORY-POINTER nil)
-  (globals/reset-image-memory-ptr))
 
 (defn transition-image-layout [image-pointer image-format old-layout new-layout]
   (util/with-memory-stack-push ^MemoryStack stack
@@ -109,10 +101,10 @@
                               (.flags 0))
           _ (if (= (VK13/vkCreateImage (VulkanGlobals/getLogicalDevice) image-create-info nil image-ptr*)
                    VK13/VK_SUCCESS)
-              (globals/set-global! IMAGE-POINTER (.get image-ptr* 0))
+              (.imagePointer TEXTURE (.get image-ptr* 0))
               (throw (RuntimeException. (str "Failed to create image: " texture-filepath))))
           memory-requirements (VkMemoryRequirements/calloc stack)
-          _ (VK13/vkGetImageMemoryRequirements (VulkanGlobals/getLogicalDevice) IMAGE-POINTER memory-requirements)
+          _ (VK13/vkGetImageMemoryRequirements (VulkanGlobals/getLogicalDevice) (.imagePointer TEXTURE) memory-requirements)
           memory-allocate-info (doto (VkMemoryAllocateInfo/calloc stack)
                                  (.sType VK13/VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO)
                                  (.allocationSize (.size memory-requirements))
@@ -122,20 +114,16 @@
           image-memory-ptr* (.mallocLong stack 1)
           _ (do (if (= (VK13/vkAllocateMemory (VulkanGlobals/getLogicalDevice) memory-allocate-info nil image-memory-ptr*)
                        VK13/VK_SUCCESS)
-                  (globals/set-global! IMAGE-MEMORY-POINTER (.get image-memory-ptr* 0))
+                  (.imageMemoryPointer TEXTURE (.get image-memory-ptr* 0))
                   (throw (RuntimeException. "Failed to allocate image memory.")))
-                (VK13/vkBindImageMemory (VulkanGlobals/getLogicalDevice) IMAGE-POINTER IMAGE-MEMORY-POINTER 0))]
-      (transition-image-layout IMAGE-POINTER VK13/VK_FORMAT_R8G8B8A8_SRGB VK13/VK_IMAGE_LAYOUT_UNDEFINED VK13/VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
-      (copy-buffer-to-image (.bufferPointer staging-buffer) IMAGE-POINTER (.get texture-width* 0) (.get texture-height* 0))
-      (transition-image-layout IMAGE-POINTER VK13/VK_FORMAT_R8G8B8A8_SRGB VK13/VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL VK13/VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+                (VK13/vkBindImageMemory (VulkanGlobals/getLogicalDevice) (.imagePointer TEXTURE) (.imageMemoryPointer TEXTURE) 0))]
+      (transition-image-layout (.imagePointer TEXTURE) VK13/VK_FORMAT_R8G8B8A8_SRGB VK13/VK_IMAGE_LAYOUT_UNDEFINED VK13/VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
+      (copy-buffer-to-image (.bufferPointer staging-buffer) (.imagePointer TEXTURE) (.get texture-width* 0) (.get texture-height* 0))
+      (transition-image-layout (.imagePointer TEXTURE) VK13/VK_FORMAT_R8G8B8A8_SRGB VK13/VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL VK13/VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
       (.free ^Buffer staging-buffer))))
 
 (defn create-texture-image-view []
-  (globals/set-global! TEXTURE-IMAGE-VIEW (util/create-image-view IMAGE-POINTER VK13/VK_FORMAT_R8G8B8A8_SRGB)))
-
-(defn destroy-texture-image-view []
-  (VK13/vkDestroyImageView (VulkanGlobals/getLogicalDevice) TEXTURE-IMAGE-VIEW nil)
-  (globals/set-global! TEXTURE-IMAGE-VIEW VK13/VK_NULL_HANDLE))
+  (.textureImageViewPointer TEXTURE (util/create-image-view (.imagePointer TEXTURE) VK13/VK_FORMAT_R8G8B8A8_SRGB)))
 
 (defn create-texture-sampler []
   (util/with-memory-stack-push ^MemoryStack stack
@@ -161,9 +149,5 @@
           texture-sampler-ptr* (.mallocLong stack 1)]
       (if (= (VK13/vkCreateSampler (VulkanGlobals/getLogicalDevice) sampler-create-info nil texture-sampler-ptr*)
              VK13/VK_SUCCESS)
-        (globals/set-global! TEXTURE-SAMPLER-POINTER (.get texture-sampler-ptr* 0))
+        (.textureSamplerPointer TEXTURE (.get texture-sampler-ptr* 0))
         (throw (RuntimeException. "Failed to create texture sampler."))))))
-
-(defn destroy-texture-sampler []
-  (VK13/vkDestroySampler (VulkanGlobals/getLogicalDevice) TEXTURE-SAMPLER-POINTER nil)
-  (globals/set-global! TEXTURE-SAMPLER-POINTER VK13/VK_NULL_HANDLE))

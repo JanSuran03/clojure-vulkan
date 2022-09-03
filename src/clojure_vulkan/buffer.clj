@@ -5,9 +5,7 @@
            (java.nio LongBuffer ByteBuffer)
            (org.lwjgl PointerBuffer)
            (org.lwjgl.system MemoryStack)
-           (org.lwjgl.vulkan VK13 VkBufferCopy VkBufferCreateInfo VkCommandBuffer VkCommandBufferAllocateInfo
-                             VkCommandBufferBeginInfo VkMemoryAllocateInfo VkMemoryRequirements
-                             VkSubmitInfo)))
+           (org.lwjgl.vulkan VK13 VkBufferCopy VkBufferCreateInfo VkMemoryAllocateInfo VkMemoryRequirements)))
 
 (defn ^Buffer create-buffer [^Integer byte-size ^Integer usage ^Integer property-flags
                              ^LongBuffer buffer-ptr* ^LongBuffer buffer-memory-ptr* ^MemoryStack stack]

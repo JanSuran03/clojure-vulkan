@@ -7,6 +7,8 @@ import static clojure_vulkan.Vulkan.VulkanGlobalsIntefaces.*;
 import static clojure_vulkan.Vulkan.VulkanGlobalsImpl.*;
 
 public class VulkanGlobals {
+    public static double oldTime = 0.0D;
+    public static double deltaTime = 0.0D;
     public static boolean VALIDATION_LAYERS_ENABLED = false;
     public static LogicalDevice LOGICAL_DEVICE = new LogicalDevice();
     public static PhysicalDevice PHYSICAL_DEVICE = new PhysicalDevice();

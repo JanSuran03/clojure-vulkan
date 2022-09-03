@@ -1,11 +1,8 @@
 (ns clojure-vulkan.render
-  (:require [clojure-vulkan.frame :as frame :refer [FRAMES MAX-FRAMES-IN-FLIGHT]]
-            [clojure-vulkan.globals :as globals]
-            [clojure-vulkan.swap-chain :as swap-chain]
+  (:require [clojure-vulkan.swap-chain :as swap-chain]
             [clojure-vulkan.util :as util]
             [clojure-vulkan.uniform :as uniform])
-  (:import (clojure_vulkan.frame Frame)
-           (clojure_vulkan.Vulkan VulkanGlobals)
+  (:import (clojure_vulkan.Vulkan VulkanGlobals Frame)
            (org.lwjgl.system MemoryStack Pointer)
            (org.lwjgl.vulkan KHRSwapchain VK13 VkFenceCreateInfo VkPresentInfoKHR VkSemaphoreCreateInfo VkSubmitInfo)))
 
@@ -22,10 +19,10 @@
                               (.sType VK13/VK_STRUCTURE_TYPE_FENCE_CREATE_INFO)
                               ; fence is created signaled -> a solution for the very first frame which cannot wait for the previous one
                               (.flags VK13/VK_FENCE_CREATE_SIGNALED_BIT))
-          image-available-semaphore-ptr (.mallocLong stack MAX-FRAMES-IN-FLIGHT)
-          render-finished-semaphore-ptr (.mallocLong stack MAX-FRAMES-IN-FLIGHT)
-          in-flight-fence-ptr (.mallocLong stack MAX-FRAMES-IN-FLIGHT)]
-      (globals/set-global! FRAMES
+          image-available-semaphore-ptr (.mallocLong stack Frame/MAX_FRAMES_IN_FLIGHT)
+          render-finished-semaphore-ptr (.mallocLong stack Frame/MAX_FRAMES_IN_FLIGHT)
+          in-flight-fence-ptr (.mallocLong stack Frame/MAX_FRAMES_IN_FLIGHT)]
+      (Frame/createFrames
         (mapv (fn [^Integer i]
                 (when (or (not= (VK13/vkCreateSemaphore (VulkanGlobals/getLogicalDevice) semaphore-create-info nil image-available-semaphore-ptr)
                                 VK13/VK_SUCCESS)
@@ -34,31 +31,27 @@
                           (not= (VK13/vkCreateFence (VulkanGlobals/getLogicalDevice) fence-create-info nil in-flight-fence-ptr)
                                 VK13/VK_SUCCESS))
                   (throw (str (RuntimeException. (str "Failed to create synchronization objects for frame: " i ".")))))
-                (Frame. (.get image-available-semaphore-ptr 0)
-                        (.get render-finished-semaphore-ptr 0)
-                        (.get in-flight-fence-ptr 0)))
-              (range MAX-FRAMES-IN-FLIGHT))))))
-
-(defmulti handle-swapchain-image-result (fn [result _this-frame _image-index-ptr _memory-stack]
-                                          result))
-
-(defmethod handle-swapchain-image-result 1 [])
+                (doto (Frame.)
+                  (.imageAvailableSemaphorePointer (.get image-available-semaphore-ptr 0))
+                  (.renderFinishedSemaphorePointer (.get render-finished-semaphore-ptr 0))
+                  (.inFlightFencePointer (.get in-flight-fence-ptr 0))))
+              (range Frame/MAX_FRAMES_IN_FLIGHT))))))
 
 (defn draw-frame []
   (util/with-memory-stack-push ^MemoryStack stack
-    (let [this-frame (frame/current-frame)
+    (let [this-frame (Frame/currentFrame)
           image-index-ptr (.mallocInt stack 1)
-          _ (VK13/vkWaitForFences (VulkanGlobals/getLogicalDevice) (frame/get-in-flight-fence-ptr this-frame) true infinite-timeout)
+          _ (VK13/vkWaitForFences (VulkanGlobals/getLogicalDevice) (.inFlightFencePointer this-frame) true infinite-timeout)
           acquire-result (KHRSwapchain/vkAcquireNextImageKHR (VulkanGlobals/getLogicalDevice) (.get VulkanGlobals/SWAP_CHAIN_POINTER) infinite-timeout
-                                                             (frame/get-image-available-semaphore-ptr this-frame)
+                                                             (.imageAvailableSemaphorePointer this-frame)
                                                              VK13/VK_NULL_HANDLE image-index-ptr)]
       (cond (= KHRSwapchain/VK_ERROR_OUT_OF_DATE_KHR acquire-result)
             (swap-chain/recreate-swap-chain)                ;; and return: last expression
 
             (#{VK13/VK_SUCCESS KHRSwapchain/VK_SUBOPTIMAL_KHR} acquire-result)
-            (let [wait-semaphores (frame/alloc-image-available-semaphore-ptr this-frame stack)
+            (let [wait-semaphores (.longs stack (.imageAvailableSemaphorePointer this-frame))
                   wait-stages (.ints stack VK13/VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT)
-                  signal-semaphores (frame/alloc-render-finished-semaphore-ptr this-frame stack)
+                  signal-semaphores (.longs stack (.renderFinishedSemaphorePointer this-frame))
                   _ (uniform/update-uniform-buffer (.get image-index-ptr 0) stack)
                   submit-info (doto (VkSubmitInfo/calloc stack)
                                 (.sType VK13/VK_STRUCTURE_TYPE_SUBMIT_INFO)
@@ -67,8 +60,8 @@
                                 (.pWaitDstStageMask wait-stages)
                                 (.pCommandBuffers (.pointers stack ^Pointer (.elementAt (.get VulkanGlobals/COMMAND_BUFFERS) (.get image-index-ptr 0))))
                                 (.pSignalSemaphores signal-semaphores))
-                  _ (VK13/vkResetFences (VulkanGlobals/getLogicalDevice) (frame/alloc-in-flight-fence-ptr this-frame stack))
-                  _ (when (not= (VK13/vkQueueSubmit (.get VulkanGlobals/GRAPHICS_QUEUE) submit-info (frame/get-in-flight-fence-ptr this-frame))
+                  _ (VK13/vkResetFences (VulkanGlobals/getLogicalDevice) (.longs stack (.inFlightFencePointer this-frame)))
+                  _ (when (not= (VK13/vkQueueSubmit (.get VulkanGlobals/GRAPHICS_QUEUE) submit-info (.inFlightFencePointer this-frame))
                                 VK13/VK_SUCCESS)
                       (throw (RuntimeException. "Failed to submit draw command buffer.")))
                   present-info (doto (VkPresentInfoKHR/calloc stack)
@@ -81,8 +74,8 @@
                   present-result (KHRSwapchain/vkQueuePresentKHR (.get VulkanGlobals/PRESENT_QUEUE) present-info)]
               (cond
                 (or (#{KHRSwapchain/VK_ERROR_OUT_OF_DATE_KHR KHRSwapchain/VK_SUBOPTIMAL_KHR} present-result)
-                    @frame/FRAME-BUFFER-RESIZED?)
-                (do (reset! frame/FRAME-BUFFER-RESIZED? false)
+                    Frame/isFrameBufferResized)
+                (do (Frame/setFrameBufferResized false)
                     (swap-chain/recreate-swap-chain))
 
                 VK13/VK_SUCCESS
@@ -90,7 +83,7 @@
 
                 :else
                 (throw (RuntimeException. "Failed to present swap chain image.")))
-              (frame/next-frame))
+              (Frame/nextFrame))
 
             :else
             (throw (RuntimeException. "Failed to acquire swap chain image."))))))

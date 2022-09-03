@@ -1,7 +1,6 @@
 (ns clojure-vulkan.vulkan
   (:require [clojure-vulkan.command-buffers :as command-buffers]
             [clojure-vulkan.debug :as debug]
-            [clojure-vulkan.frame :as frame]
             [clojure-vulkan.frame-buffers :as frame-buffers]
             [clojure-vulkan.globals :as globals]
             [clojure-vulkan.graphics-pipeline :as graphics-pipeline]
@@ -17,7 +16,7 @@
             [clojure-vulkan.uniform :as uniform]
             [clojure-vulkan.util :as util]
             [clojure-vulkan.window-surface :as window-surface])
-  (:import (clojure_vulkan.Vulkan VulkanGlobals)
+  (:import (clojure_vulkan.Vulkan VulkanGlobals Frame)
            (org.lwjgl.glfw GLFW)))
 
 (defn init []
@@ -43,7 +42,7 @@
   (uniform/create-descriptor-sets)
   (command-buffers/create-command-buffers)
   (render/create-sync-objects)
-  (reset! globals/old-time (GLFW/glfwGetTime)))
+  (set! VulkanGlobals/oldTime (GLFW/glfwGetTime)))
 
 (defn terminate []
   (util/try-all
@@ -56,11 +55,8 @@
     (uniform/destroy-descriptor-set-layout)
     (.free globals/INDEX-BUFFER)
     (.free globals/VERTEX-BUFFER)
-    (texture/destroy-texture-sampler)
-    (texture/destroy-texture-image-view)
-    (texture/destroy-texture)
-    (texture/free-texture-memory)
-    (frame/destroy-semaphores-and-fences)
+    (.free globals/TEXTURE)
+    (Frame/cleanup)
     (.free VulkanGlobals/COMMAND_POOL)
     (graphics-pipeline/destroy-graphics-pipeline)
     (.free VulkanGlobals/PIPELINE_LAYOUT_POINTER)

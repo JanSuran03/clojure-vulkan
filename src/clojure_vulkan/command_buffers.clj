@@ -1,5 +1,5 @@
 (ns clojure-vulkan.command-buffers
-  (:require [clojure-vulkan.globals :as globals :refer [DESCRIPTOR-SET-POINTERS INDEX-BUFFER VERTEX-BUFFER]]
+  (:require [clojure-vulkan.globals :refer [DESCRIPTOR-SET-POINTERS INDEX-BUFFER VERTEX-BUFFER]]
             [clojure-vulkan.util :as util]
             [clojure-vulkan.math.vertex :as vertex])
   (:import (clojure_vulkan.Vulkan Buffer VulkanGlobals VulkanGlobalsIntefaces$VkPointer)
@@ -7,7 +7,7 @@
            (org.lwjgl.system MemoryStack)
            (org.lwjgl.vulkan VK13 VkClearColorValue VkClearValue VkCommandBuffer
                              VkCommandBufferAllocateInfo VkCommandBufferBeginInfo VkCommandPoolCreateInfo VkOffset2D
-                             VkRect2D VkRect2D$Buffer VkRenderPassBeginInfo VkViewport VkViewport$Buffer VkSubmitInfo)))
+                             VkRect2D VkRect2D$Buffer VkRenderPassBeginInfo VkViewport VkViewport$Buffer)))
 
 (defn create-command-pool []
   (util/with-memory-stack-push ^MemoryStack stack

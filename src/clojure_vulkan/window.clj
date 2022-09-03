@@ -1,8 +1,7 @@
 (ns clojure-vulkan.window
-  (:require [clojure-vulkan.frame :as frame]
-            [clojure-vulkan.glfw :refer [glfw-boolean]])
+  (:require [clojure-vulkan.glfw :refer [glfw-boolean]])
   (:import (clojure_vulkan GLFWKeyEvents)
-           (clojure_vulkan.Vulkan VulkanGlobals)
+           (clojure_vulkan.Vulkan VulkanGlobals Frame)
            (org.lwjgl.glfw GLFW GLFWFramebufferSizeCallback GLFWKeyCallback)
            (org.lwjgl.vulkan VK13)))
 
@@ -23,8 +22,8 @@
   (GLFW/glfwWindowHint GLFW/GLFW_VISIBLE (glfw-boolean false))
   (-create-window)
   (GLFW/glfwSetFramebufferSizeCallback (.get VulkanGlobals/WINDOW_POINTER) (proxy [GLFWFramebufferSizeCallback] []
-                                                        (invoke [window-ptr width height]
-                                                          (reset! frame/FRAME-BUFFER-RESIZED? true))))
+                                                                             (invoke [window-ptr width height]
+                                                          (Frame/setFrameBufferResized true))))
   (GLFW/glfwSetKeyCallback (.get VulkanGlobals/WINDOW_POINTER) (proxy [GLFWKeyCallback] []
                                             (invoke [window-ptr key scancode action mods]
                                               (GLFWKeyEvents/processKeyEvent key scancode action mods)))))
