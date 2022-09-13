@@ -82,7 +82,8 @@ public class VulkanGlobalsInterfaces {
 
         @Override
         public void free() {
-            pointerVector.forEach(VkPointer::free);
+            this.pointerVector.forEach(VkPointer::free);
+            this.pointerVector = null;
         }
     }
 }

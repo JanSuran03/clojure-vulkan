@@ -19,10 +19,10 @@
                                                  (list +0.5 +0.5 -0.5,, 0 0 1,, 1 1)
                                                  (list +0.5 +0.5 +0.5,, 1 1 1,, 0 0)
                                                  (list -0.5 +0.5 +0.5,, 0 0 0,, 0 0))
-                                         (concat (list -0.5 -0.5 0.5,, 1 0 0,, 0 0)
-                                                 (list +0.5 -0.5 0.5,, 0 1 0,, 1 0)
+                                         (concat (list -0.5 -0.5 0.5,, 1 1 0,, 0 0)
+                                                 (list +0.5 -0.5 0.5,, 1 0 0,, 1 0)
                                                  (list +0.5 +0.5 0.5,, 0 0 1,, 1 1)
-                                                 (list -0.5 +0.5 0.5,, 0 1 1,, 0 1))])))
+                                                 (list -0.5 +0.5 0.5,, (/ 64 255) (/ 228 255) (/ 208 255),, 0 1))])))
 
 (def ^"[S" indices (into-array Short/TYPE
                                (first [[0 1 2, 2 3 0]
@@ -77,7 +77,6 @@
     (let [buffer-size (* (:in-stride current-triangle-vbo-characterictics) ; bytes per vertex
                          (/ (count vertices)                ; vertices
                             (:components-per-vertex current-triangle-vbo-characterictics)))
-          _ (dotimes [_ 20] (println "BUFFER SIZE: " buffer-size))
           buffer-ptr* (.mallocLong stack 1)
           buffer-memory-ptr* (.mallocLong stack 1)
 

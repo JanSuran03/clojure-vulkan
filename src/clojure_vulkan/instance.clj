@@ -17,12 +17,11 @@
                                         (.pEngineName (.UTF8Safe stack "No engine name"))
                                         (.engineVersion util/vk-version)
                                         (.apiVersion VK13/VK_API_VERSION_1_3))
-          ^VkInstanceCreateInfo create-info (doto (VkInstanceCreateInfo/calloc stack)
+          ^VkInstanceCreateInfo instance-create-info (doto (VkInstanceCreateInfo/calloc stack)
                                               (.sType VK13/VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO)
                                               (.pApplicationInfo app-info)
                                               (.ppEnabledExtensionNames (validation-layers/get-required-extensions stack))
-                                              (.ppEnabledLayerNames nil))
-          ^VkInstanceCreateInfo instance-create-info (doto create-info
+                                              (.ppEnabledLayerNames nil)
                                               (.ppEnabledLayerNames (util/string-seq-as-pointer-buffer stack validation-layers/*validation-layers*)))
           _ (when validation-layers/*enable-validation-layers*
             (let [^VkDebugUtilsMessengerCreateInfoEXT debug-create-info

@@ -36,7 +36,6 @@
       (and formats present-modes-ptr
            {:formats-ptr          formats
             :present-modes-ptr    present-modes-ptr
-            :present-modes-count  present-modes-count
             :surface-capabilities surface-capabilities}))))
 
 (defn ^VkSurfaceFormatKHR choose-swap-surface-format [^VkSurfaceFormatKHR$Buffer formats-ptr]
@@ -53,11 +52,11 @@
   KHRSurface/VK_PRESENT_MODE_FIFO_RELAXED_KHR - visible screen tearing (doesn't wait to next vertical blank)
   KHRSurface/VK_PRESENT_MODE_MAILBOX_KHR - triple buffering - if there is time to render screens between
       vertical blanks, they don't have to wait and can simply be replaced with the newer ones -> better latency."
-  [^IntBuffer present-modes-ptr present-modes-count]
+  [^IntBuffer present-modes-ptr]
   (or (some (fn [^long i]
               (when (= (.get present-modes-ptr i) KHRSurface/VK_PRESENT_MODE_MAILBOX_KHR)
                 KHRSurface/VK_PRESENT_MODE_MAILBOX_KHR))
-            (range present-modes-count))
+            (range (.capacity present-modes-ptr)))
       KHRSurface/VK_PRESENT_MODE_FIFO_KHR))
 
 (defn ^VkExtent2D choose-swap-extent [^VkSurfaceCapabilitiesKHR surface-capabilities]
@@ -75,10 +74,10 @@
 
 (defn create-swap-chain []
   (util/with-memory-stack-push ^MemoryStack stack
-    (let [{:keys [formats-ptr present-modes-ptr present-modes-count ^VkSurfaceCapabilitiesKHR surface-capabilities]}
+    (let [{:keys [formats-ptr present-modes-ptr ^VkSurfaceCapabilitiesKHR surface-capabilities]}
           (query-swap-chain-support (.get VulkanGlobals/PHYSICAL_DEVICE))
           surface-format (choose-swap-surface-format formats-ptr)
-          present-mode (choose-swap-presentation-mode present-modes-ptr present-modes-count)
+          present-mode (choose-swap-presentation-mode present-modes-ptr)
           extent (choose-swap-extent surface-capabilities)
           image-count (inc (.minImageCount surface-capabilities))
           image-count-ptr (if (and (pos? (.maxImageCount surface-capabilities))

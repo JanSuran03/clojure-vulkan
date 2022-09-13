@@ -39,7 +39,7 @@
                             present-support (.ints stack VK13/VK_FALSE)]
                         (KHRSurface/vkGetPhysicalDeviceSurfaceSupportKHR device i (.get VulkanGlobals/WINDOW_SURFACE_POINTER) present-support)
                         (cond-> family-map
-                                (bit-and queue-flags VK13/VK_QUEUE_GRAPHICS_BIT) (assoc :graphics-family i)
+                                (not (zero? (bit-and queue-flags VK13/VK_QUEUE_GRAPHICS_BIT))) (assoc :graphics-family i)
                                 (= (.get present-support 0) VK13/VK_TRUE) (assoc :present-family i)))))
                   {}
                   (range queue-family-count))]
